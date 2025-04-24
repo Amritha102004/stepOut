@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>404 Not Found</title>
+
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                background-color: #fff;
+                text-align: center;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 64px;
+                font-weight: 700;
+                margin-bottom: 15px;
+            }
+
+            p {
+                font-size: 16px;
+                margin-bottom: 30px;
+                color: #333;
+            }
+
+            .custom-button {
+                background-color: #000;
+                color: white;
+                text-decoration: none;
+                padding: 12px 25px;
+                border-radius: 4px;
+                font-size: 16px;
+                transition: background-color 0.3s;
+                display: inline-block;
+            }
+
+            .custom-button:hover {
+                background-color: #333;
+                color: white;
+            }
+            @media (max-width: 576px) {
+                h1 {
+                    font-size: 48px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <h1>404 Not Found</h1>
+                    <p>Your visited page not found. You may go home page.</p>
+                    <a href="/" class="custom-button">Back to home page</a>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StepOut - Find Your True Style</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* General Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        /* Navbar Styles */
+        .navbar {
+            padding: 1rem 2rem;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 300;
+            color: #333;
+        }
+        
+        .navbar-nav .nav-link {
+            color: #333;
+            margin: 0 0.8rem;
+            font-weight: 500;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            color: #009688;
+        }
+
+        
+        .nav-icons a {
+        color: #333;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-icons a:hover {
+        color: #009688;
+        transform: scale(1.1);
+    }
+    
+    .search-container {
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-input {
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        font-size: 0.9rem;
+        width: 0;
+        opacity: 0;
+        transition: all 0.4s ease;
+        position: absolute;
+        right: 30px;
+    }
+    
+    .search-container.active .search-input {
+        width: 180px;
+        opacity: 1;
+    }
+    .navbar-brand {
+    margin-right: 2rem;
+}
+
+.navbar-nav {
+    margin-left: 1rem;
+}
+    @media screen and (max-width: 992px) {
+        .nav-icons {
+            margin-top: 1rem;
+            justify-content: center;
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-input {
+            position: relative;
+            right: auto;
+        }
+    }
+        
+        /* Hero Section Styles */
+        .hero-section {
+            position: relative;
+            padding: 3rem 0;
+            overflow: hidden;
+        }
+        
+        .hero-bg {
+            position: absolute;
+            width: 70%;
+            height: 80%;
+            background-color: #009688;
+            border-radius: 50%;
+            right: -10%;
+            top: 10%;
+            z-index: -1;
+        }
+        
+        .hero-content {
+            padding: 2rem;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 300;
+            color: #555;
+            margin-bottom: 1.5rem;
+        }
+        
+        .hero-text {
+            color: #666;
+            margin-bottom: 2rem;
+            max-width: 450px;
+        }
+        
+        .hero-shoe {
+            transform: rotate(-15deg);
+            max-width: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .hero-shoe:hover {
+            transform: rotate(-10deg) scale(1.05);
+        }
+        
+        .shoe-thumbnails {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .shoe-thumbnail {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .shoe-thumbnail:hover {
+            border-color: #009688;
+        }
+        
+        .shoe-thumbnail img {
+            width: 85%;
+            height: auto;
+        }
+        
+        /* Jordan Section Styles */
+        .jordan-section {
+            background-color: #111;
+            color: white;
+            padding: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .jordan-bg {
+            position: absolute;
+            width: 40%;
+            top: 0;
+            bottom: 0;
+            right: 15%;
+            background-color: #d32f2f;
+            z-index: 0;
+        }
+        
+        .jordan-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .jordan-text {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+        
+        .jordan-btn {
+            padding: 0.5rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-right: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .btn-primary {
+            background-color: #ff9800;
+            border-color: #ff9800;
+        }
+        
+        .btn-outline-light {
+            color: white;
+            border-color: white;
+        }
+        
+        .jordan-shoe {
+            position: relative;
+            z-index: 1;
+            transform: rotate(10deg);
+            max-width: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .jordan-shoe:hover {
+            transform: rotate(15deg) scale(1.05);
+        }
+        
+        .color-variants {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            right: 5%;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        .color-variant {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.1);
+            margin: 5px 0;
+            padding: 5px;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .color-variant:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        
+        .color-variant img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        /* Product Section Styles */
+        .product-section {
+            padding: 4rem 0;
+            background-color: #f9f9f9;
+        }
+        
+        .product-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .wishlist-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .wishlist-icon:hover {
+            color: #f44336;
+        }
+        
+        .product-img {
+            text-align: center;
+            padding: 1rem 0;
+        }
+        
+        .product-img img {
+            max-width: 100%;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+        
+        .product-img img:hover {
+            transform: scale(1.05);
+        }
+        
+        .product-title {
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        .product-price {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+        
+        .price-current {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+        }
+        
+        .price-old {
+            text-decoration: line-through;
+            color: #999;
+            margin-right: 0.5rem;
+        }
+        
+        .price-discount {
+            background-color: #4caf50;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .product-rating {
+            margin: 0.5rem 0;
+            color: #ffc107;
+        }
+        
+        .product-delivery {
+            color: #4caf50;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .product-link {
+            text-align: right;
+            margin-top: 1rem;
+        }
+        
+        .product-link a {
+            color: #333;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        /* Footer Styles */
+        .footer {
+            background-color: #f5f5f5;
+            padding: 3rem 0 2rem;
+            color: #555;
+        }
+        
+        .footer-top {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin: 1rem;
+        }
+        
+        .footer-feature i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .footer-title {
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        
+        .footer-menu {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-menu li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-menu a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-menu a:hover {
+            color: #009688;
+        }
+        
+        .social-icons {
+            display: flex;
+            margin-top: 1rem;
+        }
+        
+        .social-icons a {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        
+        .social-icons a:hover {
+            background-color: #009688;
+            color: white;
+        }
+        
+        .contact-info {
+            margin-top: 1rem;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+        
+        .contact-item i {
+            margin-right: 10px;
+            color: #666;
+        }
+        
+        .payment-methods {
+            margin-top: 2rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .payment-methods img {
+            height: 30px;
+            margin-right: 10px;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #ddd;
+            margin-top: 2rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .hero-bg {
+                width: 90%;
+                right: -20%;
+            }
+            
+            .jordan-bg {
+                width: 50%;
+                right: 5%;
+            }
+            
+            .color-variants {
+                flex-direction: row;
+                position: relative;
+                top: auto;
+                right: auto;
+                transform: none;
+                justify-content: center;
+                margin-top: 2rem;
+            }
+            
+            .color-variant {
+                margin: 0 5px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-bg {
+                width: 100%;
+                height: 60%;
+                right: -30%;
+            }
+            
+            .jordan-bg {
+                width: 100%;
+                right: 0;
+                bottom: 40%;
+                top: 0;
+            }
+            
+            .jordan-shoe {
+                margin-top: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">stepOut</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Shop</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Order</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                    <% if(!req.session.user){ %>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Log In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/signup">Sign Up</a>
+                    </li>
+                    <% } else{ %>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/logout">Log Out</a>
+                        </li>
+                    <% } %>
+                </ul>
+                <div class="nav-icons d-flex align-items-center ms-3">
+                    <div class="search-container position-relative me-3">
+                        <input type="text" class="search-input" placeholder="Search...">
+                        <a href="#" id="search-icon" class="nav-link">
+                            <i class="fas fa-search"></i>
+                        </a>
+                    </div>
+                    <a href="#" class="nav-link mx-2">
+                        <i class="fas fa-heart"></i>
+                    </a>
+                    <a href="#" class="nav-link mx-2">
+                        <i class="fas fa-shopping-cart"></i>
+                    </a>
+                    <a href="#" class="nav-link mx-2">
+                        <i class="fas fa-user"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-bg"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-5 col-md-6 hero-content">
+                    <h1 class="hero-title">stepOut</h1>
+                    <p class="hero-text">Find your true style with stepOut and explore the variety of playful, colorful designs!</p>
+                </div>
+                <div class="col-lg-7 col-md-6">
+                    <img src="/api/placeholder/400/320" alt="White Nike Shoe" class="hero-shoe">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="shoe-thumbnails">
+                        <div class="shoe-thumbnail">
+                            <img src="/api/placeholder/50/50" alt="Shoe 1">
+                        </div>
+                        <div class="shoe-thumbnail">
+                            <img src="/api/placeholder/50/50" alt="Shoe 2">
+                        </div>
+                        <div class="shoe-thumbnail">
+                            <img src="/api/placeholder/50/50" alt="Shoe 3">
+                        </div>
+                        <div class="shoe-thumbnail">
+                            <img src="/api/placeholder/50/50" alt="Shoe 4">
+                        </div>
+                        <div class="shoe-thumbnail">
+                            <img src="/api/placeholder/50/50" alt="Shoe 5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Air Jordan Section -->
+    <section class="jordan-section">
+        <div class="jordan-bg"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-5 col-md-6">
+                    <h2 class="jordan-title">AIR JORDON</h2>
+                    <p class="jordan-text">Nam luctus nulla ut orci consectetur volutpat. Nunc vulputate ipsum et velit interdum, ac aliquet odio.</p>
+                    <div class="jordan-buttons">
+                        <button class="btn btn-primary jordan-btn">Buy Now</button>
+                        <button class="btn btn-outline-light jordan-btn">More &gt;</button>
+                    </div>
+                </div>
+                <div class="col-lg-7 col-md-6 text-center">
+                    <img src="/api/placeholder/400/320" alt="Red Air Jordan Shoe" class="jordan-shoe">
+                </div>
+            </div>
+        </div>
+        <div class="color-variants">
+            <div class="color-variant">
+                <img src="/api/placeholder/30/30" alt="Red Variant">
+            </div>
+            <div class="color-variant">
+                <img src="/api/placeholder/30/30" alt="Yellow Variant">
+            </div>
+            <div class="color-variant">
+                <img src="/api/placeholder/30/30" alt="Pink Variant">
+            </div>
+            <div class="color-variant">
+                <img src="/api/placeholder/30/30" alt="Blue Variant">
+            </div>
+            <div class="color-variant">
+                <img src="/api/placeholder/30/30" alt="Orange Variant">
+            </div>
+            <div class="color-variant">
+                <img src="/api/placeholder/30/30" alt="Green Variant">
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Section -->
+    <section class="product-section">
+        <div class="container">
+            <div class="row">
+                <!-- Product Card 1 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card">
+                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
+                        <div class="product-img">
+                            <img src="/api/placeholder/200/150" alt="White Nike Air Max">
+                        </div>
+                        <h3 class="product-title">Air Max 97</h3>
+                        <div class="product-price">
+                            <span class="price-current">₹499</span>
+                            <span class="price-old">₹699</span>
+                            <span class="price-discount">30% off</span>
+                        </div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                        <div class="product-delivery">
+                            <i class="fas fa-truck"></i> Free Delivery
+                        </div>
+                        <div class="product-link">
+                            <a href="#">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Card 2 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card">
+                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
+                        <div class="product-img">
+                            <img src="/api/placeholder/200/150" alt="Black Nike Air Max">
+                        </div>
+                        <h3 class="product-title">Air Max 97</h3>
+                        <div class="product-price">
+                            <span class="price-current">₹499</span>
+                            <span class="price-old">₹699</span>
+                            <span class="price-discount">30% off</span>
+                        </div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="product-delivery">
+                            <i class="fas fa-truck"></i> Free Delivery
+                        </div>
+                        <div class="product-link">
+                            <a href="#">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Card 3 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card">
+                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
+                        <div class="product-img">
+                            <img src="/api/placeholder/200/150" alt="Orange Nike Air Max">
+                        </div>
+                        <h3 class="product-title">Air Max 97</h3>
+                        <div class="product-price">
+                            <span class="price-current">₹499</span>
+                            <span class="price-old">₹699</span>
+                            <span class="price-discount">30% off</span>
+                        </div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="far fa-star"></i>
+                        </div>
+                        <div class="product-delivery">
+                            <i class="fas fa-truck"></i> Free Delivery
+                        </div>
+                        <div class="product-link">
+                            <a href="#">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Card 4 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card">
+                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
+                        <div class="product-img">
+                            <img src="/api/placeholder/200/150" alt="Multi-color Nike Air Max">
+                        </div>
+                        <h3 class="product-title">Air Max 97</h3>
+                        <div class="product-price">
+                            <span class="price-current">₹499</span>
+                            <span class="price-old">₹699</span>
+                            <span class="price-discount">30% off</span>
+                        </div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <div class="product-delivery">
+                            <i class="fas fa-truck"></i> Free Delivery
+                        </div>
+                        <div class="product-link">
+                            <a href="#">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Card 5 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card">
+                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
+                        <div class="product-img">
+                            <img src="/api/placeholder/200/150" alt="Black and White Nike Air Max">
+                        </div>
+                        <h3 class="product-title">Air Max 97</h3>
+                        <div class="product-price">
+                            <span class="price-current">₹499</span>
+                            <span class="price-old">₹699</span>
+                            <span class="price-discount">30% off</span>
+                        </div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="product-delivery">
+                            <i class="fas fa-truck"></i> Free Delivery
+                        </div>
+                        <div class="product-link">
+                            <a href="#">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product Card 6 -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="product-card">
+                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
+                        <div class="product-img">
+                            <img src="/api/placeholder/200/150" alt="White Nike Air Max">
+                        </div>
+                        <h3 class="product-title">Air Max 97</h3>
+                        <div class="product-price">
+                            <span class="price-current">₹499</span>
+                            <span class="price-old">₹699</span>
+                            <span class="price-discount">30% off</span>
+                        </div>
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <div class="product-delivery">
+                            <i class="fas fa-truck"></i> Free Delivery
+                        </div>
+                        <div class="product-link">
+                            <a href="#">
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <!-- Footer Top Features -->
+            <div class="footer-top">
+                <div class="footer-feature">
+                    <i class="fas fa-rocket"></i>
+                    <h4>EXPRESS SHIPPING</h4>
+                    <p>Shipping in 24 hours</p>
+                </div>
+                <div class="footer-feature">
+                    <i class="fas fa-truck"></i>
+                    <h4>SHIPPING TRACKING</h4>
+                    <p>Track your order</p>
+                </div>
+                <div class="footer-feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <h4>BUY SAFELY</h4>
+                    <p>Buy safely, pay securely</p>
+                </div>
+            </div>
+            
+            <!-- Footer Main Menu -->
+            <div class="row">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="footer-title">CUSTOMER SERVICE</h5>
+                    <ul class="footer-menu">
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Shipping & Returns</a></li>
+                        <li><a href="#">Terms & Conditions</a></li>
+                        <li><a href="#">Delivery</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="footer-title">INFORMATION</h5>
+                    <ul class="footer-menu">
+                        <li><a href="#">Payments</a></li>
+                        <li><a href="#">Size guide</a></li>
+                        <li><a href="#">Administrator</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="footer-title">FOLLOW US</h5>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <h5 class="footer-title">CONTACT US</h5>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i> 
+                            <span>+91 1234567890</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>info@stepOut.com</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="far fa-clock"></i>
+                            <span>7:00 - 20:00 GMT +12:30</span>
+                        </div>
+                    </div>
+                    <div class="payment-methods mt-3">
+                        <i class="fab fa-cc-visa fa-2x me-2"></i>
+                        <i class="fab fa-cc-mastercard fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <p>&copy; 2025 StepOut. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle search bar
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchIcon = document.getElementById('search-icon');
+            const searchContainer = document.querySelector('.search-container');
+            
+            searchIcon.addEventListener('click', function(e) {
+                e.preventDefault();
+                searchContainer.classList.toggle('active');
+                if (searchContainer.classList.contains('active')) {
+                    searchContainer.querySelector('input').focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>stepOut - OTP Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 800px;
+            height: 400px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Left Section */
+        .left-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            background-color: white;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .gradient-circle {
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9c27b0, #f9a825);
+            z-index: 1;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .logo {
+            position: relative;
+            z-index: 2;
+            font-size: 2rem;
+            font-style: italic;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+
+        .sneaker-image {
+            position: relative;
+            z-index: 2;
+            width: 70%;
+            max-width: 300px;
+            margin-top: 20px;
+        }
+
+        /* Stylized Sneaker */
+        .sneaker {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* Right Section */
+        .right-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 40px;
+        }
+
+        .verification-card {
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .verification-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .verification-subtitle {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .timer {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .otp-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #e8e8e8;
+            margin: 0 4px;
+        }
+
+        .otp-input:focus {
+            outline: none;
+            border-color: #4287f5;
+            box-shadow: 0 0 0 2px rgba(66, 135, 245, 0.2);
+        }
+
+        .confirm-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4287f5;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .confirm-button:hover {
+            background-color: #3370d6;
+        }
+
+        .resend-link {
+            color: #4287f5;
+            font-size: 0.9rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .resend-link:hover {
+            text-decoration: underline;
+        }
+         
+        .error{
+            color: red;
+        }
+        
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+                margin: 20px;
+            }
+
+            .left-section {
+                padding: 40px 20px;
+            }
+
+            .gradient-circle {
+                width: 200px;
+                height: 200px;
+            }
+
+            .sneaker-image {
+                width: 60%;
+                margin-top: 10px;
+                margin-bottom: 30px;
+            }
+
+            .right-section {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Section -->
+        <div class="left-section">
+            <div class="gradient-circle"></div>
+            <h1 class="logo">stepOut</h1>
+            <div class="sneaker-image">
+                <!-- SVG representation of the Adidas-style sneaker with flames -->
+                <svg class="sneaker" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Main Shoe Shape -->
+                    <path d="M40,100 Q50,70 100,60 Q150,50 200,60 Q250,70 270,100 L270,120 Q250,130 100,130 Q50,130 40,120 Z" fill="white" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Sole -->
+                    <path d="M40,120 Q50,130 100,130 Q150,130 200,130 Q250,130 270,120 L270,130 Q250,140 100,140 Q50,140 40,130 Z" fill="#5d4037" stroke="#333" stroke-width="1"/>
+                    
+                    <!-- Adidas Stripes -->
+                    <path d="M80,65 L90,110" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M100,62 L110,110" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+                    <path d="M120,60 L130,110" stroke="#333" stroke-width="5" stroke-linecap="round"/>
+                    
+                    <!-- Red Flame Design at Bottom -->
+                    <path d="M40,120 Q60,100 80,120 Q100,100 120,120 Q140,100 160,120 Q180,100 200,120 Q220,100 240,120 Q260,100 270,120" fill="#e53935" stroke="#c62828" stroke-width="1"/>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Right Section -->
+        <div class="right-section">
+            <form action="/otp" method="post">
+            <div class="verification-card">
+                <h2 class="verification-title">OTP Verification</h2>
+                <p class="verification-subtitle">Enter OTP sent to your email</p>
+                <% if (error) { %>
+                    <p class="error"><%= error %></p>
+                  <% } %>
+                <p class="timer" id="countdownTimer"></p>
+                
+                <div class="otp-container">
+                    
+                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                        <input type="hidden" name="otp" id="finalOtp">
+
+                   
+                </div>
+                
+                <button class="confirm-button" type="submit">Confirm</button>
+                <!-- <a href="/otp" class="resend-link">Resend OTP</a> -->
+                <a class="resend-link" id="resendBtn" style="pointer-events: none; color: #4287f5;">Resend OTP</a>
+                <p id="resendMessage" style="margin-top: 10px; color: green;"></p>
+
+            </div>
+        </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const inputs = document.querySelectorAll('.otp-input');
+            const finalOtpInput = document.getElementById('finalOtp');
+            const form = document.querySelector('form');
+        
+            // Auto-focus and collect OTP digits
+            inputs.forEach((input, index) => {
+                input.addEventListener('keyup', function (e) {
+                    if (e.key >= 0 && e.key <= 9) {
+                        if (index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        }
+                    } else if (e.key === 'Backspace') {
+                        if (index > 0) {
+                            inputs[index - 1].focus();
+                        }
+                    }
+                });
+            });
+        
+            form.addEventListener('submit', function () {
+                let otpValue = '';
+                inputs.forEach(input => {
+                    otpValue += input.value;
+                });
+                finalOtpInput.value = otpValue;
+            });
+        
+            // Timer and Resend OTP handling
+            const resendBtn = document.getElementById('resendBtn');
+            const message = document.getElementById('resendMessage');
+            const countdown = document.getElementById('countdownTimer');
+        
+            let timeLeft = 30;
+        
+            function startTimer() {
+                resendBtn.style.pointerEvents = 'none';
+                resendBtn.style.color = '#aaa';
+                countdown.textContent = `You can resend OTP in ${timeLeft} seconds`;
+        
+                const countdownInterval = setInterval(() => {
+                    timeLeft--;
+                    if (timeLeft > 0) {
+                        countdown.textContent = `You can resend OTP in ${timeLeft} seconds`;
+                    } else {
+                        clearInterval(countdownInterval);
+                        countdown.textContent = '';
+                        resendBtn.style.pointerEvents = 'auto';
+                        resendBtn.style.color = '#4287f5';
+                    }
+                }, 1000);
+            }
+        
+            // Start timer immediately when page loads
+            startTimer();
+        
+            resendBtn.addEventListener('click', async function (e) {
+                e.preventDefault();
+        
+                timeLeft = 30; // Reset timer on resend
+                startTimer();
+        
+                const response = await fetch('/resendotp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+        
+                const data = await response.json();
+        
+                if (data.success) {
+                    message.textContent = 'OTP sent successfully!';
+                    message.style.color = 'green';
+                } else {
+                    message.textContent = data.error || 'Failed to resend OTP';
+                    message.style.color = 'red';
+                }
+            });
+        });
+        </script>
+        
+</body>
+</html>
