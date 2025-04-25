@@ -28,7 +28,10 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      required: false,
+      required:  function() {
+        return !this.googleId;
+      }
+
     }, 
     image: {
       type: [String],

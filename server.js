@@ -32,6 +32,8 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use(nocache());
+
 app.use('/',userRoute)
 app.use('/admin',adminRoute)
 
@@ -42,3 +44,4 @@ connectDB();
 app.listen(3000, ()=>{
     console.log("Server running in port: http://localhost:3000 ");
 })
+

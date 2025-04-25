@@ -1,7 +1,7 @@
 const User = require('../../model/userModel');
 const env = require('dotenv').config();
 const bcrypt = require("bcrypt");
-const nodemailer = require('nodemailer')
+const nodemailer = require('nodemailer');
 
 
 const loadHome = async (req, res) => {
@@ -21,6 +21,7 @@ const loadSignup = async (req, res) => {
         res.status(500).send("server error");
     }
 }
+
 
 
 function generateOtp() {
@@ -64,10 +65,7 @@ async function sendVerificationEmail(email, otp) {
             }
         });
 
-
-
         return info.accepted.length > 0
-
 
     } catch (error) {
         console.error("ERROR SENDING EMAIL", error);
@@ -78,10 +76,25 @@ async function sendVerificationEmail(email, otp) {
 
 
 
+
 const signup = async (req, res) => {
 
     try {
         const { fullName, email, phoneNumber, password, confirmPassword } = req.body;
+
+        if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
+            return res.render('user/signUp', { error: "All fields are required" });
+        }
+
+        const nameRegex = /^[A-Za-z\s]{3,}$/;
+        if (!nameRegex.test(fullName)) {
+            return res.render('user/signUp', { error: "Enter a valid full name (only letters, min 3 chars)" });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.render('user/signUp', { error: "Enter a valid email address" });
+        }
 
         if (password !== confirmPassword) {
             return res.render('user/signUp', { error: "Passwords do not match" });
@@ -92,11 +105,7 @@ const signup = async (req, res) => {
             return res.render('user/signUp', { error: "Enter a valid 10-digit phone number" });
         }
 
-        if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
-            return res.render('user/signUp', { error: "All fields are required" });
-        }
-
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$%^&*!]{6,}$/;
         if (!passwordRegex.test(password)) {
             return res.render('user/signUp', { error: "Password must be at least 6 characters and include a number" });
         }
@@ -114,10 +123,11 @@ const signup = async (req, res) => {
         }
 
         req.session.userOtp = otp;
+        req.session.otpType = 'signup';
         req.session.userData = { fullName, email, phoneNumber, password }
 
         res.render('user/otpVerification', { error: null })
-        console.log('otp sented ', otp);
+        console.log('otp sented ', otp);                    //////
 
 
     } catch (error) {
@@ -142,9 +152,10 @@ const securePassword = async (password) => {
 const verifyOtp = async (req, res) => {
     try {
         const { otp } = req.body;
-        console.log(otp);
+        console.log(otp);                                               ////////
+        const otpType = req.session.otpType;
 
-        if (otp == req.session.userOtp) {
+        if (otpType === 'signup' && otp == req.session.userOtp) {
             const user = req.session.userData;
             const passwordHash = await securePassword(user.password);
 
@@ -153,54 +164,85 @@ const verifyOtp = async (req, res) => {
                 email: user.email,
                 password: passwordHash,
                 phoneNumber: user.phoneNumber
-            })
-            await saveUserData.save()
+            });
+
+            await saveUserData.save();
             req.session.user = saveUserData._id;
 
-            res.redirect("/");
+            req.session.userOtp = null;                                                                                      // Clear OTP-related session data
+            req.session.userData = null;
+            req.session.otpType = null;
+
+            return res.redirect("/");
         }
 
-        else if (otp !== req.session.secondOtp) {
-            res.redirect("/resetpassword");
+        if (otpType === 'reset' && otp == req.session.secondOtp) {
+            req.session.otpType = null;                                                                                    // Keep verifiedEmail for next step
+            return res.redirect("/resetpassword");
         }
 
-        else {
-            res.render("user/otpVerification", { error: "Incorrect OTP. Please try again." });
-        }
+        return res.render("user/otpVerification", { error: "Incorrect OTP. Please try again." });
 
     } catch (error) {
-        console.error("error verifying otp", error);
-        res.status(500).json({ success: false, error: 'an error occured' });            //////////
-
+        console.error("Error verifying OTP", error);
+        res.status(500).json({ success: false, error: 'An error occurred' });
     }
+};
 
-}
 
 
 const resendOtp = async (req, res) => {
     try {
-        const { email } = req.session.userData;
-        if (!email) {
-            return res.status(400).json({ success: false, error: "Session expired" });
+        const otpType = req.session.otpType;
+
+        if (otpType === 'signup') {
+            const { email } = req.session.userData;
+            const newOtp = generateOtp();
+            req.session.userOtp = newOtp;
+
+            const emailSent = await sendVerificationEmail(email, newOtp);
+            if (emailSent) {
+                console.log("Resent signup OTP:", newOtp);          ////////
+                return res.status(200).json({ success: true });
+            } else {
+                return res.json({ success: false, error: "Failed to resend OTP" });
+            }
         }
 
-        const newOtp = generateOtp();
-        req.session.userOtp = newOtp;
+        else if (otpType === 'reset') {
+            const email = req.session.verifiedEmail;
+            const newOtp = generateOtp();
+            req.session.secondOtp = newOtp;
 
-        const emailSent = await sendVerificationEmail(email, newOtp);
+            const transporter = nodemailer.createTransport({
+                service: "gmail",
+                auth: {
+                    user: process.env.NODEMAILER_EMAIL,
+                    pass: process.env.NODEMAILER_PASSWORD,
+                },
+            });
 
-        if (emailSent) {
-            console.log('resend otp ', newOtp);
+            await transporter.sendMail({
+                from: `"stepOut Support" <${process.env.NODEMAILER_EMAIL}>`,
+                to: email,
+                subject: "Reset your stepOut password",
+                text: `Your OTP is ${newOtp}`,
+            });
 
-            res.status(200).json({ success: true });
-        } else {
-            res.json({ success: false, error: "Failed to resend OTP" });
+            console.log("Resent reset password OTP:", newOtp);    ////////
+            return res.status(200).json({ success: true });
         }
+
+        else {
+            return res.status(400).json({ success: false, error: "Invalid OTP type or session expired" });
+        }
+
     } catch (error) {
         console.error("Error resending OTP", error);
         res.status(500).json({ success: false, error: "Server error" });
     }
 };
+
 
 
 const loadLogin = async (req, res) => {
@@ -211,7 +253,6 @@ const loadLogin = async (req, res) => {
         res.status(500).send("server error");
     }
 }
-
 
 
 const login = async (req, res) => {
@@ -243,8 +284,6 @@ const login = async (req, res) => {
 }
 
 
-
-
 const loadForgotPassword = async (req, res) => {
     try {
         return res.render('user/forgotPassword', { error: null });
@@ -266,7 +305,9 @@ const handleForgotPassword = async (req, res) => {
         }
 
         const otp = generateOtp()
-        req.session.secondOtp = otp
+        req.session.secondOtp = otp;
+        req.session.otpType = 'reset';
+
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -281,7 +322,7 @@ const handleForgotPassword = async (req, res) => {
             subject: "Reset your stepOut password",
             text: `Your OTP is ${otp}`,
         });
-        console.log(otp);
+        console.log("reset password OTP:", otp);
 
 
         res.render("user/otpVerification", { email: null, error: null });
@@ -294,9 +335,6 @@ const handleForgotPassword = async (req, res) => {
 }
 
 
-
-
-
 const loadResetPassword = async (req, res) => {
     try {
         return res.render('user/resetPassword');
@@ -305,7 +343,6 @@ const loadResetPassword = async (req, res) => {
         res.status(500).send("server error");
     }
 }
-
 
 
 const changePassword = async (req, res) => {
@@ -329,13 +366,13 @@ const changePassword = async (req, res) => {
 }
 
 
-const logout=async (req,res)=>{
+const logout = async (req, res) => {
     try {
         req.session.destroy(() => {
-            res.redirect('/');                   // Redirect after destroying session
+            res.redirect('/');                                                                                          // Redirect after destroying session
         });
     } catch (error) {
-        console.log('error during logout:',error)
+        console.log('error during logout:', error)
         res.status(500).send('error during logout')
     }
 }
@@ -357,16 +394,6 @@ module.exports = {
     logout,
 }
 
-
-
-// const newUser=new User({fullName,email,phoneNumber,password});
-// console.log(newUser);
-// await newUser.save();
-// return res.redirect('/signup');   ///////changeeeee
-// } catch (error) {
-// console.log("error for save user:",error);
-// res.status(500).send("Internal Sersver Error");
-// }
 
 
 
