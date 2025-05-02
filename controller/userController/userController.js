@@ -365,6 +365,14 @@ const changePassword = async (req, res) => {
     }
 }
 
+const loadShop=async (req,res)=>{
+    try {
+        res.render('user/shop',{req});
+    } catch (error) {
+        console.log('shop page not rendering',error);
+        res.status(500).send("somethingg went wrong");
+    }
+}
 
 const logout = async (req, res) => {
     try {
@@ -391,6 +399,7 @@ module.exports = {
     handleForgotPassword,
     loadResetPassword,
     changePassword,
+    loadShop,
     logout,
 }
 

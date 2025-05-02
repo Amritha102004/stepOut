@@ -1,0 +1,237 @@
+/* Admin content layout */
+.admin-content {
+    padding: 20px;
+    margin-left: 270px; /* Adjust based on your sidebar width */
+    margin-top: 60px; /* Adjust based on your header height */
+    min-height: calc(100vh - 70px);
+    transition: all 0.3s;
+}
+
+@media (max-width: 991px) {
+    .admin-content {
+        margin-left: 80px; /* Adjust based on your collapsed sidebar width */
+    }
+}
+
+@media (max-width: 575px) {
+    .admin-content {
+        margin-left: 0;
+    }
+}
+
+/* Form styles */
+.form-card {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #212529;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border-radius: 4px;
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #212529;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+.form-check-input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.form-check-label {
+    margin-left: 5px;
+    font-weight: 500;
+}
+
+.size-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #fff;
+    margin-right: 10px;
+}
+
+.size-input {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-left: 5px;
+}
+
+.section-title {
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.subsection-title {
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #6c757d;
+}
+
+/* Image upload styles */
+.image-upload-section {
+    border: 1px solid #0d6efd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.image-upload-title {
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 20px;
+    color: #000;
+}
+
+.image-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 100%;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-upload-area:hover {
+    border-color: #adb5bd;
+}
+
+.upload-icon {
+    font-size: 24px;
+    color: #6c757d;
+    margin-bottom: 10px;
+}
+
+.upload-text {
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.btn-upload {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.main-photo-label {
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.additional-photos-label {
+    font-weight: 500;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+
+.btn-add {
+    background-color: #0d6efd;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.btn-cancel {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #dee2e6;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.btn-add:hover {
+    background-color: #0b5ed7;
+}
+
+.btn-add-info {
+    background-color: #0d6efd;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.image-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+}
+
+/* Responsive styles */
+@media (max-width: 767.98px) {
+    .size-container {
+        flex-wrap: wrap;
+    }
+
+    .size-group {
+        margin-bottom: 15px;
+        width: 50%;
+    }
+
+    .additional-photos .col-md-4 {
+        margin-bottom: 15px;
+    }
+}

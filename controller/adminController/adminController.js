@@ -5,10 +5,10 @@ const bcrypt = require("bcrypt");
 const loadlogin=async (req,res)=>{
     try {
         if(req.session.admin){
-            res.redirect('/admin/dashboard');
-        }else{
-            return res.render('admin/login',{error:null});
+            return res.redirect('/admin/dashboard');
         }
+            res.render('admin/login',{error:null});
+        
     } catch (error) {
         console.log("admin login page not loading:", error);
         res.status(500).send("server error");
@@ -43,11 +43,8 @@ const login = async (req, res) => {
 
 const loadDashboard=async (req,res)=>{
     try {
-        if(req.session.admin){
-            return res.render('admin/dashboard');
-        }else{
-            return res.render('admin/login',{error:null});
-        }
+        res.render('admin/dashboard');
+        
     } catch (error) {
         console.log('something wrong:',error);
         res.status(500).send(error);
@@ -59,7 +56,7 @@ const loadDashboard=async (req,res)=>{
 const logout=async (req,res)=>{
     try {
         req.session.destroy(() => {
-            res.redirect('/admin/login');                   // Redirect after destroying session
+            res.redirect('/admin/login');                   
         });
     } catch (error) {
         console.log('error during logout:',error);

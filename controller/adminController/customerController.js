@@ -4,7 +4,7 @@ let customer = require('../../model/userModel')
 
 const loadCustomer = async (req, res) => {
     try {
-        if (req.session.admin) {
+        
             const page = parseInt(req.query.page) || 1
             const limit = 10
             const skip = (page - 1) * limit
@@ -13,15 +13,12 @@ const loadCustomer = async (req, res) => {
             const totalCustomers = await customer.countDocuments()
             const totalPages = Math.ceil(totalCustomers / limit)
 
-            // Pass the customers, currentPage, and totalPages to the view
             res.render('admin/customer', {
-                customers,  // Ensure you're passing the 'customers' array here
+                customers,
                 currentPage: page,
                 totalPages,
             })
-        } else {
-            return res.render('admin/login', { error: null });
-        }
+        
 
     } catch (error) {
         // res.redirect('/user/error404')

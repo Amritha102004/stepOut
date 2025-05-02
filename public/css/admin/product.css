@@ -1,8 +1,56 @@
-body {
+/* Add this to the top of your existing CSS file */
+.admin-content {
+    padding: 20px;
+    margin-left: 270px; /* Adjust based on your sidebar width */
+    margin-top: 60px; /* Adjust based on your header height */
+    min-height: calc(100vh - 70px);
+    transition: all 0.3s;
+}
+
+/* Content header styling */
+.content-header {
+    margin-bottom: 20px;
+}
+
+/* Form controls styling */
+.form-select, .form-control {
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    /* padding: 8px 12px; */
+}
+
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+/* Add these media queries to adjust the layout for different screen sizes */
+@media (max-width: 991px) {
+    .admin-content {
+        margin-left: 80px; /* Adjust based on your collapsed sidebar width */
+    }
+}
+
+@media (max-width: 575px) {
+    .admin-content {
+        margin-left: 0;
+    }
+}
+
+/* body {
     font-family: 'Inter', sans-serif;
     background-color: #f8f9fa;
     overflow-x: hidden;
-}
+} */
 
 .product-table {
     background-color: #fff;

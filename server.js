@@ -8,13 +8,14 @@ const env = require('dotenv').config();
 const adminRoute=require('./routes/adminRoute');
 const userRoute=require('./routes/userRoute');
 const passport=require('./config/passport');
+const flash=require('express-flash');
 
-//View Engine Setup
+
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-//Static Assets
+
 app.use(express.static(path.join(__dirname,'public')));
-//parsing
+
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
@@ -34,12 +35,21 @@ app.use(passport.session());
 
 app.use(nocache());
 
+app.use(flash());
+
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
+  });
+  
 app.use('/',userRoute)
 app.use('/admin',adminRoute)
 
 
 
 connectDB();
+
 
 app.listen(3000, ()=>{
     console.log("Server running in port: http://localhost:3000 ");

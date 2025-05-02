@@ -10,18 +10,27 @@ const categorySchema = new Schema(
       unique: true,
       trim: true,
     },
-    offer: {
-      type: Number, 
-      default: 0,
-    },
     description: {
       type: String,
       required: true,
     },
+    offer: {
+      type: Number, 
+      default: 0,
+    },
+    stock: {
+      type: Number,
+      default: 0,
+    },
+    
     isListed: {
       type: Boolean,
       default: true,
     },
+  },
+
+  {
+    timestamps:true,
   }
 );
 
