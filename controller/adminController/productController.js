@@ -1,8 +1,8 @@
 const Product = require("../../model/productModel");
 const Category = require("../../model/categoryModel");
-const User = require("../../model/userModel");////
+const User = require("../../model/userModel");
 const mongoose = require("mongoose");
-const upload = require("../../middleware/upload");///
+const upload = require("../../middleware/upload");
 const cloudinary = require("cloudinary").v2;
 const statusCode = require("../../utils/httpStatusCodes")
 

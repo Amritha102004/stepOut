@@ -34,11 +34,11 @@ async (accessToken,refreshToken,profile,done)=>{
 
 ))
 
-passport.serializeUser((user,done)=>{                      ///for assigning userdetails on session
+passport.serializeUser((user,done)=>{                      
     done(null,user.id)
 })
 
-passport.deserializeUser((id,done)=>{                     ///for fetching userdata from session
+passport.deserializeUser((id,done)=>{                     
     User.findById(id)
     .then(user=>{
         done(null,user)

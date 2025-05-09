@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Handle flash messages
+    
     if (typeof success_msg !== 'undefined' && success_msg.length > 0) {
         Swal.fire({
             icon: 'success',
@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Delete category functionality
+    
     const deleteButtons = document.querySelectorAll(".delete-btn")
     deleteButtons.forEach((button) => {
         button.addEventListener("click", function () {
@@ -91,7 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     })
 
-    // Toggle category listing status
+    
     const toggleForms = document.querySelectorAll(".toggle-form")
     toggleForms.forEach((form) => {
         const checkbox = form.querySelector('input[type="checkbox"]')
