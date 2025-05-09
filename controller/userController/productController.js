@@ -1,6 +1,7 @@
 const Product = require('../../model/productModel');
 const Category = require('../../model/categoryModel');
 const mongoose = require('mongoose');
+const statusCode = require("../../utils/httpStatusCodes")
 
 const getAllProducts = async (req, res, next) => {
     try {
@@ -53,15 +54,32 @@ const getAllProducts = async (req, res, next) => {
             default:
                 sortOption = { createdAt: -1 };
         }
-
         if (req.query.minPrice || req.query.maxPrice) {
-            const priceFilter = {};
+            const minPrice = req.query.minPrice ? Number.parseFloat(req.query.minPrice) : 0
+            const maxPrice = req.query.maxPrice ? Number.parseFloat(req.query.maxPrice) : Number.MAX_SAFE_INTEGER
+      
+            query.variants = {
+              $elemMatch: {
+                salePrice: {
+                  $gte: minPrice,
+                  $lte: maxPrice,
+                },
+              },
+            }
+          }
 
-            if (req.query.minPrice) priceFilter.$gte = Number.parseFloat(req.query.minPrice);
-            if (req.query.maxPrice) priceFilter.$lte = Number.parseFloat(req.query.maxPrice);
-
-            query["variants.salePrice"] = priceFilter;
-        }
+          if (req.query.price) {
+            const [min, max] = req.query.price.split("-").map(Number)
+      
+            query.variants = {
+              $elemMatch: {
+                salePrice: {
+                  $gte: min,
+                  $lte: max,
+                },
+              },
+            }
+          }
 
         const products = await Product.find(query)
             .populate("categoryId")

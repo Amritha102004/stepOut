@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -167,11 +168,11 @@
         .resend-link:hover {
             text-decoration: underline;
         }
-         
-        .error{
+
+        .error {
             color: red;
         }
-        
+
         /* Responsive Design */
         @media screen and (max-width: 768px) {
             .container {
@@ -201,6 +202,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Left Section -->
@@ -211,52 +213,61 @@
                 <!-- SVG representation of the Adidas-style sneaker with flames -->
                 <svg class="sneaker" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
                     <!-- Main Shoe Shape -->
-                    <path d="M40,100 Q50,70 100,60 Q150,50 200,60 Q250,70 270,100 L270,120 Q250,130 100,130 Q50,130 40,120 Z" fill="white" stroke="#333" stroke-width="2"/>
-                    
+                    <path
+                        d="M40,100 Q50,70 100,60 Q150,50 200,60 Q250,70 270,100 L270,120 Q250,130 100,130 Q50,130 40,120 Z"
+                        fill="white" stroke="#333" stroke-width="2" />
+
                     <!-- Sole -->
-                    <path d="M40,120 Q50,130 100,130 Q150,130 200,130 Q250,130 270,120 L270,130 Q250,140 100,140 Q50,140 40,130 Z" fill="#5d4037" stroke="#333" stroke-width="1"/>
-                    
+                    <path
+                        d="M40,120 Q50,130 100,130 Q150,130 200,130 Q250,130 270,120 L270,130 Q250,140 100,140 Q50,140 40,130 Z"
+                        fill="#5d4037" stroke="#333" stroke-width="1" />
+
                     <!-- Adidas Stripes -->
-                    <path d="M80,65 L90,110" stroke="#333" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M100,62 L110,110" stroke="#333" stroke-width="5" stroke-linecap="round"/>
-                    <path d="M120,60 L130,110" stroke="#333" stroke-width="5" stroke-linecap="round"/>
-                    
+                    <path d="M80,65 L90,110" stroke="#333" stroke-width="5" stroke-linecap="round" />
+                    <path d="M100,62 L110,110" stroke="#333" stroke-width="5" stroke-linecap="round" />
+                    <path d="M120,60 L130,110" stroke="#333" stroke-width="5" stroke-linecap="round" />
+
                     <!-- Red Flame Design at Bottom -->
-                    <path d="M40,120 Q60,100 80,120 Q100,100 120,120 Q140,100 160,120 Q180,100 200,120 Q220,100 240,120 Q260,100 270,120" fill="#e53935" stroke="#c62828" stroke-width="1"/>
+                    <path
+                        d="M40,120 Q60,100 80,120 Q100,100 120,120 Q140,100 160,120 Q180,100 200,120 Q220,100 240,120 Q260,100 270,120"
+                        fill="#e53935" stroke="#c62828" stroke-width="1" />
                 </svg>
             </div>
         </div>
-        
+
         <!-- Right Section -->
         <div class="right-section">
             <form action="/otp" method="post">
-            <div class="verification-card">
-                <h2 class="verification-title">OTP Verification</h2>
-                <p class="verification-subtitle">Enter OTP sent to your email</p>
-                <% if (error) { %>
-                    <p class="error"><%= error %></p>
-                  <% } %>
-                <p class="timer" id="countdownTimer"></p>
-                
-                <div class="otp-container">
-                    
-                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
-                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
-                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
-                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
-                        <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
-                        <input type="hidden" name="otp" id="finalOtp">
+                <div class="verification-card">
+                    <h2 class="verification-title">OTP Verification</h2>
+                    <p class="verification-subtitle">Enter OTP sent to your email</p>
+                    <% if (error) { %>
+                        <p class="error">
+                            <%= error %>
+                        </p>
+                        <% } %>
+                            <p class="timer" id="countdownTimer"></p>
 
-                   
+                            <div class="otp-container">
+
+                                <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                                <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                                <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                                <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                                <input type="text" class="otp-input" maxlength="1" placeholder="-" name="otp1">
+                                <input type="hidden" name="otp" id="finalOtp">
+
+
+                            </div>
+
+                            <button class="confirm-button" type="submit">Confirm</button>
+                            <!-- <a href="/otp" class="resend-link">Resend OTP</a> -->
+                            <a class="resend-link" id="resendBtn" style="pointer-events: none; color: #4287f5;">Resend
+                                OTP</a>
+                            <p id="resendMessage" style="margin-top: 10px; color: green;"></p>
+
                 </div>
-                
-                <button class="confirm-button" type="submit">Confirm</button>
-                <!-- <a href="/otp" class="resend-link">Resend OTP</a> -->
-                <a class="resend-link" id="resendBtn" style="pointer-events: none; color: #4287f5;">Resend OTP</a>
-                <p id="resendMessage" style="margin-top: 10px; color: green;"></p>
-
-            </div>
-        </form>
+            </form>
         </div>
     </div>
 
@@ -265,7 +276,7 @@
             const inputs = document.querySelectorAll('.otp-input');
             const finalOtpInput = document.getElementById('finalOtp');
             const form = document.querySelector('form');
-        
+
             // Auto-focus and collect OTP digits
             inputs.forEach((input, index) => {
                 input.addEventListener('keyup', function (e) {
@@ -280,7 +291,7 @@
                     }
                 });
             });
-        
+
             form.addEventListener('submit', function () {
                 let otpValue = '';
                 inputs.forEach(input => {
@@ -288,50 +299,65 @@
                 });
                 finalOtpInput.value = otpValue;
             });
-        
+
             // Timer and Resend OTP handling
             const resendBtn = document.getElementById('resendBtn');
             const message = document.getElementById('resendMessage');
             const countdown = document.getElementById('countdownTimer');
-        
-            let timeLeft = 30;
-        
+
             function startTimer() {
-                resendBtn.style.pointerEvents = 'none';
-                resendBtn.style.color = '#aaa';
-                countdown.textContent = `You can resend OTP in ${timeLeft} seconds`;
-        
-                const countdownInterval = setInterval(() => {
-                    timeLeft--;
+                const savedTime = localStorage.getItem('resendOtpExpire');
+                let expireTime;
+
+                if (savedTime) {
+                    expireTime = new Date(savedTime);
+                } else {
+                    expireTime = new Date(Date.now() + 30000); // 30 seconds from now
+                    localStorage.setItem('resendOtpExpire', expireTime);
+                }
+
+                function updateCountdown() {
+                    const now = new Date();
+                    const timeLeft = Math.floor((expireTime - now) / 1000);
+
                     if (timeLeft > 0) {
                         countdown.textContent = `You can resend OTP in ${timeLeft} seconds`;
+                        resendBtn.style.pointerEvents = 'none';
+                        resendBtn.style.color = '#aaa';
                     } else {
-                        clearInterval(countdownInterval);
                         countdown.textContent = '';
                         resendBtn.style.pointerEvents = 'auto';
                         resendBtn.style.color = '#4287f5';
+                        localStorage.removeItem('resendOtpExpire');
+                        clearInterval(timerInterval);
                     }
-                }, 1000);
+                }
+
+                updateCountdown(); // Call immediately
+                const timerInterval = setInterval(updateCountdown, 1000);
             }
-        
+
+
             // Start timer immediately when page loads
             startTimer();
-        
+
             resendBtn.addEventListener('click', async function (e) {
                 e.preventDefault();
-        
-                timeLeft = 30; // Reset timer on resend
+
+                const newExpire = new Date(Date.now() + 30000);
+                localStorage.setItem('resendOtpExpire', newExpire);
+
                 startTimer();
-        
+
                 const response = await fetch('/resendotp', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     }
                 });
-        
+
                 const data = await response.json();
-        
+
                 if (data.success) {
                     message.textContent = 'OTP sent successfully!';
                     message.style.color = 'green';
@@ -341,7 +367,8 @@
                 }
             });
         });
-        </script>
-        
+    </script>
+
 </body>
+
 </html>

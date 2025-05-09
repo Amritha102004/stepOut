@@ -1,15 +1,58 @@
 const User = require('../../model/userModel');
+const Product=require('../../model/productModel');
+const Category=require('../../model/categoryModel')
 const env = require('dotenv').config();
+const statusCode = require("../../utils/httpStatusCodes")
 const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer');
 
 
 const loadHome = async (req, res) => {
     try {
-        return res.render('user/home', { req });
+        const page = Number.parseInt(req.query.page) || 1;
+        const limit = Number.parseInt(req.query.limit) || 12;
+        const skip = (page - 1) * limit;
+
+        const query = { isActive: true };
+
+        if (req.query.search) {
+            query.$or = [
+                { name: { $regex: req.query.search, $options: "i" } },
+                { brand: { $regex: req.query.search, $options: "i" } },
+                { description: { $regex: req.query.search, $options: "i" } },
+                { tags: { $in: [new RegExp(req.query.search, "i")] } },
+            ];
+        }
+
+        const products = await Product.find({isActive:true})
+                    .populate("categoryId")
+                    .sort({createdAt:-1})
+                    .skip(skip)
+                    .limit(limit)
+                    .lean();
+        
+        const totalProducts = await Product.countDocuments({isActive: true});
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        const categories = await Category.find({ isListed: true }).lean();
+        
+        const brands = await Product.distinct("brand", { isActive: true });
+        
+        const colors = await Product.distinct("color", { isActive: true });
+
+        return res.render('user/home', { 
+            products,
+            currentPage: page,
+            totalPages,
+            totalProducts,
+            categories,
+            brands,
+            colors,
+            query: req.query,
+            req });
     } catch (error) {
         console.log("homepage not loading:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -18,7 +61,7 @@ const loadSignup = async (req, res) => {
         return res.render('user/signUp', { error: null });
     } catch (error) {
         console.log("signUp page not loading:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -105,9 +148,11 @@ const signup = async (req, res) => {
             return res.render('user/signUp', { error: "Enter a valid 10-digit phone number" });
         }
 
-        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@#$%^&*!]{6,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\d@#$%^&*!]{8,}$/;
         if (!passwordRegex.test(password)) {
-            return res.render('user/signUp', { error: "Password must be at least 6 characters and include a number" });
+            return res.render('user/signUp', {
+               error: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
+            });
         }
 
         const existingUser = await User.findOne({ email });
@@ -132,7 +177,7 @@ const signup = async (req, res) => {
 
     } catch (error) {
         console.log('Error during signup:', error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -167,13 +212,13 @@ const verifyOtp = async (req, res) => {
             });
 
             await saveUserData.save();
-            req.session.user = saveUserData._id;
+            
 
             req.session.userOtp = null;                                                                                      // Clear OTP-related session data
             req.session.userData = null;
             req.session.otpType = null;
 
-            return res.redirect("/");
+            return res.redirect("/login");
         }
 
         if (otpType === 'reset' && otp == req.session.secondOtp) {
@@ -185,7 +230,7 @@ const verifyOtp = async (req, res) => {
 
     } catch (error) {
         console.error("Error verifying OTP", error);
-        res.status(500).json({ success: false, error: 'An error occurred' });
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, error: 'An error occurred' });
     }
 };
 
@@ -203,7 +248,7 @@ const resendOtp = async (req, res) => {
             const emailSent = await sendVerificationEmail(email, newOtp);
             if (emailSent) {
                 console.log("Resent signup OTP:", newOtp);          ////////
-                return res.status(200).json({ success: true });
+                return res.status(statusCode.OK).json({ success: true });
             } else {
                 return res.json({ success: false, error: "Failed to resend OTP" });
             }
@@ -230,16 +275,16 @@ const resendOtp = async (req, res) => {
             });
 
             console.log("Resent reset password OTP:", newOtp);    ////////
-            return res.status(200).json({ success: true });
+            return res.status(statusCode.OK).json({ success: true });
         }
 
         else {
-            return res.status(400).json({ success: false, error: "Invalid OTP type or session expired" });
+            return res.status(statusCode.BAD_REQUEST).json({ success: false, error: "Invalid OTP type or session expired" });
         }
 
     } catch (error) {
         console.error("Error resending OTP", error);
-        res.status(500).json({ success: false, error: "Server error" });
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, error: "Server error" });
     }
 };
 
@@ -250,7 +295,7 @@ const loadLogin = async (req, res) => {
         return res.render('user/login', { error: null });
     } catch (error) {
         console.log("login page not loading:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -272,7 +317,7 @@ const login = async (req, res) => {
             return res.render('user/login', { error: "incorrect password" })
         }
 
-        req.session.user = finduser._id
+        req.session.user = finduser
         res.redirect('/')
 
     } catch (error) {
@@ -289,7 +334,7 @@ const loadForgotPassword = async (req, res) => {
         return res.render('user/forgotPassword', { error: null });
     } catch (error) {
         console.log("login page not loading:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -330,7 +375,7 @@ const handleForgotPassword = async (req, res) => {
 
     } catch (error) {
         console.log("something wrong with forgotpassword:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -340,7 +385,7 @@ const loadResetPassword = async (req, res) => {
         return res.render('user/resetPassword');
     } catch (error) {
         console.log("resetpassword page not loading:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -359,7 +404,7 @@ const changePassword = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).send("Something went wrong");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("Something went wrong");
         console.log(req.body);
 
     }
@@ -370,7 +415,7 @@ const loadShop=async (req,res)=>{
         res.render('user/shop',{req});
     } catch (error) {
         console.log('shop page not rendering',error);
-        res.status(500).send("somethingg went wrong");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("somethingg went wrong");
     }
 }
 
@@ -381,7 +426,7 @@ const logout = async (req, res) => {
         });
     } catch (error) {
         console.log('error during logout:', error)
-        res.status(500).send('error during logout')
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send('error during logout')
     }
 }
 

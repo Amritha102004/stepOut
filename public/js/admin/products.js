@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Declare variables if they are not globally available
+    
     let success_msg = typeof window.success_msg !== 'undefined' ? window.success_msg : '';
     let error_msg = typeof window.error_msg !== 'undefined' ? window.error_msg : '';
 
-    // Handle flash messages
+    //  flash messages
     if (typeof success_msg !== 'undefined' && success_msg.length > 0) { 
         Swal.fire({
             icon: 'success',

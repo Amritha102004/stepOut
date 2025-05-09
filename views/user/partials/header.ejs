@@ -24,12 +24,14 @@
                 </li>
             </ul>
             <div class="nav-icons d-flex align-items-center ms-3">
-                <div class="search-container position-relative ">
-                    <input type="text" class="search-input" placeholder="Search...">
-                    <a href="#" id="search-icon" class="nav-link">
-                        <i class="fas fa-search"></i>
-                    </a>
-                </div>
+                <form id="searchForm" action="/shop" method="GET">
+                    <div class="search-container position-relative ">
+                        <input type="text" name="search" id="searchInput" class="search-input" placeholder="Search..." value="<%= req.query.search %>">
+                        <a href="#" id="search-icon" class="nav-link">
+                            <i class="fas fa-search"></i>
+                        </a>
+                    </div>
+                </form>
                 <a href="#" class="nav-link ">
                     <i class="fas fa-heart"></i>
                 </a>
@@ -45,7 +47,7 @@
                             <li><a class="dropdown-item" href="/login">Log In</a></li>
                             <li><a class="dropdown-item" href="/signup">Sign Up</a></li>
                         <% } else{ %>
-                            <li><a class="dropdown-item" href="/account">My Account</a></li>
+                            <li><a class="dropdown-item" href="/account"><%=req.session.user.fullName%></a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout">Log Out</a></li>
                         <% } %>

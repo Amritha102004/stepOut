@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="/css/user/header.css">
     <link rel="stylesheet" href="/css/user/footer.css">
     <link rel="stylesheet" href="/css/user/home.css">
+    <link rel="stylesheet" href="/css/user/home-product.css">
 </head>
 <body>
     <!-- Include Header Partial -->
@@ -36,7 +37,7 @@
                                 <p class="hero-text">Find your true style with stepOut and explore the variety of playful, colorful designs!</p>
                             </div>
                             <div class="col-lg-7 col-md-6">
-                                <img src="/api/placeholder/400/320" alt="White Nike Shoe" class="hero-shoe">
+                                <img src="/placeholder.svg?height=400&width=320&query=white%20nike%20shoe" alt="White Nike Shoe" class="hero-shoe">
                             </div>
                         </div>
                     </div>
@@ -52,7 +53,7 @@
                                 <p class="hero-text">Check out our latest collection of premium footwear for every occasion!</p>
                             </div>
                             <div class="col-lg-7 col-md-6">
-                                <img src="/api/placeholder/400/320" alt="Blue Nike Shoe" class="hero-shoe">
+                                <img src="/placeholder.svg?height=400&width=320&query=blue%20nike%20shoe" alt="Blue Nike Shoe" class="hero-shoe">
                             </div>
                         </div>
                     </div>
@@ -68,7 +69,7 @@
                                 <p class="hero-text">Limited time deals on selected items. Grab yours before they're gone!</p>
                             </div>
                             <div class="col-lg-7 col-md-6">
-                                <img src="/api/placeholder/400/320" alt="Red Nike Shoe" class="hero-shoe">
+                                <img src="/placeholder.svg?height=400&width=320&query=red%20nike%20shoe" alt="Red Nike Shoe" class="hero-shoe">
                             </div>
                         </div>
                     </div>
@@ -89,19 +90,19 @@
                 <div class="col-12">
                     <div class="shoe-thumbnails">
                         <div class="shoe-thumbnail">
-                            <img src="/api/placeholder/50/50" alt="Shoe 1">
+                            <img src="/placeholder.svg?height=50&width=50&query=shoe%201" alt="Shoe 1">
                         </div>
                         <div class="shoe-thumbnail">
-                            <img src="/api/placeholder/50/50" alt="Shoe 2">
+                            <img src="/placeholder.svg?height=50&width=50&query=shoe%202" alt="Shoe 2">
                         </div>
                         <div class="shoe-thumbnail">
-                            <img src="/api/placeholder/50/50" alt="Shoe 3">
+                            <img src="/placeholder.svg?height=50&width=50&query=shoe%203" alt="Shoe 3">
                         </div>
                         <div class="shoe-thumbnail">
-                            <img src="/api/placeholder/50/50" alt="Shoe 4">
+                            <img src="/placeholder.svg?height=50&width=50&query=shoe%204" alt="Shoe 4">
                         </div>
                         <div class="shoe-thumbnail">
-                            <img src="/api/placeholder/50/50" alt="Shoe 5">
+                            <img src="/placeholder.svg?height=50&width=50&query=shoe%205" alt="Shoe 5">
                         </div>
                     </div>
                 </div>
@@ -123,222 +124,139 @@
                     </div>
                 </div>
                 <div class="col-lg-7 col-md-6 text-center">
-                    <img src="/api/placeholder/400/320" alt="Red Air Jordan Shoe" class="jordan-shoe">
+                    <img src="/placeholder.svg?height=400&width=320&query=red%20air%20jordan" alt="Red Air Jordan Shoe" class="jordan-shoe">
                 </div>
             </div>
         </div>
         <div class="color-variants">
             <div class="color-variant">
-                <img src="/api/placeholder/30/30" alt="Red Variant">
+                <img src="/placeholder.svg?height=30&width=30&query=red%20shoe" alt="Red Variant">
             </div>
             <div class="color-variant">
-                <img src="/api/placeholder/30/30" alt="Yellow Variant">
+                <img src="/placeholder.svg?height=30&width=30&query=yellow%20shoe" alt="Yellow Variant">
             </div>
             <div class="color-variant">
-                <img src="/api/placeholder/30/30" alt="Pink Variant">
+                <img src="/placeholder.svg?height=30&width=30&query=pink%20shoe" alt="Pink Variant">
             </div>
             <div class="color-variant">
-                <img src="/api/placeholder/30/30" alt="Blue Variant">
+                <img src="/placeholder.svg?height=30&width=30&query=blue%20shoe" alt="Blue Variant">
             </div>
             <div class="color-variant">
-                <img src="/api/placeholder/30/30" alt="Orange Variant">
+                <img src="/placeholder.svg?height=30&width=30&query=orange%20shoe" alt="Orange Variant">
             </div>
             <div class="color-variant">
-                <img src="/api/placeholder/30/30" alt="Green Variant">
+                <img src="/placeholder.svg?height=30&width=30&query=green%20shoe" alt="Green Variant">
             </div>
         </div>
     </section>
 
-    <!-- Product Section -->
-    <section class="product-section">
+    <!-- Featured Products Section -->
+    <section class="product-section py-5">
         <div class="container">
-            <div class="row">
-                <!-- Product Card 1 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="product-card">
-                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
-                        <div class="product-img">
-                            <img src="/api/placeholder/200/150" alt="White Nike Air Max">
+            <h2 class="section-title text-center mb-4">Featured Products</h2>
+            
+            <!-- Product Grid -->
+            <div class="product-grid">
+                <div class="row">
+                    <% if (products && products.length > 0) { %>
+                        <% products.forEach(product => { %>
+                            <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+                                <div class="product-card">
+                                    <button class="wishlist-icon"><i class="far fa-heart"></i></button>
+                                    <div class="product-img">
+                                        <a href="/product/<%= product._id %>">
+                                            <% 
+                                            let productImage = '/placeholder.svg?height=200&width=200&query=shoe';
+                                            if (product.images && product.images.length > 0) {
+                                                // Find main image or use first image
+                                                const main = product.images.find(img => img.isMain) || product.images[0];
+                                                productImage = main.url;
+                                            }
+                                            %>
+                                            <img src="<%= productImage %>" alt="<%= product.name %>" class="img-fluid">
+                                        </a>
+                                    </div>
+                                    <div class="product-info">
+                                        <h3 class="product-name"><%= product.name %></h3>
+                                        <p class="product-brand"><%= product.brand %></p>
+                                        <div class="product-price-row">
+                                            <div class="price">
+                                                <% if (product.variants && product.variants.length > 0) { %>
+                                                    <span class="current-price">₹<%= product.variants[0].salePrice %></span>
+                                                    <% if (product.variants[0].varientPrice > product.variants[0].salePrice) { %>
+                                                        <span class="original-price">₹<%= product.variants[0].varientPrice %></span>
+                                                        <% const discount = Math.round((product.variants[0].varientPrice - product.variants[0].salePrice) / product.variants[0].varientPrice * 100) %>
+                                                        <span class="discount"><%= discount %>% off</span>
+                                                    <% } %>
+                                                <% } else { %>
+                                                    <span class="current-price">₹<%= product.price || 'N/A' %></span>
+                                                <% } %>
+                                            </div>
+                                            <div class="view-details">
+                                                <a href="/product/<%= product._id %>"><i class="fas fa-arrow-right"></i></a>
+                                            </div>
+                                        </div>
+                                        <!-- Product Rating -->
+                                        <div class="product-rating">
+                                            <% if (product.ratings && product.ratings.average) { %>
+                                                <% for (let i = 1; i <= 5; i++) { %>
+                                                    <% if (i <= Math.floor(product.ratings.average)) { %>
+                                                        <i class="fas fa-star"></i>
+                                                    <% } else if (i <= Math.ceil(product.ratings.average) && product.ratings.average % 1 !== 0) { %>
+                                                        <i class="fas fa-star-half-alt"></i>
+                                                    <% } else { %>
+                                                        <i class="far fa-star"></i>
+                                                    <% } %>
+                                                <% } %>
+                                                <span class="rating-count">(<%= product.ratings.count || 0 %>)</span>
+                                            <% } else { %>
+                                                <i class="far fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                                <span class="rating-count">(0)</span>
+                                            <% } %>
+                                        </div>
+                                        <!-- Free Delivery Text -->
+                                        <p class="delivery-info"><i class="fas fa-truck-fast me-1"></i> Free Delivery</p>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <div class="col-12 text-center">
+                            <p>No products available at the moment. Check back soon!</p>
                         </div>
-                        <h3 class="product-title">Air Max 97</h3>
-                        <div class="product-price">
-                            <span class="price-current">₹499</span>
-                            <span class="price-old">₹699</span>
-                            <span class="price-discount">30% off</span>
-                        </div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="far fa-star"></i>
-                        </div>
-                        <div class="product-delivery">
-                            <i class="fas fa-truck"></i> Free Delivery
-                        </div>
-                        <div class="product-link">
-                            <a href="#">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product Card 2 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="product-card">
-                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
-                        <div class="product-img">
-                            <img src="/api/placeholder/200/150" alt="Black Nike Air Max">
-                        </div>
-                        <h3 class="product-title">Air Max 97</h3>
-                        <div class="product-price">
-                            <span class="price-current">₹499</span>
-                            <span class="price-old">₹699</span>
-                            <span class="price-discount">30% off</span>
-                        </div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="product-delivery">
-                            <i class="fas fa-truck"></i> Free Delivery
-                        </div>
-                        <div class="product-link">
-                            <a href="#">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product Card 3 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="product-card">
-                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
-                        <div class="product-img">
-                            <img src="/api/placeholder/200/150" alt="Orange Nike Air Max">
-                        </div>
-                        <h3 class="product-title">Air Max 97</h3>
-                        <div class="product-price">
-                            <span class="price-current">₹499</span>
-                            <span class="price-old">₹699</span>
-                            <span class="price-discount">30% off</span>
-                        </div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="far fa-star"></i>
-                        </div>
-                        <div class="product-delivery">
-                            <i class="fas fa-truck"></i> Free Delivery
-                        </div>
-                        <div class="product-link">
-                            <a href="#">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product Card 4 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="product-card">
-                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
-                        <div class="product-img">
-                            <img src="/api/placeholder/200/150" alt="Multi-color Nike Air Max">
-                        </div>
-                        <h3 class="product-title">Air Max 97</h3>
-                        <div class="product-price">
-                            <span class="price-current">₹499</span>
-                            <span class="price-old">₹699</span>
-                            <span class="price-discount">30% off</span>
-                        </div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                        </div>
-                        <div class="product-delivery">
-                            <i class="fas fa-truck"></i> Free Delivery
-                        </div>
-                        <div class="product-link">
-                            <a href="#">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product Card 5 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="product-card">
-                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
-                        <div class="product-img">
-                            <img src="/api/placeholder/200/150" alt="Black and White Nike Air Max">
-                        </div>
-                        <h3 class="product-title">Air Max 97</h3>
-                        <div class="product-price">
-                            <span class="price-current">₹499</span>
-                            <span class="price-old">₹699</span>
-                            <span class="price-discount">30% off</span>
-                        </div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="product-delivery">
-                            <i class="fas fa-truck"></i> Free Delivery
-                        </div>
-                        <div class="product-link">
-                            <a href="#">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product Card 6 -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="product-card">
-                        <span class="wishlist-icon"><i class="far fa-heart"></i></span>
-                        <div class="product-img">
-                            <img src="/api/placeholder/200/150" alt="White Nike Air Max">
-                        </div>
-                        <h3 class="product-title">Air Max 97</h3>
-                        <div class="product-price">
-                            <span class="price-current">₹499</span>
-                            <span class="price-old">₹699</span>
-                            <span class="price-discount">30% off</span>
-                        </div>
-                        <div class="product-rating">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star-half-alt"></i>
-                        </div>
-                        <div class="product-delivery">
-                            <i class="fas fa-truck"></i> Free Delivery
-                        </div>
-                        <div class="product-link">
-                            <a href="#">
-                                <i class="fas fa-arrow-right"></i>
-                            </a>
-                        </div>
-                    </div>
+                    <% } %>
                 </div>
             </div>
+            
+            <!-- View All Products Button -->
+            <div class="text-center mt-4">
+                <a href="/shop" class="btn btn-primary">View All Products</a>
+            </div>
+            
+            <!-- Pagination -->
+            <% if (products && products.length > 0 && totalPages > 1) { %>
+                <nav aria-label="Product pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                            <a class="page-link" href="/?page=<%= currentPage - 1 %>" tabindex="-1" <%= currentPage === 1 ? 'aria-disabled="true"' : '' %>>Previous</a>
+                        </li>
+                        
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                <a class="page-link" href="/?page=<%= i %>"><%= i %></a>
+                            </li>
+                        <% } %>
+                        
+                        <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                            <a class="page-link" href="/?page=<%= currentPage + 1 %>" <%= currentPage === totalPages ? 'aria-disabled="true"' : '' %>>Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            <% } %>
         </div>
     </section>
 
@@ -347,26 +265,43 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/user/common.js"></script>
     <script>
         // Toggle search bar
         document.addEventListener('DOMContentLoaded', function() {
-            const searchIcon = document.getElementById('search-icon');
-            const searchContainer = document.querySelector('.search-container');
+            // const searchIcon = document.getElementById('search-icon');
+            // const searchContainer = document.querySelector('.search-container');
             
-            searchIcon.addEventListener('click', function(e) {
-                e.preventDefault();
-                searchContainer.classList.toggle('active');
-                if (searchContainer.classList.contains('active')) {
-                    searchContainer.querySelector('input').focus();
-                }
-            });
+            // if (searchIcon && searchContainer) {
+            //     searchIcon.addEventListener('click', function(e) {
+            //         e.preventDefault();
+            //         searchContainer.classList.toggle('active');
+            //         if (searchContainer.classList.contains('active')) {
+            //             searchContainer.querySelector('input').focus();
+            //         }
+            //     });
+            // }
             
             // Initialize carousel with options
             const heroCarousel = document.getElementById('heroCarousel');
-            const carousel = new bootstrap.Carousel(heroCarousel, {
-                interval: 5000,
-                wrap: true,
-                touch: true
+            if (heroCarousel) {
+                const carousel = new bootstrap.Carousel(heroCarousel, {
+                    interval: 5000,
+                    wrap: true,
+                    touch: true
+                });
+            }
+            
+            // Toggle wishlist icon
+            const wishlistIcons = document.querySelectorAll('.wishlist-icon');
+            wishlistIcons.forEach((icon) => {
+                icon.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const heartIcon = this.querySelector('i');
+                    heartIcon.classList.toggle('far');
+                    heartIcon.classList.toggle('fas');
+                    heartIcon.classList.toggle('text-danger');
+                });
             });
         });
     </script>

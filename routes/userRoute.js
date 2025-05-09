@@ -3,22 +3,25 @@ const router=express.Router();
 const userController=require('../controller/userController/userController');
 const productController=require('../controller/userController/productController')
 const passport=require('passport');
+const {isLogin}=require('../middleware/userAuth')
+const {isBlocked}=require('../middleware/userAuth')
+const {checkSession}=require('../middleware/userAuth')
 
-router.get('/',userController.loadHome);
+router.get('/', isBlocked,userController.loadHome);
 
-router.get('/signup',userController.loadSignup)
-router.post('/signup',userController.signup)
-router.post('/otp',userController.verifyOtp)  
-router.post('/resendotp', userController.resendOtp);
-router.get('/login',userController.loadLogin);
-router.post('/login',userController.login);
-router.get('/forgotpassword',userController.loadForgotPassword);
-router.post('/forgotpassword',userController.handleForgotPassword);
-router.get('/resetpassword',userController.loadResetPassword);
-router.post('/resetpassword',userController.changePassword);
+router.get('/signup', isLogin, userController.loadSignup)
+router.post('/signup', isLogin, userController.signup)
+router.post('/otp', isLogin, userController.verifyOtp)  
+router.post('/resendotp', isLogin, userController.resendOtp);
+router.get('/login', isLogin, userController.loadLogin);
+router.post('/login', isLogin, userController.login);
+router.get('/forgotpassword', isLogin, userController.loadForgotPassword);
+router.post('/forgotpassword', isLogin, userController.handleForgotPassword);
+router.get('/resetpassword', isLogin, userController.loadResetPassword);
+router.post('/resetpassword', isLogin, userController.changePassword);
 
-router.get('/shop', productController.getAllProducts);
-router.get('/product/:id', productController.getProductDetails);
+router.get('/shop', isBlocked, productController.getAllProducts);
+router.get('/product/:id', isBlocked, productController.getProductDetails);
 
 // router.get('/about',userController.logout);
 // router.get('/contact',userController.logout);

@@ -1,12 +1,12 @@
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: "Poppins", sans-serif;
     background-color: #f8f8f8;
     margin: 0;
     padding: 0;
-}
-
-/* Sidebar Styles */
-.sidebar {
+  }
+  
+  /* Sidebar Styles */
+  .sidebar {
     background-color: #ffffff;
     width: 270px;
     height: 100vh;
@@ -19,14 +19,30 @@ body {
     transition: all 0.3s;
     z-index: 1020;
     border-right: 1px solid #e0e0e0;
-}
-
-.sidebar-menu {
+  }
+  
+  /* Add this for mobile sidebar overlay */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1015;
+  }
+  
+  .sidebar-overlay.active {
+    display: block;
+  }
+  
+  .sidebar-menu {
     padding: 10px 15px;
     list-style: none;
-}
-
-.sidebar-menu .nav-link {
+  }
+  
+  .sidebar-menu .nav-link {
     background-color: #f8f8f8;
     border-radius: 8px;
     margin-bottom: 12px;
@@ -37,29 +53,49 @@ body {
     transition: all 0.3s;
     display: flex;
     align-items: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.sidebar-menu .nav-link:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .sidebar-menu .nav-link:hover {
     background-color: #eeeeee;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.sidebar-menu .nav-link.active {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar-menu .nav-link.active {
     background-color: #000000;
     color: #ffffff;
-}
-
-.sidebar-menu .nav-link i {
+  }
+  
+  .sidebar-menu .nav-link i {
     margin-right: 16px;
     font-size: 16px;
     width: 20px;
     text-align: center;
-}
-
-.sidebar-divider {
+  }
+  
+  .sidebar-divider {
     height: 1px;
     background-color: #e0e0e0;
     margin: 15px 0;
-}
+  }
+  
+  @media (max-width: 575px) {
+    .sidebar {
+      transform: translateX(-100%);
+      width: 270px;
+    }
+  
+    .sidebar.active {
+      transform: translateX(0);
+    }
+  
+    .sidebar-menu .nav-link span {
+      display: inline;
+    }
+  
+    .sidebar-menu .nav-link i {
+      margin-right: 16px;
+    }
+  }
+  

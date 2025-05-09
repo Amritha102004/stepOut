@@ -298,23 +298,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     
     <!-- Custom JS -->
-    <script>
-        // Toggle sidebar on mobile
-        document.querySelector('.toggle-sidebar').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-        
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.querySelector('.sidebar');
-            const toggleBtn = document.querySelector('.toggle-sidebar');
-            
-            if (window.innerWidth <= 575) {
-                if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
-                    sidebar.classList.remove('active');
-                }
-            }
-        });
-    </script>
+    <script src="/js/admin/sidebar.js"></script>
 </body>
 </html>

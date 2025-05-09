@@ -1,20 +1,20 @@
 /* General Styles */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-/* Hero Section Styles */
-.hero-section {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  /* Hero Section Styles */
+  .hero-section {
     position: relative;
     padding: 3rem 0;
     overflow: hidden;
-}
-
-.carousel-item {
+  }
+  
+  .carousel-item {
     min-height: 400px;
-}
-
-.hero-bg {
+  }
+  
+  .hero-bg {
     position: absolute;
     width: 70%;
     height: 80%;
@@ -23,42 +23,42 @@ body {
     right: -10%;
     top: 10%;
     z-index: -1;
-}
-
-.hero-content {
+  }
+  
+  .hero-content {
     padding: 2rem;
-}
-
-.hero-title {
+  }
+  
+  .hero-title {
     font-size: 3.5rem;
     font-weight: 300;
     color: #555;
     margin-bottom: 1.5rem;
-}
-
-.hero-text {
+  }
+  
+  .hero-text {
     color: #666;
     margin-bottom: 2rem;
     max-width: 450px;
-}
-
-.hero-shoe {
+  }
+  
+  .hero-shoe {
     transform: rotate(-15deg);
     max-width: 100%;
     transition: transform 0.3s ease;
-}
-
-.hero-shoe:hover {
+  }
+  
+  .hero-shoe:hover {
     transform: rotate(-10deg) scale(1.05);
-}
-
-.shoe-thumbnails {
+  }
+  
+  .shoe-thumbnails {
     display: flex;
     justify-content: center;
     margin-top: 2rem;
-}
-
-.shoe-thumbnail {
+  }
+  
+  .shoe-thumbnail {
     width: 80px;
     height: 80px;
     border-radius: 50%;
@@ -71,56 +71,56 @@ body {
     overflow: hidden;
     border: 2px solid transparent;
     transition: all 0.2s ease;
-}
-
-.shoe-thumbnail:hover {
+  }
+  
+  .shoe-thumbnail:hover {
     border-color: #009688;
-}
-
-.shoe-thumbnail img {
+  }
+  
+  .shoe-thumbnail img {
     width: 85%;
     height: auto;
-}
-
-.carousel-indicators {
+  }
+  
+  .carousel-indicators {
     bottom: -40px;
-}
-
-.carousel-indicators [data-bs-target] {
+  }
+  
+  .carousel-indicators [data-bs-target] {
     width: 12px;
     height: 12px;
     border-radius: 50%;
     background-color: #009688;
     opacity: 0.5;
-}
-
-.carousel-indicators .active {
+  }
+  
+  .carousel-indicators .active {
     opacity: 1;
-}
-
-.carousel-control-prev,
-.carousel-control-next {
+  }
+  
+  .carousel-control-prev,
+  .carousel-control-next {
     width: 5%;
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
+  }
+  
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
     background-color: rgba(0, 0, 0, 0.3);
     border-radius: 50%;
     padding: 20px;
-}
-
-/* Jordan Section Styles */
-.jordan-section {
+  }
+  
+  /* Jordan Section Styles */
+  .jordan-section {
     background-color: #111;
     color: white;
     padding: 4rem 0;
     position: relative;
     overflow: hidden;
     margin-top: 3rem;
-}
-
-.jordan-bg {
+  }
+  
+  .jordan-bg {
     position: absolute;
     width: 40%;
     top: 0;
@@ -128,55 +128,55 @@ body {
     right: 15%;
     background-color: #d32f2f;
     z-index: 0;
-}
-
-.jordan-title {
+  }
+  
+  .jordan-title {
     font-size: 2.5rem;
     font-weight: bold;
     margin-bottom: 1.5rem;
     position: relative;
     z-index: 1;
-}
-
-.jordan-text {
+  }
+  
+  .jordan-text {
     position: relative;
     z-index: 1;
     margin-bottom: 2rem;
     max-width: 400px;
-}
-
-.jordan-btn {
+  }
+  
+  .jordan-btn {
     padding: 0.5rem 2rem;
     border-radius: 25px;
     font-weight: 600;
     margin-right: 1rem;
     position: relative;
     z-index: 1;
-}
-
-.btn-primary {
+  }
+  
+  .btn-primary {
     background-color: #ff9800;
     border-color: #ff9800;
-}
-
-.btn-outline-light {
+  }
+  
+  .btn-outline-light {
     color: white;
     border-color: white;
-}
-
-.jordan-shoe {
+  }
+  
+  .jordan-shoe {
     position: relative;
     z-index: 1;
     transform: rotate(10deg);
     max-width: 100%;
     transition: transform 0.3s ease;
-}
-
-.jordan-shoe:hover {
+  }
+  
+  .jordan-shoe:hover {
     transform: rotate(15deg) scale(1.05);
-}
-
-.color-variants {
+  }
+  
+  .color-variants {
     display: flex;
     flex-direction: column;
     position: absolute;
@@ -184,179 +184,102 @@ body {
     top: 50%;
     transform: translateY(-50%);
     z-index: 1;
-}
-
-.color-variant {
+  }
+  
+  .color-variant {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: rgba(255,255,255,0.1);
+    background-color: rgba(255, 255, 255, 0.1);
     margin: 5px 0;
     padding: 5px;
     cursor: pointer;
     overflow: hidden;
     transition: all 0.2s ease;
-}
-
-.color-variant:hover {
-    background-color: rgba(255,255,255,0.3);
-}
-
-.color-variant img {
+  }
+  
+  .color-variant:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .color-variant img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-}
-
-/* Product Section Styles */
-.product-section {
+  }
+  
+  /* Product Section Styles - Overrides for home page */
+  .product-section {
     padding: 4rem 0;
     background-color: #f9f9f9;
-}
-
-.product-card {
-    background-color: white;
-    border-radius: 8px;
-    padding: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
     margin-bottom: 2rem;
     position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-}
-
-.wishlist-icon {
+  }
+  
+  .section-title:after {
+    content: "";
     position: absolute;
-    top: 15px;
-    right: 15px;
-    color: #ddd;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.wishlist-icon:hover {
-    color: #f44336;
-}
-
-.product-img {
-    text-align: center;
-    padding: 1rem 0;
-}
-
-.product-img img {
-    max-width: 100%;
-    height: auto;
-    transition: transform 0.3s ease;
-}
-
-.product-img img:hover {
-    transform: scale(1.05);
-}
-
-.product-title {
-    font-weight: 600;
-    margin-top: 1rem;
-}
-
-.product-price {
-    display: flex;
-    align-items: center;
-    margin: 0.5rem 0;
-}
-
-.price-current {
-    font-weight: bold;
-    font-size: 1.1rem;
-    margin-right: 0.5rem;
-}
-
-.price-old {
-    text-decoration: line-through;
-    color: #999;
-    margin-right: 0.5rem;
-}
-
-.price-discount {
-    background-color: #4caf50;
-    color: white;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-}
-
-.product-rating {
-    margin: 0.5rem 0;
-    color: #ffc107;
-}
-
-.product-delivery {
-    color: #4caf50;
-    font-size: 0.9rem;
-    margin-top: 0.5rem;
-}
-
-.product-link {
-    text-align: right;
-    margin-top: 1rem;
-}
-
-.product-link a {
-    color: #333;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-}
-
-/* Responsive adjustments */
-@media (max-width: 992px) {
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background-color: #ff9800;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 992px) {
     .hero-bg {
-        width: 90%;
-        right: -20%;
+      width: 90%;
+      right: -20%;
     }
-    
+  
     .jordan-bg {
-        width: 50%;
-        right: 5%;
+      width: 50%;
+      right: 5%;
     }
-    
+  
     .color-variants {
-        flex-direction: row;
-        position: relative;
-        top: auto;
-        right: auto;
-        transform: none;
-        justify-content: center;
-        margin-top: 2rem;
+      flex-direction: row;
+      position: relative;
+      top: auto;
+      right: auto;
+      transform: none;
+      justify-content: center;
+      margin-top: 2rem;
     }
-    
+  
     .color-variant {
-        margin: 0 5px;
+      margin: 0 5px;
     }
-}
-
-@media (max-width: 768px) {
+  }
+  
+  @media (max-width: 768px) {
     .hero-title {
-        font-size: 2.5rem;
+      font-size: 2.5rem;
     }
-    
+  
     .hero-bg {
-        width: 100%;
-        height: 60%;
-        right: -30%;
+      width: 100%;
+      height: 60%;
+      right: -30%;
     }
-    
+  
     .jordan-bg {
-        width: 100%;
-        right: 0;
-        bottom: 40%;
-        top: 0;
+      width: 100%;
+      right: 0;
+      bottom: 40%;
+      top: 0;
     }
-    
+  
     .jordan-shoe {
-        margin-top: 2rem;
+      margin-top: 2rem;
     }
-}
+  }
+  

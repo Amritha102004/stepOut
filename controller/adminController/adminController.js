@@ -1,6 +1,7 @@
 const User = require('../../model/userModel');
 const env = require('dotenv').config();
 const bcrypt = require("bcrypt");
+const statusCode = require("../../utils/httpStatusCodes")
 
 const loadlogin=async (req,res)=>{
     try {
@@ -11,7 +12,7 @@ const loadlogin=async (req,res)=>{
         
     } catch (error) {
         console.log("admin login page not loading:", error);
-        res.status(500).send("server error");
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
@@ -30,7 +31,12 @@ const login = async (req, res) => {
             return res.render('admin/login', { error: "incorrect password" })
         }
  
-        req.session.admin = findadmin._id
+        req.session.admin = {
+            id: findadmin._id,
+            email: findadmin.email,
+            name:findadmin.fullName,
+            isAdmin:findadmin.isAdmin,
+          };
         res.redirect('/admin/dashboard')
 
     } catch (error) {
@@ -47,7 +53,7 @@ const loadDashboard=async (req,res)=>{
         
     } catch (error) {
         console.log('something wrong:',error);
-        res.status(500).send(error);
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send(error);
     }
 }
 
@@ -60,11 +66,9 @@ const logout=async (req,res)=>{
         });
     } catch (error) {
         console.log('error during logout:',error);
-        res.status(500).send('error during logout');
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send('error during logout');
     }
 }
-
-
 
 
 module.exports = {

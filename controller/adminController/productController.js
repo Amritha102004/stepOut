@@ -1,9 +1,10 @@
 const Product = require("../../model/productModel");
 const Category = require("../../model/categoryModel");
-const User = require("../../model/userModel");
+const User = require("../../model/userModel");////
 const mongoose = require("mongoose");
-const upload = require("../../middleware/upload");
+const upload = require("../../middleware/upload");///
 const cloudinary = require("cloudinary").v2;
+const statusCode = require("../../utils/httpStatusCodes")
 
 const loadProducts = async (req, res) => {
     try {
@@ -11,136 +12,50 @@ const loadProducts = async (req, res) => {
         const limit = 10;
         const skip = (page - 1) * limit;
         const searchQuery = req.query.search || "";
-        const category = req.query.category || "";
-        const priceRange = req.query.priceRange || "";
-        const sortBy = req.query.sortBy || "createdAt";
-        const sortOrder = req.query.sortOrder || "desc";
-        const isActiveFilter = req.query.isActive || "";
+        
 
         let filter = {};
-
         if (searchQuery) {
             filter.$or = [
                 { name: { $regex: searchQuery, $options: "i" } },
                 { description: { $regex: searchQuery, $options: "i" } },
             ];
         }
+        const totalProducts = await Product.countDocuments({ ...filter, isDeleted: false });
+        const totalPages = Math.ceil(totalProducts / limit);
 
-        if (category && category.trim() !== "") {
-            filter.categoryId = new mongoose.Types.ObjectId(category);
-        }
+        const products = await Product.find({ ...filter, isDeleted: false })
+            .populate("categoryId")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        if (isActiveFilter === "true") {
-            filter.isActive = true;
-        } else if (isActiveFilter === "false") {
-            filter.isActive = false;
-        }
+        const categories = await Category.find({ isListed: true });
 
-        if (priceRange) {
-            const [min, max] = priceRange.split("-");
-            const minPrice = parseFloat(min);
-            const maxPrice = parseFloat(max);
-            
-            if (!isNaN(minPrice) && !isNaN(maxPrice)) {
-                filter["variants.varientPrice"] = {
-                    $gte: minPrice,
-                    $lte: maxPrice,
-                };
-            } else if (!isNaN(minPrice)) {
-                filter["variants.varientPrice"] = { $gte: minPrice };
+        const admin = req.session.admin
+            ? {
+                name: req.session.admin.name,
+                email: req.session.admin.email,
+                // profileImage: req.session.admin.profileImage || "",
             }
-        }
+            : {};
 
-        const sort = {};
-
-        if (sortBy === "price") {
-            const sortStage = { $sort: {} };
-            sortStage.$sort["variants.0.varientPrice"] = sortOrder === "asc" ? 1 : -1;
-            
-            const totalProducts = await Product.countDocuments(filter);
-            const totalPages = Math.ceil(totalProducts / limit);
-
-            const products = await Product.aggregate([
-                { $match: filter },
-                sortStage,
-                { $skip: skip },
-                { $limit: limit },
-                { $lookup: {
-                    from: "categories",
-                    localField: "categoryId",
-                    foreignField: "_id",
-                    as: "categoryId"
-                }},
-                { $unwind: "$categoryId" }
-            ]);
-            
-            const categories = await Category.find({ isListed: true });
-            
-            const admin = req.session.admin
-                ? {
-                    name: req.session.admin.name,
-                    email: req.session.admin.email,
-                    // profileImage: req.session.admin.profileImage || "",
-                }
-                : {};
-            
-            return res.render("admin/products", {
-                admin,
-                products,
-                categories,
-                currentPage: page,
-                totalPages,
-                totalProducts,
-                searchQuery,
-                category,
-                limit,
-                priceRange,
-                sortBy,
-                sortOrder,
-                query: req.query,
-            });
-        } else {
-            sort[sortBy] = sortOrder === "asc" ? 1 : -1;
-            
-            const totalProducts = await Product.countDocuments(filter);
-            const totalPages = Math.ceil(totalProducts / limit);
-            
-            const products = await Product.find(filter)
-                .populate("categoryId")
-                .sort(sort)
-                .skip(skip)
-                .limit(limit);
-            
-            const categories = await Category.find({ isListed: true });
-            
-            const admin = req.session.admin
-                ? {
-                    name: req.session.admin.name,
-                    email: req.session.admin.email,
-                    // profileImage: req.session.admin.profileImage || "",
-                }
-                : {};
-            
-            res.render("admin/products", {
-                admin,
-                products,
-                categories,
-                currentPage: page,
-                totalPages,
-                totalProducts,
-                searchQuery,
-                category,
-                limit,
-                priceRange,
-                sortBy,
-                sortOrder,
-                query: req.query,
-            });
-        }
+        res.render("admin/products", {
+            admin,
+            products,
+            categories,
+            currentPage: page,
+            totalPages,
+            totalProducts,
+            searchQuery,
+            limit,
+            query: req.query,
+        });
+        // }
     } catch (error) {
         console.error(error);
         req.flash("error_msg", "Server error");
-        res.status(500).render("admin/products", {
+        res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/products", {
             admin: req.session.admin || {},
             products: [],
             categories: [],
@@ -148,10 +63,6 @@ const loadProducts = async (req, res) => {
             totalPages: 0,
             totalProducts: 0,
             searchQuery: req.query.search || "",
-            category: req.query.category || "",
-            priceRange: req.query.priceRange || "",
-            sortBy: req.query.sortBy || "createdAt",
-            sortOrder: req.query.sortOrder || "desc",
             query: req.query,
             error_msg: "Server error: " + error.message,
         });
@@ -173,7 +84,7 @@ const loadAddProduct = async (req, res) => {
     } catch (error) {
         console.error(error);
         req.flash("error_msg", "Server error");
-        res.status(500).render("admin/addproduct", {
+        res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/addproduct", {
             admin: req.session.admin || {},
             categories: [],
             error_msg: "Server error",
@@ -195,7 +106,7 @@ const addProduct = async (req, res) => {
         } = req.body;
 
         const variants = [];
-        const sizes = ["6", "7", "8", "9","10"];
+        const sizes = ["6", "7", "8", "9", "10"];
 
         const varientPrices = Array.isArray(req.body.varientPrice)
             ? req.body.varientPrice
@@ -279,6 +190,7 @@ const addProduct = async (req, res) => {
                 count: 0,
             },
             isActive: true,
+            isDeleted: false,
         });
 
         await newProduct.save();
@@ -288,7 +200,7 @@ const addProduct = async (req, res) => {
     } catch (error) {
         console.error(error);
         req.flash("error_msg", "Failed to add product: " + error.message);
-        res.status(500).render("admin/addProduct", {
+        res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/addProduct", {
             admin: req.session.admin,
             error_msg: "Failed to add product: " + error.message,
         });
@@ -298,7 +210,7 @@ const addProduct = async (req, res) => {
 const loadEditProduct = async (req, res) => {
     try {
         const productId = req.query.id;
-        const product = await Product.findById(productId).populate( "categoryId");
+        const product = await Product.findById(productId).populate("categoryId");
 
         if (!product) {
             req.flash("error_msg", "Product not found");
@@ -319,7 +231,7 @@ const loadEditProduct = async (req, res) => {
     } catch (error) {
         console.error("Load edit products error:", error);
         req.flash("error_msg", "Server error");
-        res.status(500).render("admin/editProduct", {
+        res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/editProduct", {
             error_msg: "Server error",
         });
     }
@@ -341,7 +253,7 @@ const editProduct = async (req, res) => {
 
         const variantPrices = req.body.varientPrice || {};
         const offerValue = parseFloat(offer) || 0;
-        const sizes = ["6", "7", "8", "9","10"];
+        const sizes = ["6", "7", "8", "9", "10"];
         const variants = sizes.map((size) => {
             const price = parseFloat(variantPrices[size]) || 0;
             const discount = price * (offerValue / 100);
@@ -358,7 +270,7 @@ const editProduct = async (req, res) => {
                 varientquantity: quantity,
             };
         });
-        const totalStock = variants.reduce((sum, v) => sum + v.varientquantity,0);
+        const totalStock = variants.reduce((sum, v) => sum + v.varientquantity, 0);
 
         let images = [];
 
@@ -371,7 +283,7 @@ const editProduct = async (req, res) => {
                         "/upload/",
                         "/upload/w_200,h_200,c_thumb/"
                     ),
-                    isMain: fieldName === "mainImage", 
+                    isMain: fieldName === "mainImage",
                 };
                 images.push(imageObj);
             }
@@ -417,22 +329,23 @@ const deleteProduct = async (req, res) => {
                 message: "Product not found",
             });
         }
-        for (const image of product.images) {
-            try {
-                const publicId = image.url.split("/").pop().split(".")[0];
-                await cloudinary.uploader.destroy(publicId);
-            } catch (error) {
-                console.error("Error deleting image from Cloudinary:", error);
-            }
-        }
-        await Product.findByIdAndDelete(productId);
+        // for (const image of product.images) {
+        //     try {
+        //         const publicId = image.url.split("/").pop().split(".")[0];
+        //         await cloudinary.uploader.destroy(publicId);
+        //     } catch (error) {
+        //         console.error("Error deleting image from Cloudinary:", error);
+        //     }
+        // }
+        await Product.findByIdAndUpdate(productId,
+            { isDeleted: true, isActive: false });
         return res.status(200).json({
             success: true,
             message: "Product deleted successfully",
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
 };
 
@@ -453,7 +366,7 @@ const toggleProductListing = async (req, res) => {
         });
     } catch (error) {
         console.error(`Error toggling product listing: ${error.message}`);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
     }
 };
 
@@ -461,9 +374,9 @@ const toggleProductListing = async (req, res) => {
 module.exports = {
     loadProducts,
     loadAddProduct,
-    addProduct, 
-    loadEditProduct, 
+    addProduct,
+    loadEditProduct,
     editProduct,
     deleteProduct,
-    toggleProductListing,              
+    toggleProductListing,
 }

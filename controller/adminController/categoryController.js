@@ -1,6 +1,7 @@
 const User = require("../../model/userModel")
 const Product = require("../../model/productModel")
 const Category = require("../../model/categoryModel")
+const statusCode = require("../../utils/httpStatusCodes")
 
 const loadCategory = async (req, res) => {
   try {
@@ -8,20 +9,14 @@ const loadCategory = async (req, res) => {
     const limit = 3
     const skip = (page - 1) * limit
     const searchQuery = req.query.search || ""
-    const sort = req.query.sort || "createdAt"
-    const order = req.query.order || "desc"
 
     const filter = {}
     if (searchQuery) {
       filter.name = { $regex: searchQuery, $options: "i" }
     }
-
-    const sortObj = {}
-    sortObj[sort] = order === "asc" ? 1 : -1
-
-    const totalCategories = await Category.countDocuments(filter)
+    const totalCategories = await Category.countDocuments({...filter,isDeleted:false})
     const totalPages = Math.ceil(totalCategories / limit)
-    const categories = await Category.find(filter).sort(sortObj).skip(skip).limit(limit)
+    const categories = await Category.find({...filter,isDeleted:false}).sort({createdAt:-1}).skip(skip).limit(limit)
 
     const categoriesWithCounts = await Promise.all(
       categories.map(async (category) => {
@@ -37,7 +32,6 @@ const loadCategory = async (req, res) => {
       name: req.session.admin.name,
       email: req.session.admin.email,
     }
-
     res.render("admin/category", {
       admin,
       categories: categoriesWithCounts,
@@ -45,14 +39,12 @@ const loadCategory = async (req, res) => {
       totalPages,
       totalCategories,
       searchQuery,
-      sort,
-      order,
       limit,
     })
   } catch (error) {
     console.error(error)
     req.flash("error_msg", "Server error")
-    res.status(500).render("admin/category", { error_msg: "Server Error" })
+    res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/category", { error_msg: "Server Error" })
   }
 }
 
@@ -95,7 +87,7 @@ const addCategory = async (req, res) => {
   } catch (error) {
     console.error(error)
     req.flash("error_msg", "Server error: " + error.message)
-    res.status(500).render("admin/pages/adminAddCategory", {
+    res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/pages/adminAddCategory", {
       error_msg: "Server Error: " + error.message,
       admin: {
         name: req.session.admin.name,
@@ -124,7 +116,7 @@ const loadEditCategory = async (req, res) => {
   } catch (error) {
     console.error(error)
     req.flash("error_msg", "Server error")
-    res.status(500).render("admin/editCategory", { error_msg: "Server error" })
+    res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/editCategory", { error_msg: "Server error" })
   }
 }
 
@@ -188,7 +180,7 @@ const editCategory = async (req, res) => {
   } catch (error) {
     console.error(error)
     req.flash("error_msg", "Server error: " + error.message)
-    res.status(500).render("admin/pages/adminEditCategory", { error_msg: "Server error: " + error.message })
+    res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/pages/adminEditCategory", { error_msg: "Server error: " + error.message })
   }
 }
 
@@ -204,14 +196,15 @@ const deleteCategory = async (req, res) => {
       })
     }
 
-    await Category.findByIdAndDelete(categoryId)
-    return res.status(200).json({
+    await Category.findByIdAndUpdate(categoryId ,
+      { isDeleted: true,isListed:false})
+    return res.status(statusCode.OK).json({
       success: true,
       message: "Category deleted successfully",
     })
   } catch (error) {
     console.error(error)
-    res.status(500).json({ success: false, message: "Server error" })
+    res.status(statusCode.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" })
   }
 }
 
