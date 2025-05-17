@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - StepOut</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/user/userAccount.css">
+    <!-- Header & Footer CSS -->
+    <link rel="stylesheet" href="css/user/header.css">
+    <link rel="stylesheet" href="css/user/footer.css">
+</head>
+<body>
+    <!-- Header (from partial) -->
+    <%- include('./partials/header') %>
+    <!-- Main Content -->
+    <div class="container py-5 main-container">
+        <!-- Sidebar -->
+        <div class="col-lg-3 col-md-4">
+            <div class="profile-sidebar">
+                <div class="profile-header">
+                    <h4>AMRITHA</h4>
+                </div>
+                <ul class="profile-nav">
+                    <li>
+                        <a href="account-overview.html">
+                            <i class="fas fa-user-circle"></i> Account Overview
+                        </a>
+                    </li>
+                    <li>
+                        <a href="my-orders.html" class="active">
+                            <i class="fas fa-shopping-bag"></i> My Orders
+                        </a>
+                    </li>
+                    <li>
+                        <a href="manage-addresses.html">
+                            <i class="fas fa-map-marker-alt"></i> Manage Addresses
+                        </a>
+                    </li>
+                    <li>
+                        <a href="wallet.html">
+                            <i class="fas fa-wallet"></i> Wallet
+                        </a>
+                    </li>
+                    <li>
+                        <a href="coupons.html">
+                            <i class="fas fa-tags"></i> Coupons
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="col-lg-9 col-md-8">
+            <div class="content-area">
+                <h2 class="section-title">My Orders</h2>
+                
+                <!-- Order Card 1 -->
+                <div class="order-card mb-4">
+                    <div class="order-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="order-id">#ORD-2025-1234</span>
+                            <span class="ms-3 order-date">May 10, 2025</span>
+                        </div>
+                        <span class="order-status status-delivered">Delivered</span>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-product">
+                            <img src="/placeholder.svg?height=80&width=80&query=brown%20leather%20shoes" class="product-image" alt="Product">
+                            <div class="product-details">
+                                <h5>Classic Brown Leather Shoes</h5>
+                                <div class="product-price">₹3,499</div>
+                                <div class="product-quantity">Qty: 1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">Total: ₹3,499</div>
+                        <div>
+                            <a href="#" class="btn btn-outline-primary btn-sm">Track Order</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Card 2 -->
+                <div class="order-card mb-4">
+                    <div class="order-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="order-id">#ORD-2025-1201</span>
+                            <span class="ms-3 order-date">May 5, 2025</span>
+                        </div>
+                        <span class="order-status status-processing">Processing</span>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-product">
+                            <img src="/placeholder.svg?height=80&width=80&query=white%20sneakers" class="product-image" alt="Product">
+                            <div class="product-details">
+                                <h5>White Canvas Sneakers</h5>
+                                <div class="product-price">₹1,999</div>
+                                <div class="product-quantity">Qty: 1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">Total: ₹1,999</div>
+                        <div>
+                            <a href="#" class="btn btn-outline-danger btn-sm cancel-order-btn me-2">Cancel Order</a>
+                            <a href="#" class="btn btn-outline-primary btn-sm">Track Order</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Card 3 -->
+                <div class="order-card mb-4">
+                    <div class="order-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="order-id">#ORD-2025-1189</span>
+                            <span class="ms-3 order-date">April 28, 2025</span>
+                        </div>
+                        <span class="order-status status-cancelled">Cancelled</span>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-product">
+                            <img src="/placeholder.svg?height=80&width=80&query=black%20formal%20shoes" class="product-image" alt="Product">
+                            <div class="product-details">
+                                <h5>Black Formal Shoes</h5>
+                                <div class="product-price">₹2,499</div>
+                                <div class="product-quantity">Qty: 1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">Total: ₹2,499</div>
+                        <div>
+                            <a href="#" class="btn btn-outline-primary btn-sm">Buy Again</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Card 4 -->
+                <div class="order-card mb-4">
+                    <div class="order-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="order-id">#ORD-2025-1156</span>
+                            <span class="ms-3 order-date">April 15, 2025</span>
+                        </div>
+                        <span class="order-status status-delivered">Delivered</span>
+                    </div>
+                    <div class="order-body">
+                        <div class="order-product">
+                            <img src="/placeholder.svg?height=80&width=80&query=running%20shoes" class="product-image" alt="Product">
+                            <div class="product-details">
+                                <h5>Premium Running Shoes</h5>
+                                <div class="product-price">₹4,999</div>
+                                <div class="product-quantity">Qty: 1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-footer">
+                        <div class="order-total">Total: ₹4,999</div>
+                        <div>
+                            <a href="#" class="btn btn-outline-primary btn-sm">Buy Again</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer (from partial) -->
+    <%- include('./partials/footer') %>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="js/user/common.js"></script>
+    <script src="js/user/userAccount.js"></script>
+</body>
+</html>

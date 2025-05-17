@@ -1,39 +1,39 @@
 document.addEventListener("DOMContentLoaded", function () {
     // Check for flash messages
-    try {
-        // Declare locals, success_msg, and error_msg
-        let locals = {};
-        let success_msg = "";
-        let error_msg = "";
+    // try {
+    //     // Declare locals, success_msg, and error_msg
+    //     let locals = {};
+    //     let success_msg = "";
+    //     let error_msg = "";
 
-        if (
-            typeof locals !== "undefined" &&
-            locals.success_msg &&
-            success_msg.length > 0
-        ) {
-            Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: success_msg,
-                confirmButtonColor: "#0d6efd",
-            });
-        }
+    //     if (
+    //         typeof locals !== "undefined" &&
+    //         locals.success_msg &&
+    //         success_msg.length > 0
+    //     ) {
+    //         Swal.fire({
+    //             icon: "success",
+    //             title: "Success",
+    //             text: success_msg,
+    //             confirmButtonColor: "#0d6efd",
+    //         });
+    //     }
 
-        if (
-            typeof locals !== "undefined" &&
-            locals.error_msg &&
-            error_msg.length > 0
-        ) {
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: error_msg,
-                confirmButtonColor: "#0d6efd",
-            });
-        }
-    } catch (e) {
-        console.log("Flash message check error:", e);
-    }
+    //     if (
+    //         typeof locals !== "undefined" &&
+    //         locals.error_msg &&
+    //         error_msg.length > 0
+    //     ) {
+    //         Swal.fire({
+    //             icon: "error",
+    //             title: "Error",
+    //             text: error_msg,
+    //             confirmButtonColor: "#0d6efd",
+    //         });
+    //     }
+    // } catch (e) {
+    //     console.log("Flash message check error:", e);
+    // }
 
     // Image upload functionality
     function setupImageUpload(

@@ -60,7 +60,7 @@ const loadAddCategory = (req, res) => {
 const addCategory = async (req, res) => {
   try {
     const { name, description, offer = 0,isDeleted = "false" } = req.body
-    const existingCategory = await Category.findOne({ name })
+    const existingCategory = await Category.findOne({name:{$regex:"^"+name+"$" ,$options:"i"}})
 
     if (existingCategory) {
       req.flash("error_msg", "Category already exists")

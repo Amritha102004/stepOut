@@ -1,24 +1,25 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const variantSchema = new Schema({
-  size: {
-    type: String,
-    required: true
-  },
-  varientPrice: {
-    type: Number,
-    required: true
-  },
-  salePrice: {
-    type: Number,
-    required: true
-  },
-  varientquantity: {
-    type: Number,
-    required: true
-  }
-});
+const variantSchema = new Schema(
+  {
+    size: {
+      type: String,
+      required: true
+    },
+    varientPrice: {
+      type: Number,
+      required: true
+    },
+    salePrice: {
+      type: Number,
+      required: true
+    },
+    varientquantity: {
+      type: Number,
+      required: true
+    }
+  });
 
 const imageSchema = new Schema({
   url: {
@@ -58,7 +59,7 @@ const productSchema = new Schema({
     type: String,
     required: false
   },
-  color : {
+  color: {
     type: String,
     required: true
   },
@@ -92,9 +93,9 @@ const productSchema = new Schema({
   },
   isDeleted: {
     type: Boolean,
-    default:false,
+    default: false,
   },
-  
+
 },
   {
     timestamps: true,

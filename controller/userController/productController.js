@@ -1,5 +1,6 @@
 const Product = require('../../model/productModel');
 const Category = require('../../model/categoryModel');
+const Wishlist = require('../../model/wishlistModel');
 const mongoose = require('mongoose');
 const statusCode = require("../../utils/httpStatusCodes")
 
@@ -115,7 +116,7 @@ const getAllProducts = async (req, res, next) => {
                 sort: req.query.sort || "newest",
                 search: req.query.search || "",
             },
-            user: req.session.user || null,
+            user: req.session.user || null,//
             req
         });
     } catch (error) {
@@ -154,7 +155,7 @@ const getProductDetails = async (req, res, next) => {
         res.render("user/product-details", {
             product,
             relatedProducts,
-            user: req.session.user || null,
+            user: req.session.user || null,//
             req
         });
     } catch (error) {

@@ -3,13 +3,13 @@
     width: 100%;
     overflow: hidden;
     position: relative;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
   }
   
   .banner-image {
     width: 100%;
     height: auto;
-    max-height: 400px;
+    max-height: 500px;
     overflow: hidden;
   }
   

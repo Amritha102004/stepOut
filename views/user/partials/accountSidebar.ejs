@@ -1,0 +1,38 @@
+<!-- Account Sidebar Partial -->
+<div class="profile-sidebar">
+    <div class="profile-header">
+        <h4><%=req.session.user.fullName.toUpperCase() %></h4>
+    </div>
+    <ul class="profile-nav">
+        <li>
+            <a href="/account" class="<%= activePage === 'overview' ? 'active' : '' %>">
+                <i class="fas fa-user-circle"></i> Account Overview
+            </a>
+        </li>
+        <li>
+            <a href="/account/orders" class="<%= activePage === 'orders' ? 'active' : '' %>">
+                <i class="fas fa-shopping-bag"></i> My Orders
+            </a>
+        </li>
+        <li>
+            <a href="/account/addresses" class="<%= activePage === 'addresses' ? 'active' : '' %>">
+                <i class="fas fa-map-marker-alt"></i> Manage Addresses
+            </a>
+        </li>
+        <li>
+            <a href="/account/wallet" class="<%= activePage === 'wallet' ? 'active' : '' %>">
+                <i class="fas fa-wallet"></i> Wallet
+            </a>
+        </li>
+        <li>
+            <a href="/account/coupons" class="<%= activePage === 'coupons' ? 'active' : '' %>">
+                <i class="fas fa-tags"></i> Coupons
+            </a>
+        </li>
+        <li>
+            <a href="/logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </li>
+    </ul>
+</div>

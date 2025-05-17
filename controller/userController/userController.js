@@ -1,10 +1,13 @@
 const User = require('../../model/userModel');
 const Product=require('../../model/productModel');
-const Category=require('../../model/categoryModel')
+const Category=require('../../model/categoryModel');
 const env = require('dotenv').config();
-const statusCode = require("../../utils/httpStatusCodes")
+const statusCode = require("../../utils/httpStatusCodes");
 const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer');
+const generateOtp=require('../../utils/otpGenerator');
+const sendEmail=require('../../utils/sendEmail');
+const securePassword=require('../../utils/hashPassword');
 
 
 const loadHome = async (req, res) => {
@@ -58,122 +61,79 @@ const loadHome = async (req, res) => {
 
 const loadSignup = async (req, res) => {
     try {
-        return res.render('user/signUp', { error: null });
+        return res.render('user/signUp', { errors: null, userData: null  });
     } catch (error) {
         console.log("signUp page not loading:", error);
         res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
     }
 }
 
-
-
-function generateOtp() {
-    return Math.floor(10000 + Math.random() * 90000);
-}
-
-
-async function sendVerificationEmail(email, otp) {
-    try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            port: 587,
-            secure: false,
-            requireTLS: true,
-            auth: {
-                user: process.env.NODEMAILER_EMAIL,
-                pass: process.env.NODEMAILER_PASSWORD
-            }
-        })
-
-        const info = await transporter.sendMail({
-            from: ` "stepOut Support" <${process.env.NODEMAILER_EMAIL}>`,
-            to: email,
-            subject: "Verify Your stepOut Account ✔",
-            text: `Your OTP is: ${otp}`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 10px; background: #f4f4f4;">
-                <h2 style="color: #333;">Welcome to <span style="color: #27ae60;">stepOut</span>!</h2>
-                <p>Thanks for signing up! Use the OTP below to verify your account:</p>
-                <div style="padding: 15px; background: #fff; border-radius: 8px; margin: 20px 0; text-align: center;">
-                  <h1 style="color: #27ae60;">${otp}</h1>
-                </div>
-                <p>If you didn’t request this, you can ignore it.</p>
-                <p style="font-size: 12px; color: #999; margin-top: 30px;">
-                  stepOut Inc. | stepOut.com | support@stepOut.com
-                </p>
-              </div>`,
-            headers: {
-                'X-Priority': '3',
-                'X-Mailer': 'stepOut Mailer'
-            }
-        });
-
-        return info.accepted.length > 0
-
-    } catch (error) {
-        console.error("ERROR SENDING EMAIL", error);
-        return false
-
-    }
-}
-
-
-
-
 const signup = async (req, res) => {
-
     try {
         const { fullName, email, phoneNumber, password, confirmPassword } = req.body;
 
-        if (!fullName || !email || !phoneNumber || !password || !confirmPassword) {
-            return res.render('user/signUp', { error: "All fields are required" });
-        }
+        const errors = {};
+        const userData = { fullName, email, phoneNumber };
 
         const nameRegex = /^[A-Za-z\s]{3,}$/;
-        if (!nameRegex.test(fullName)) {
-            return res.render('user/signUp', { error: "Enter a valid full name (only letters, min 3 chars)" });
+        if (!fullName) {
+            errors.fullName = "Full name is required";
+        } else if (!nameRegex.test(fullName)) {
+            errors.fullName = "Enter a valid full name (only letters, min 3 chars)";
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.render('user/signUp', { error: "Enter a valid email address" });
+        if (!email) {
+            errors.email = "Email is required";
+        } else if (!emailRegex.test(email)) {
+            errors.email = "Enter a valid email address";
+        } else {
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                errors.email = "Email already registered";
+            }
         }
-
-        if (password !== confirmPassword) {
-            return res.render('user/signUp', { error: "Passwords do not match" });
-        }
-
+ 
         const phoneRegex = /^\d{10}$/;
-        if (!phoneRegex.test(phoneNumber)) {
-            return res.render('user/signUp', { error: "Enter a valid 10-digit phone number" });
+        if (!phoneNumber) {
+            errors.phoneNumber = "Phone number is required";
+        } else if (!phoneRegex.test(phoneNumber)) {
+            errors.phoneNumber = "Enter a valid 10-digit phone number";
         }
 
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\d@#$%^&*!]{8,}$/;
-        if (!passwordRegex.test(password)) {
-            return res.render('user/signUp', {
-               error: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
+        if (!password) {
+            errors.password = "Password is required";
+        } else if (!passwordRegex.test(password)) {
+            errors.password = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character";
+        }
+
+        if (!confirmPassword) {
+            errors.confirmPassword = "Please confirm your password";
+        } else if (password !== confirmPassword) {
+            errors.confirmPassword = "Passwords do not match";
+        }
+ 
+        if (Object.keys(errors).length > 0) {
+            return res.render('user/signUp', { 
+                errors, 
+                userData
             });
         }
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.render('user/signUp', { error: "Email already registered" });
-        }
-
-        const otp = generateOtp()
-        const emailsent = await sendVerificationEmail(email, otp)
+        const otp = generateOtp();
+        const emailsent = await sendEmail.sendVerificationEmail(email, otp);
 
         if (!emailsent) {
-            return res.json('email error')
+            return res.json('email error');
         }
 
         req.session.userOtp = otp;
         req.session.otpType = 'signup';
-        req.session.userData = { fullName, email, phoneNumber, password }
+        req.session.userData = { fullName, email, phoneNumber, password };
 
-        res.render('user/otpVerification', { error: null })
-        console.log('otp sented ', otp);                    //////
-
+        res.render('user/otpVerification', { error: null });
+        console.log('otp sented ', otp);
 
     } catch (error) {
         console.log('Error during signup:', error);
@@ -182,22 +142,22 @@ const signup = async (req, res) => {
 }
 
 
-const securePassword = async (password) => {
-    try {
-        const passwordHash = await bcrypt.hash(password, 10)
-        return passwordHash
+// const securePassword = async (password) => {
+//     try {
+//         const passwordHash = await bcrypt.hash(password, 10)
+//         return passwordHash
 
-    } catch (error) {
-        console.error("Password hash error:", error);
-        throw error;
-    }
-}
+//     } catch (error) {
+//         console.error("Password hash error:", error);
+//         throw error;
+//     }
+// }
 
 
 const verifyOtp = async (req, res) => {
     try {
         const { otp } = req.body;
-        console.log(otp);                                               ////////
+        console.log(otp); ////////
         const otpType = req.session.otpType;
 
         if (otpType === 'signup' && otp == req.session.userOtp) {
@@ -222,8 +182,27 @@ const verifyOtp = async (req, res) => {
         }
 
         if (otpType === 'reset' && otp == req.session.secondOtp) {
-            req.session.otpType = null;                                                                                    // Keep verifiedEmail for next step
+            req.session.otpType = null;                                                                                 // Keep verifiedEmail for next step
             return res.redirect("/resetpassword");
+        }
+
+        if(otpType==='email' && otp == req.session.userOtp){
+            req.session.otpType=null;
+            req.session.userOtp=null; 
+            const user = req.session.userData;
+            const updatedUser=await User.findOneAndUpdate(
+                {_id: req.session.user._id },
+                {
+                fullName:user.fullName,
+                email:user.email,
+                phoneNumber:user.phoneNumber,
+                },
+                { new: true }
+            );
+            req.session.user=updatedUser
+            req.flash("success_msg", "Updated info successfully")
+            return res.redirect('/account');/////json
+
         }
 
         return res.render("user/otpVerification", { error: "Incorrect OTP. Please try again." });
@@ -245,9 +224,9 @@ const resendOtp = async (req, res) => {
             const newOtp = generateOtp();
             req.session.userOtp = newOtp;
 
-            const emailSent = await sendVerificationEmail(email, newOtp);
+            const emailSent = await sendEmail.sendVerificationEmail(email, newOtp);
             if (emailSent) {
-                console.log("Resent signup OTP:", newOtp);          ////////
+                console.log("Resent signup OTP:", newOtp);////////
                 return res.status(statusCode.OK).json({ success: true });
             } else {
                 return res.json({ success: false, error: "Failed to resend OTP" });
@@ -258,6 +237,8 @@ const resendOtp = async (req, res) => {
             const email = req.session.verifiedEmail;
             const newOtp = generateOtp();
             req.session.secondOtp = newOtp;
+
+            ////util//
 
             const transporter = nodemailer.createTransport({
                 service: "gmail",
@@ -353,6 +334,13 @@ const handleForgotPassword = async (req, res) => {
         req.session.secondOtp = otp;
         req.session.otpType = 'reset';
 
+        
+        // const emailsent = await sendEmail.sendVerificationEmail(email, otp);
+
+        // if (!emailsent) {
+        //     return res.json('email error');
+        // }
+
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -367,8 +355,7 @@ const handleForgotPassword = async (req, res) => {
             subject: "Reset your stepOut password",
             text: `Your OTP is ${otp}`,
         });
-        console.log("reset password OTP:", otp);
-
+        console.log("reset password OTP:", otp);//////
 
         res.render("user/otpVerification", { email: null, error: null });
 
@@ -394,9 +381,8 @@ const changePassword = async (req, res) => {
     try {
         const { password } = req.body;
         const email = req.session.verifiedEmail;
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await User.findOneAndUpdate({ email }, { password: hashedPassword });
+        const passwordHash = await securePassword(password);
+        await User.findOneAndUpdate({ email }, { password: passwordHash });
 
         req.session.verifiedEmail = null;
         req.session.secondOtp = null;
@@ -410,14 +396,6 @@ const changePassword = async (req, res) => {
     }
 }
 
-const loadShop=async (req,res)=>{
-    try {
-        res.render('user/shop',{req});
-    } catch (error) {
-        console.log('shop page not rendering',error);
-        res.status(statusCode.INTERNAL_SERVER_ERROR).send("somethingg went wrong");
-    }
-}
 
 const logout = async (req, res) => {
     try {
@@ -444,7 +422,6 @@ module.exports = {
     handleForgotPassword,
     loadResetPassword,
     changePassword,
-    loadShop,
     logout,
 }
 
