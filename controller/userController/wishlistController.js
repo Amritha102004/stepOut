@@ -8,22 +8,21 @@ const statusCode = require("../../utils/httpStatusCodes");
 const loadWishlist = async (req, res) => {
     try {
         const userId = req.session.user._id;
-        
-        const populatedWishlist = await Wishlist.findOne({ user: userId })
+        const wishlist = await Wishlist.findOne({ user: userId })
             .populate({
                 path: 'products',
                 match: { isActive: true, isDeleted: false }
             })
             .lean();
 
-        if (!populatedWishlist) {
+        if (!wishlist) {
             return res.render('user/wishlist', { 
                 wishlistItems: [],
                 req
             });
         }
 
-        const wishlistItems = populatedWishlist.products.filter(product => product !== null);
+        const wishlistItems = wishlist.products.filter(product => product !== null);
 
         res.render('user/wishlist', {
             wishlistItems,
@@ -36,26 +35,15 @@ const loadWishlist = async (req, res) => {
     }
 };
 
-// Add product to wishlist
 const addToWishlist = async (req, res) => {
     try {
-        // Since checkSession middleware is applied, we know user is logged in
         const userId = req.session.user._id;
         const { productId } = req.body;
 
-        // Validate product ID
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-            return res.status(statusCode.BAD_REQUEST).json({
-                success: false,
-                message: "Invalid product ID"
-            });
-        }
-
-        // Check if product exists and is active
         const product = await Product.findOne({ 
             _id: productId,
             isActive: true,
-            isDeleted: { $ne: true }
+            isDeleted: false
         });
 
         if (!product) {
@@ -65,7 +53,6 @@ const addToWishlist = async (req, res) => {
             });
         }
 
-        // Find user's wishlist or create if it doesn't exist
         let wishlist = await Wishlist.findOne({ user: userId });
         
         if (!wishlist) {
@@ -82,7 +69,6 @@ const addToWishlist = async (req, res) => {
             });
         }
 
-        // Check if product is already in wishlist
         if (wishlist.products.includes(productId)) {
             return res.status(statusCode.OK).json({
                 success: true,
@@ -91,7 +77,6 @@ const addToWishlist = async (req, res) => {
             });
         }
 
-        // Add product to wishlist
         wishlist.products.push(productId);
         await wishlist.save();
 
@@ -109,22 +94,10 @@ const addToWishlist = async (req, res) => {
     }
 };
 
-// Remove product from wishlist
 const removeFromWishlist = async (req, res) => {
     try {
-        // Since checkSession middleware is applied, we know user is logged in
         const userId = req.session.user._id;
         const productId = req.params.productId;
-
-        // Validate product ID
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-            return res.status(statusCode.BAD_REQUEST).json({
-                success: false,
-                message: "Invalid product ID"
-            });
-        }
-
-        // Find user's wishlist
         const wishlist = await Wishlist.findOne({ user: userId });
         
         if (!wishlist) {
@@ -134,8 +107,8 @@ const removeFromWishlist = async (req, res) => {
             });
         }
 
-        // Check if product is in wishlist
         const productIndex = wishlist.products.indexOf(productId);
+        // console.log(productIndex);
         if (productIndex === -1) {
             return res.status(statusCode.NOT_FOUND).json({
                 success: false,
@@ -143,7 +116,6 @@ const removeFromWishlist = async (req, res) => {
             });
         }
 
-        // Remove product from wishlist
         wishlist.products.splice(productIndex, 1);
         await wishlist.save();
 
@@ -161,13 +133,9 @@ const removeFromWishlist = async (req, res) => {
     }
 };
 
-// Clear entire wishlist
 const clearWishlist = async (req, res) => {
     try {
-        // Since checkSession middleware is applied, we know user is logged in
         const userId = req.session.user._id;
-
-        // Find user's wishlist
         const wishlist = await Wishlist.findOne({ user: userId });
         
         if (!wishlist) {
@@ -177,7 +145,6 @@ const clearWishlist = async (req, res) => {
             });
         }
 
-        // Clear wishlist products
         wishlist.products = [];
         await wishlist.save();
 
@@ -194,10 +161,8 @@ const clearWishlist = async (req, res) => {
     }
 };
 
-// Check if product is in wishlist
 const checkWishlistStatus = async (req, res) => {
     try {
-        // If user is not logged in, product is not in wishlist
         if (!req.session.user) {
             return res.status(statusCode.OK).json({
                 inWishlist: false
@@ -206,19 +171,7 @@ const checkWishlistStatus = async (req, res) => {
 
         const userId = req.session.user._id;
         const productId = req.params.productId;
-
-        // Validate product ID
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
-            return res.status(statusCode.BAD_REQUEST).json({
-                success: false,
-                message: "Invalid product ID"
-            });
-        }
-
-        // Find user's wishlist
         const wishlist = await Wishlist.findOne({ user: userId });
-        
-        // Check if wishlist exists and product is in it
         const inWishlist = wishlist && wishlist.products.includes(productId);
 
         res.status(statusCode.OK).json({

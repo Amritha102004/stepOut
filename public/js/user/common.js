@@ -1,21 +1,16 @@
 // Common JavaScript functions for all pages
 document.addEventListener('DOMContentLoaded', function() {
-    // Header search functionality
+
     initializeHeaderSearch();
-    
-    // Fix shop page search if it exists
+
     fixShopPageSearch();
-    
-    // Initialize Bootstrap components
+ 
     initializeBootstrapComponents();
-    
-    // Initialize wishlist functionality
+ 
     initializeWishlistIcons();
-    
-    // Check wishlist status for all products
+  
     checkWishlistStatusForProducts();
-    
-    // Handle image errors
+  
     handleImageErrors();
 });
 
@@ -47,7 +42,6 @@ function initializeHeaderSearch() {
 function fixShopPageSearch() {
     const shopSearchInput = document.querySelector('.search-filter-section #searchInput');
     if (shopSearchInput) {
-        // Ensure shop search is always visible and not affected by header search toggle
         shopSearchInput.style.opacity = '1';
         shopSearchInput.style.position = 'static';
     }

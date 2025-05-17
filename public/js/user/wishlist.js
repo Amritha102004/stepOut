@@ -1,11 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize remove buttons
   initializeRemoveButtons();
-
-  // Initialize clear wishlist button
   initializeClearWishlistButton();
-
-  // Initialize add to cart buttons
   initializeAddToCartButtons();
 });
 
@@ -18,7 +13,7 @@ function initializeRemoveButtons() {
             const productId = this.getAttribute("data-product-id");
             const wishlistCard = this.closest(".col-lg-4");
 
-            // Make AJAX call to remove the item from the wishlist - no confirmation
+            // Make AJAX call to remove the item from the wishlist
             fetch(`/wishlist/remove/${productId}`, {
                 method: 'DELETE',
                 headers: {
@@ -85,7 +80,6 @@ function initializeRemoveButtons() {
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Redirect to login if it's an authentication error
                 window.location.href = '/login';
             });
         });
@@ -98,7 +92,7 @@ function initializeClearWishlistButton() {
 
   if (clearButton) {
     clearButton.addEventListener("click", () => {
-      // Make AJAX call to clear the wishlist - no confirmation
+      // Make AJAX call to clear the wishlist
       fetch('/wishlist/clear', {
         method: 'DELETE',
         headers: {
@@ -136,7 +130,6 @@ function initializeClearWishlistButton() {
               }
             });
 
-            // Add the empty state
             wishlistContainer.appendChild(newContent.firstElementChild);
           }
 
@@ -162,7 +155,7 @@ function initializeAddToCartButtons() {
     button.addEventListener("click", function () {
       const productId = this.getAttribute("data-product-id");
 
-      // Show loading state
+   
       const originalText = this.innerHTML;
       this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Adding...';
       this.disabled = true;
@@ -180,7 +173,6 @@ function initializeAddToCartButtons() {
       })
       .then(response => response.json())
       .then(data => {
-        // Reset button
         this.innerHTML = originalText;
         this.disabled = false;
         
@@ -191,7 +183,6 @@ function initializeAddToCartButtons() {
         }
       })
       .catch(error => {
-        // Reset button
         this.innerHTML = originalText;
         this.disabled = false;
         
@@ -204,7 +195,6 @@ function initializeAddToCartButtons() {
 
 // Improved Toast notification function that ensures Bootstrap is properly loaded
 function showToastImproved(message, type = 'success') {
-    // Check if toast container exists, if not create it
     let toastContainer = document.querySelector('.toast-container');
     if (!toastContainer) {
         toastContainer = document.createElement('div');
@@ -212,7 +202,6 @@ function showToastImproved(message, type = 'success') {
         document.body.appendChild(toastContainer);
     }
     
-    // Create toast element
     const toastId = 'toast-' + Date.now();
     const toastHtml = `
         <div id="${toastId}" class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'}" role="alert" aria-live="assertive" aria-atomic="true">
@@ -227,13 +216,11 @@ function showToastImproved(message, type = 'success') {
     
     toastContainer.insertAdjacentHTML('beforeend', toastHtml);
     
-    // Initialize and show the toast
     const toastElement = document.getElementById(toastId);
-    
-    // Try to directly create a Bootstrap Toast instance
+
     try {
         // First check if Bootstrap is available as a global variable
-        const bootstrap = window.bootstrap; // Declare the bootstrap variable here
+        const bootstrap = window.bootstrap;
         if (typeof bootstrap !== 'undefined') {
             const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
             toast.show();
@@ -246,11 +233,9 @@ function showToastImproved(message, type = 'success') {
             toast.show();
             return;
         }
-        
-        // If we get here, Bootstrap is not available, so we'll create a simple custom toast
+
         console.warn('Bootstrap not found, using custom toast implementation');
         
-        // Style the toast for visibility without Bootstrap
         toastElement.style.display = 'block';
         toastElement.style.position = 'fixed';
         toastElement.style.bottom = '20px';
@@ -265,7 +250,6 @@ function showToastImproved(message, type = 'success') {
         toastElement.style.transition = 'opacity 0.5s ease';
         toastElement.style.zIndex = '9999';
         
-        // Auto-hide after 3 seconds
         setTimeout(() => {
             toastElement.style.opacity = '0';
             setTimeout(() => {
@@ -274,11 +258,10 @@ function showToastImproved(message, type = 'success') {
         }, 3000);
     } catch (error) {
         console.error('Error showing toast:', error);
-        // Fallback to alert as a last resort
         alert(message);
     }
     
-    // Add click handler to close button
+    // close button
     const closeButton = toastElement.querySelector('.btn-close');
     if (closeButton) {
         closeButton.addEventListener('click', () => {

@@ -24,16 +24,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (clearSearchBtn) {
       clearSearchBtn.addEventListener("click", () => {
         document.getElementById("searchInput").value = ""
-        // Submit the form to clear the search
+     
         document.getElementById("searchForm").submit()
       })
     }
   
-    // Clear all filters
+   
     const clearAllFiltersBtn = document.getElementById("clearAllFilters")
     if (clearAllFiltersBtn) {
       clearAllFiltersBtn.addEventListener("click", () => {
-        // Redirect to the base shop URL without any query parameters
         window.location.href = "/shop"
       })
     }
