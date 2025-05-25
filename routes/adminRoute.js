@@ -4,6 +4,7 @@ const adminController=require('../controller/adminController/adminController');
 const customerController=require('../controller/adminController/customerController');
 const productController=require('../controller/adminController/productController');
 const categoryController=require('../controller/adminController/categoryController');
+const orderController=require('../controller/adminController/orderController');
 const {checkSession}=require('../middleware/adminAuth');
 const {isAdmin}=require('../middleware/adminAuth');
 const upload=require('../middleware/upload');
@@ -38,6 +39,14 @@ router.post('/editProduct', checkSession, isAdmin, upload.fields([
       { name: 'additionalImage2', maxCount: 1 }]), productController.editProduct);
 router.delete("/deleteProduct/:id", checkSession, isAdmin, productController.deleteProduct);
 router.put("/toggleProductListing/:id", checkSession, isAdmin, productController.toggleProductListing);
+
+router.get("/orders", checkSession, orderController.loadOrders);
+router.get("/orders/:orderId/details", checkSession, orderController.getOrderDetails)
+router.patch("/orders/:orderId/status", checkSession, isAdmin, orderController.updateOrderStatus);
+router.post("/orders/:orderId/notify", checkSession, isAdmin, orderController.sendNotification);
+router.post("/orders/:orderId/cancel", checkSession, isAdmin, orderController.cancelOrder)
+router.delete("/orders/:orderId", checkSession, isAdmin, orderController.deleteOrder)
+router.get("/orders/:orderId/invoice", checkSession, orderController.downloadInvoice);
       
     
 

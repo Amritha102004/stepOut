@@ -1,0 +1,394 @@
+/* Orders Page Styles */
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.orders-search-container {
+  min-width: 300px;
+}
+
+.orders-search-container .input-group {
+  width: 100%;
+}
+
+.orders-search-container .form-control {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+
+.orders-search-container .btn {
+  border-radius: 0;
+}
+
+.orders-search-container .btn:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+/* Filter Tabs */
+.filter-tabs .nav-pills .nav-link {
+  color: #666;
+  background-color: transparent;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.filter-tabs .nav-pills .nav-link:hover {
+  background-color: #f8f9fa;
+  border-color: #009688;
+  color: #009688;
+}
+
+.filter-tabs .nav-pills .nav-link.active {
+  background-color: #009688;
+  border-color: #009688;
+  color: white;
+}
+
+/* Order Cards */
+.order-card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.order-card:hover {
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Order Header */
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.order-info .order-id {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.order-info .order-date {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-confirmed {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-shipped {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-delivered {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-returned {
+  background-color: #ffeaa7;
+  color: #6c5ce7;
+}
+
+/* Order Items Preview */
+.order-items-preview {
+  padding: 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.item-preview {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.item-preview:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.item-image {
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.item-details {
+  flex-grow: 1;
+}
+
+.item-details h6 {
+  margin: 0 0 0.25rem 0;
+  color: #333;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.item-details p {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.item-status {
+  margin-top: 0.5rem;
+}
+
+.more-items {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+/* Order Summary */
+.order-summary {
+  padding: 1rem 1.5rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-item .amount {
+  font-weight: 600;
+  color: #009688;
+  font-size: 1rem;
+}
+
+/* Order Actions */
+.order-actions {
+  padding: 1rem 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.order-actions .btn {
+  font-size: 0.85rem;
+  padding: 0.375rem 0.75rem;
+}
+
+/* Empty State */
+.empty-orders {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #ddd;
+  margin-bottom: 1.5rem;
+}
+
+.empty-orders h4 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.empty-orders p {
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+/* Modal Styles */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+}
+
+/* Form Validation */
+.form-select.is-invalid,
+.form-control.is-invalid {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: none;
+}
+
+.form-select.is-invalid + .invalid-feedback,
+.form-control.is-invalid + .invalid-feedback {
+  display: block;
+}
+
+/* Pagination */
+.pagination .page-link {
+  color: #009688;
+  border-color: #ddd;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #009688;
+  border-color: #009688;
+}
+
+.pagination .page-link:hover {
+  color: #00796b;
+  background-color: #f8f9fa;
+  border-color: #009688;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .orders-search-container {
+    min-width: auto;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .order-actions {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .filter-tabs .nav-pills {
+    flex-wrap: wrap;
+  }
+
+  .filter-tabs .nav-pills .nav-link {
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .order-card {
+    margin-bottom: 1rem;
+  }
+
+  .order-header,
+  .order-items-preview,
+  .order-summary,
+  .order-actions {
+    padding: 1rem;
+  }
+
+  .item-preview {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .item-image {
+    align-self: center;
+  }
+
+  .order-actions {
+    flex-direction: column;
+  }
+
+  .order-actions .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .order-actions .btn:last-child {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .summary-item {
+    font-size: 0.85rem;
+  }
+
+  .empty-orders {
+    padding: 2rem 1rem;
+  }
+
+  .empty-icon {
+    font-size: 3rem;
+  }
+}

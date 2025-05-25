@@ -24,34 +24,63 @@
     <!-- Main Content -->
     <div class="main-content">
         <h3 class="label">Dashboard</h3>
+        
         <!-- Stats Cards -->
         <div class="row">
             <div class="col-md-3 col-sm-6">
                 <div class="stats-card sales">
-                    <i class="fas fa-rupee-sign"></i>
-                    <div class="number">₹ 5,55,000</div>
-                    <div class="label">Total Sales</div>
+                    <div class="stats-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="number">₹ <%= dashboardStats.totalRevenue.toLocaleString() %></div>
+                        <div class="label">Total Sales</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i> +<%= dashboardStats.revenueGrowth %>%
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="stats-card visitors">
-                    <i class="fas fa-eye"></i>
-                    <div class="number">2,500</div>
-                    <div class="label">Visitors</div>
+                    <div class="stats-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="number"><%= dashboardStats.totalVisitors %></div>
+                        <div class="label">Visitors</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i> +<%= dashboardStats.visitorGrowth %>%
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="stats-card orders">
-                    <i class="fas fa-shopping-bag"></i>
-                    <div class="number">1,500</div>
-                    <div class="label">Total Orders</div>
+                    <div class="stats-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="number"><%= dashboardStats.totalOrders %></div>
+                        <div class="label">Total Orders</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i> +<%= dashboardStats.orderGrowth %>%
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3 col-sm-6">
                 <div class="stats-card users">
-                    <i class="fas fa-user"></i>
-                    <div class="number">1,013</div>
-                    <div class="label">Users</div>
+                    <div class="stats-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="stats-content">
+                        <div class="number"><%= dashboardStats.totalUsers %></div>
+                        <div class="label">Users</div>
+                        <div class="stats-change">
+                            <i class="fas fa-arrow-up"></i> +<%= dashboardStats.userGrowth %>%
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -61,9 +90,9 @@
             <div class="chart-header">
                 <div>
                     <div class="chart-title">Total Revenue</div>
-                    <div class="revenue-amount">₹50,23,780</div>
+                    <div class="revenue-amount">₹<%= dashboardStats.totalRevenue.toLocaleString() %></div>
                     <div class="change-indicator">
-                        <i class="fas fa-arrow-up me-1"></i> 5% increase since last month
+                        <i class="fas fa-arrow-up me-1"></i> <%= dashboardStats.revenueGrowth %>% increase since last month
                     </div>
                 </div>
                 <div class="chart-legend">
@@ -121,175 +150,111 @@
         <div class="orders-container">
             <div class="orders-header">
                 <div class="orders-title">Latest Orders</div>
+                <a href="/admin/orders" class="btn btn-outline-dark btn-sm">
+                    <i class="fas fa-external-link-alt me-1"></i>View All
+                </a>
             </div>
             
             <div class="table-responsive">
-                <table class="orders-table">
-                    <thead>
-                        <tr>
-                            <th>
-                                <div class="d-flex align-items-center">
-                                    <span>Order ID</span>
-                                    <i class="fas fa-sort ms-1 sort-icon"></i>
-                                </div>
-                            </th>
-                            <th>Product</th>
-                            <th>
-                                <div class="d-flex align-items-center">
-                                    <span>Date</span>
-                                    <i class="fas fa-sort ms-1 sort-icon"></i>
-                                </div>
-                            </th>
-                            <th>Customer</th>
-                            <th>
-                                <div class="d-flex align-items-center">
-                                    <span>Total</span>
-                                    <i class="fas fa-sort ms-1 sort-icon"></i>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="d-flex align-items-center">
-                                    <span>Payment</span>
-                                    <i class="fas fa-sort ms-1 sort-icon"></i>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="d-flex align-items-center">
-                                    <span>Status</span>
-                                    <i class="fas fa-sort ms-1 sort-icon"></i>
-                                </div>
-                            </th>
-                            <th>
-                                <div class="d-flex align-items-center">
-                                    <span>Action</span>
-                                    <i class="fas fa-sort ms-1 sort-icon"></i>
-                                </div>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>#302012</td>
-                            <td>
-                                <div class="product-info">
-                                    <img src="/api/placeholder/50/50" alt="Nike CITY" class="product-img">
-                                    <div>
-                                        <div class="product-name">Nike CITY</div>
-                                        <div class="product-meta">+5 Products</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>29 Dec 2022</td>
-                            <td>jaydev</td>
-                            <td>₹15000</td>
-                            <td>24 Jan 2023</td>
-                            <td><span class="status-badge processing">Processing</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <div class="action-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                    <div class="action-btn">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <div class="action-btn delete">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#302012</td>
-                            <td>
-                                <div class="product-info">
-                                    <img src="/api/placeholder/50/50" alt="Nike Zoom" class="product-img">
-                                    <div>
-                                        <div class="product-name">Nike Zoom</div>
-                                        <div class="product-meta">+3 Products</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>29 Dec 2022</td>
-                            <td>jaydev</td>
-                            <td>₹15000</td>
-                            <td>24 Jan 2023</td>
-                            <td><span class="status-badge processing">Processing</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <div class="action-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                    <div class="action-btn">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <div class="action-btn delete">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#302012</td>
-                            <td>
-                                <div class="product-info">
-                                    <img src="/api/placeholder/50/50" alt="Jordan Retro" class="product-img">
-                                    <div>
-                                        <div class="product-name">Jordan Retro</div>
-                                        <div class="product-meta">+3 Products</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>29 Dec 2022</td>
-                            <td>jaydev</td>
-                            <td>₹15000</td>
-                            <td>24 Jan 2023</td>
-                            <td><span class="status-badge processing">Processing</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <div class="action-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                    <div class="action-btn">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <div class="action-btn delete">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>#302012</td>
-                            <td>
-                                <div class="product-info">
-                                    <img src="/api/placeholder/50/50" alt="KatikaSpeed" class="product-img">
-                                    <div>
-                                        <div class="product-name">KatikaSpeed</div>
-                                        <div class="product-meta">+3 Products</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>29 Dec 2022</td>
-                            <td>jaydev</td>
-                            <td>₹15000</td>
-                            <td>24 Jan 2023</td>
-                            <td><span class="status-badge processing">Processing</span></td>
-                            <td>
-                                <div class="action-btns">
-                                    <div class="action-btn">
-                                        <i class="fas fa-eye"></i>
-                                    </div>
-                                    <div class="action-btn">
-                                        <i class="fas fa-edit"></i>
-                                    </div>
-                                    <div class="action-btn delete">
-                                        <i class="fas fa-trash"></i>
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <% if (latestOrders && latestOrders.length > 0) { %>
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Product</th>
+                                <th>Date</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% latestOrders.forEach(order => { %>
+                                <tr>
+                                    <td>
+                                        <strong>#<%= order.orderID %></strong>
+                                    </td>
+                                    <td>
+                                        <div class="product-info">
+                                            <% if (order.products && order.products.length > 0) { %>
+                                                <img src="<%= order.products[0].product.images && order.products[0].product.images.length > 0 ? 
+                                                    (order.products[0].product.images.find(img => img.isMain) || order.products[0].product.images[0]).url : 
+                                                    '/placeholder.svg?height=40&width=40&query=shoe' %>" 
+                                                     alt="<%= order.products[0].product.name %>" class="product-img">
+                                                <div>
+                                                    <div class="product-name"><%= order.products[0].product.name %></div>
+                                                    <% if (order.products.length > 1) { %>
+                                                        <div class="product-meta">+<%= order.products.length - 1 %> more items</div>
+                                                    <% } else { %>
+                                                        <div class="product-meta">Size: <%= order.products[0].variant.size %></div>
+                                                    <% } %>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="order-date">
+                                            <%= new Date(order.orderDate).toLocaleDateString('en-IN', { 
+                                                day: '2-digit', 
+                                                month: 'short',
+                                                year: 'numeric'
+                                            }) %>
+                                        </div>
+                                        <div class="order-time">
+                                            <small class="text-muted">
+                                                <%= new Date(order.orderDate).toLocaleTimeString('en-IN', { 
+                                                    hour: '2-digit', 
+                                                    minute: '2-digit' 
+                                                }) %>
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="customer-info">
+                                            <div class="customer-name"><%= order.user.name %></div>
+                                            <div class="customer-email">
+                                                <small class="text-muted"><%= order.user.email %></small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong class="order-amount">₹<%= order.finalAmount.toLocaleString() %></strong>
+                                    </td>
+                                    <td>
+                                        <div class="payment-method">
+                                            <% if (order.paymentMethod === 'COD') { %>
+                                                <i class="fas fa-money-bill-wave me-1"></i>COD
+                                            <% } else { %>
+                                                <i class="fas fa-credit-card me-1"></i>Online
+                                            <% } %>
+                                        </div>
+                                        <div class="payment-status">
+                                            <% if (order.paymentMethod === 'COD') { %>
+                                                <small class="badge bg-warning text-dark">Pending</small>
+                                            <% } else { %>
+                                                <small class="badge bg-success">Paid</small>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-<%= order.orderStatus %>">
+                                            <%= order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1) %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                <% } else { %>
+                    <div class="no-orders">
+                        <div class="no-orders-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h5>No Recent Orders</h5>
+                        <p class="text-muted">No orders have been placed recently.</p>
+                    </div>
+                <% } %>
             </div>
         </div>
     </div>

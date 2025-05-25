@@ -60,7 +60,7 @@
 }
 
 .product-table th {
-    background-color: #0d6efd;
+    background-color: #121314;
     color: #fff;
     font-weight: 500;
     padding: 12px 15px;
@@ -164,7 +164,7 @@ input:checked+.slider:before {
 }
 
 .btn-add-offer {
-    background-color: #0d6efd;
+    background-color: #212529;
     color: #fff;
     border: none;
     padding: 8px 15px;
@@ -174,11 +174,11 @@ input:checked+.slider:before {
 
 .offer-text {
     font-weight: 600;
-    color: #0d6efd;
+    color: #212529;
 }
 
 .pagination .page-item .page-link {
-    color: #0d6efd;
+    color: #212529;
     border: none;
     width: 35px;
     height: 35px;
@@ -190,7 +190,7 @@ input:checked+.slider:before {
 }
 
 .pagination .page-item.active .page-link {
-    background-color: #0d6efd;
+    background-color: #212529;
     color: #fff;
 }
 

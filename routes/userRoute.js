@@ -7,6 +7,7 @@ const wishlistController = require('../controller/userController/wishlistControl
 const cartController = require('../controller/userController/cartController');
 const addressesController = require('../controller/userController/addressesController');
 const checkoutController = require('../controller/userController/checkoutController');
+const orderController = require('../controller/userController/orderController');
 const passport = require('passport');
 const { isLogin } = require('../middleware/userAuth')
 const { isBlocked } = require('../middleware/userAuth')
@@ -65,14 +66,15 @@ router.post('/checkout/place-order', checkSession, isBlocked, checkoutController
 router.get('/order-success', checkSession, isBlocked, checkoutController.loadOrderSuccess);
 
 //order
-router.get('/account/orders', (req, res) => {
-    res.render('user/myOrder', { req })
-})
-
-
+router.get('/account/orders', checkSession, isBlocked, orderController.loadOrders);
+router.get('/account/orders/:orderId', checkSession, isBlocked, orderController.loadOrderDetail);
+router.post('/account/orders/:orderId/cancel', checkSession, isBlocked, orderController.cancelOrder);
+router.post('/account/orders/:orderId/return', checkSession, isBlocked, orderController.returnOrder);
+router.post('/account/orders/:orderId/cancel-item', checkSession, isBlocked, orderController.cancelOrderItem);
+router.post('/account/orders/:orderId/return-item', checkSession, isBlocked, orderController.returnOrderItem);
+router.get('/account/orders/:orderId/invoice', checkSession, isBlocked, orderController.downloadInvoice);
 
 router.get('/logout', userController.logout);
-
 
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/signup' }), (req, res) => {               /////////////       
@@ -80,8 +82,6 @@ router.get('/auth/google/callback', passport.authenticate('google', { failureRed
     req.session.user = req.user;
     res.redirect('/');
 })
-
-
 
 
 module.exports = router

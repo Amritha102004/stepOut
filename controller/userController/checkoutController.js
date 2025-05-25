@@ -109,7 +109,6 @@ const placeOrder = async (req, res) => {
     const userId = req.session.user._id
     const { addressId, paymentMethod, couponCode } = req.body
 
-    // Validate input
     if (!addressId || !paymentMethod) {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
@@ -117,7 +116,6 @@ const placeOrder = async (req, res) => {
       })
     }
 
-    // Validate address
     const address = await Address.findOne({ _id: addressId, user: userId })
     if (!address) {
       return res.status(statusCode.NOT_FOUND).json({
@@ -126,13 +124,9 @@ const placeOrder = async (req, res) => {
       })
     }
 
-    // Get user's cart
     const cart = await Cart.findOne({ user: userId }).populate({
       path: "products.product",
-      populate: {
-        path: "categoryId",
-        model: "Category",
-      },
+      populate: { path: "categoryId", model: "Category" },
     })
 
     if (!cart || cart.products.length === 0) {
@@ -142,14 +136,12 @@ const placeOrder = async (req, res) => {
       })
     }
 
-    // Process and validate cart items
     const orderProducts = []
     let totalAmount = 0
 
     for (const item of cart.products) {
       const product = item.product
 
-      // Check if product exists and is active
       if (!product || !product.isActive || product.isDeleted) {
         return res.status(statusCode.BAD_REQUEST).json({
           success: false,
@@ -157,7 +149,6 @@ const placeOrder = async (req, res) => {
         })
       }
 
-      // Check if category is active
       if (!product.categoryId || !product.categoryId.isListed) {
         return res.status(statusCode.BAD_REQUEST).json({
           success: false,
@@ -165,32 +156,14 @@ const placeOrder = async (req, res) => {
         })
       }
 
-      // Find the specific variant
       const variant = product.variants.find((v) => v.size === item.size)
-      if (!variant) {
+      if (!variant || variant.varientquantity === 0 || item.quantity > variant.varientquantity) {
         return res.status(statusCode.BAD_REQUEST).json({
           success: false,
-          message: `Size ${item.size} is not available for ${product.name}`,
+          message: `${product.name} (Size: ${item.size}) is not available in sufficient quantity`,
         })
       }
 
-      // Check stock availability
-      if (variant.varientquantity === 0) {
-        return res.status(statusCode.BAD_REQUEST).json({
-          success: false,
-          message: `${product.name} (Size: ${item.size}) is out of stock`,
-        })
-      }
-
-      // Check if requested quantity is available
-      if (item.quantity > variant.varientquantity) {
-        return res.status(statusCode.BAD_REQUEST).json({
-          success: false,
-          message: `Only ${variant.varientquantity} units available for ${product.name} (Size: ${item.size})`,
-        })
-      }
-
-      // Add to order products
       orderProducts.push({
         product: product._id,
         variant: {
@@ -205,83 +178,59 @@ const placeOrder = async (req, res) => {
       totalAmount += variant.salePrice * item.quantity
     }
 
-    // Calculate tax (18% GST)
     const taxAmount = Math.round(totalAmount * 0.18)
-
-    // Apply discount if coupon is provided (implement your coupon logic here)
     let discount = 0
+
     if (couponCode) {
-      // Simple coupon validation (replace with your actual coupon system)
       if (couponCode.toUpperCase() === "SAVE10") {
-        discount = Math.round(totalAmount * 0.1) // 10% discount
+        discount = Math.round(totalAmount * 0.1)
       } else if (couponCode.toUpperCase() === "FLAT50") {
-        discount = 50 // ₹50 flat discount
+        discount = 50
       }
     }
 
     const finalAmount = totalAmount + taxAmount - discount
 
-    // Start transaction
-    const session = await mongoose.startSession()
-    session.startTransaction()
+    const order = new Order({
+      user: userId,
+      products: orderProducts,
+      address: addressId,
+      totalAmount,
+      discount,
+      finalAmount,
+      paymentMethod,
+      orderStatus: "pending",
+    })
 
-    try {
-      // Create order with proper orderID generation
-      const order = new Order({
-        user: userId,
-        products: orderProducts,
-        address: addressId,
-        totalAmount: totalAmount,
-        discount: discount,
-        finalAmount: finalAmount,
-        paymentMethod: paymentMethod,
-        orderStatus: "pending",
-      })
-
-      // Ensure orderID is generated before saving
-      if (!order.orderID) {
-        const date = new Date()
-        const year = date.getFullYear().toString().slice(-2)
-        const month = ("0" + (date.getMonth() + 1)).slice(-2)
-        const day = ("0" + date.getDate()).slice(-2)
-        const random = Math.floor(Math.random() * 10000)
-          .toString()
-          .padStart(4, "0")
-        order.orderID = `ORD${year}${month}${day}${random}`
-      }
-
-      await order.save({ session })
-
-      // Update product stock
-      for (const item of cart.products) {
-        const product = await Product.findById(item.product._id).session(session)
-        const variantIndex = product.variants.findIndex((v) => v.size === item.size)
-
-        if (variantIndex !== -1) {
-          product.variants[variantIndex].varientquantity -= item.quantity
-          await product.save({ session })
-        }
-      }
-
-      // Clear user's cart
-      cart.products = []
-      await cart.save({ session })
-
-      // Commit transaction
-      await session.commitTransaction()
-
-      res.status(statusCode.OK).json({
-        success: true,
-        message: "Order placed successfully",
-        orderId: order.orderID,
-      })
-    } catch (error) {
-      // Rollback transaction
-      await session.abortTransaction()
-      throw error
-    } finally {
-      session.endSession()
+    if (!order.orderID) {
+      const date = new Date()
+      const year = date.getFullYear().toString().slice(-2)
+      const month = ("0" + (date.getMonth() + 1)).slice(-2)
+      const day = ("0" + date.getDate()).slice(-2)
+      const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0")
+      order.orderID = `ORD${year}${month}${day}${random}`
     }
+
+    await order.save()
+
+    // Update product stock
+    for (const item of cart.products) {
+      const product = await Product.findById(item.product._id)
+      const variantIndex = product.variants.findIndex((v) => v.size === item.size)
+      if (variantIndex !== -1) {
+        product.variants[variantIndex].varientquantity -= item.quantity
+        await product.save()
+      }
+    }
+
+    cart.products = []
+    await cart.save()
+
+    res.status(statusCode.OK).json({
+      success: true,
+      message: "Order placed successfully",
+      orderId: order.orderID,
+    })
   } catch (error) {
     console.log("Error placing order:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
@@ -290,6 +239,7 @@ const placeOrder = async (req, res) => {
     })
   }
 }
+
 
 // Load order success page
 const loadOrderSuccess = async (req, res) => {

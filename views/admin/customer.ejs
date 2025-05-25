@@ -83,7 +83,7 @@ input:checked+.slider:before {
     <div class="flex min-h-screen">
       <!-- Sidebar -->
       <div class="w-64 bg-dark text-white">
-        <%- include('./partials/sidebar') %>
+        <%- include('./partials/sidebar',{activePage: 'customers'}) %>
       </div>
 
       <!-- Main Content -->
@@ -107,7 +107,7 @@ input:checked+.slider:before {
             <div class="input-group" style="max-width: 400px">
               <input type="text" class="form-control" placeholder="Search customer.." name="search"
                 value="<%= searchQuery || '' %>" />
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-dark">
                 Search
               </button>
             </div>
@@ -167,7 +167,7 @@ input:checked+.slider:before {
                       </span>
                     </td>
                     <td>
-                      <a href="/admin/userprofile/<%= customer._id %>" class="btn btn-sm btn-outline-primary"
+                      <a href="/admin/userprofile/<%= customer._id %>" class="btn btn-sm btn-outline-dark"
                         title="View Profile">
                         <i class="bi bi-eye "></i>
                       </a>
@@ -190,7 +190,7 @@ input:checked+.slider:before {
               <% } %>
 
                 <% for (let i=1; i <=totalPages; i++) { %>
-                  <a class="px-3 py-1 rounded <%= currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200 hover:bg-gray-300' %>"
+                  <a class="px-3 py-1 rounded <%= currentPage === i ? 'bg-black text-white' : 'bg-gray-200 hover:bg-gray-300' %>"
                     href="/admin/customer?page=<%= i %>">
                     <%= i %>
                   </a>
