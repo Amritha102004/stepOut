@@ -297,3 +297,112 @@
     font-size: 1rem;
   }
 }
+
+/* Size Selection Modal Styles */
+.size-options-modal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.size-option-modal {
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  min-width: 60px;
+  position: relative;
+}
+
+.size-option-modal:not(.disabled):hover {
+  border-color: #009688;
+  background-color: #f0f9ff;
+}
+
+.size-option-modal.active {
+  border-color: #009688;
+  background-color: #009688;
+  color: white;
+}
+
+.size-option-modal.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.size-option-modal input[type="radio"] {
+  display: none;
+}
+
+.size-option-modal label {
+  cursor: pointer;
+  margin: 0;
+  font-weight: 500;
+}
+
+.size-option-modal.disabled label {
+  cursor: not-allowed;
+}
+
+.size-option-modal small {
+  display: block;
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 4px;
+}
+
+.size-option-modal.active small {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Modal customizations */
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  border-bottom: 1px solid #eee;
+  padding: 20px 24px 16px;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-footer {
+  border-top: 1px solid #eee;
+  padding: 16px 24px 20px;
+}
+
+#confirmAddToCart {
+  background-color: #009688;
+  border-color: #009688;
+  padding: 8px 24px;
+}
+
+#confirmAddToCart:hover {
+  background-color: #00796b;
+  border-color: #00796b;
+}
+
+/* Responsive design for modal */
+@media (max-width: 576px) {
+  .size-options-modal {
+    justify-content: center;
+  }
+
+  .size-option-modal {
+    min-width: 50px;
+    padding: 10px 12px;
+  }
+
+  .modal-dialog {
+    margin: 1rem;
+  }
+}

@@ -1,0 +1,103 @@
+/* Addresses page specific styles */
+
+/* Address cards */
+.address-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  transition: all 0.3s ease;
+}
+
+.address-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.address-header {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 10px;
+}
+
+.address-content {
+  padding: 10px 0;
+}
+
+.address-content p {
+  color: #555;
+}
+
+.address-content i {
+  color: #666;
+  width: 20px;
+}
+
+.address-actions {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 10px;
+}
+
+/* Empty state */
+.empty-addresses {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 40px 20px;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: #ccc;
+  display: block;
+}
+
+/* Modal styles */
+.modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #eee;
+}
+
+/* Form styles */
+.form-label {
+  font-weight: 500;
+  color: #555;
+}
+
+/* Add these styles to ensure validation messages display properly */
+.invalid-feedback {
+  display: none;
+}
+
+.form-control.is-invalid + .invalid-feedback {
+  display: block !important;
+}
+
+/* Toast styling */
+.toast-container {
+  z-index: 1060;
+}
+
+.toast {
+  min-width: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .address-card {
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .toast-container {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .toast {
+    width: 100%;
+  }
+}

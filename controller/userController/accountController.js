@@ -10,11 +10,16 @@ const statusCode = require("../../utils/httpStatusCodes");
 const generateOtp = require('../../utils/otpGenerator');
 const sendEmail = require('../../utils/sendEmail');
 const bcrypt = require("bcrypt");
-const securePassword=require('../../utils/hashPassword');
+const securePassword = require('../../utils/hashPassword');
 
 const loadAccount = async (req, res) => {
     try {
-        res.render('user/userAccount', { req })
+        const userId = req.session.user._id;
+        const address = await Address.findOne({ user: userId ,isDefault:true});
+        if (!address) {
+            return res.render('user/userAccount', { req ,address:null});
+        }
+        res.render('user/userAccount', { req ,address})
     } catch (error) {
         res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error: "page not loading" })
     }
@@ -22,7 +27,7 @@ const loadAccount = async (req, res) => {
 
 const loadEditAccount = async (req, res) => {
     try {
-        res.render('user/editAccount', { req ,errors:null})
+        res.render('user/editAccount', { req, errors: null })
     } catch (error) {
         res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error: "page not loading" })
     }
@@ -30,7 +35,7 @@ const loadEditAccount = async (req, res) => {
 
 const editAccount = async (req, res) => {
     try {
-        const user = await User.findOne({_id:req.session.user._id})
+        const user = await User.findOne({ _id: req.session.user._id })
         const { fullName, email, phoneNumber } = req.body
         if (!user) {
             return res.render('user/editAccount', { error: "something wrong user not found" })
@@ -57,14 +62,14 @@ const editAccount = async (req, res) => {
             errors.email = "Enter a valid email address";
         } else {
             const existingUser = await User.findOne({ email });
-            if (existingUser && email!=req.session.user.email) {
+            if (existingUser && email != req.session.user.email) {
                 errors.email = "Email already registered";
             }
         }
 
         if (Object.keys(errors).length > 0) {
-            return res.render('user/editAccount', { 
-                errors, 
+            return res.render('user/editAccount', {
+                errors,
                 req,
             });
         }
@@ -83,7 +88,7 @@ const editAccount = async (req, res) => {
 
         }
         console.log(req.session.user)/////d
-        const updatedUser=await User.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
             { _id: req.session.user._id },
             {
                 fullName: fullName,
@@ -92,7 +97,7 @@ const editAccount = async (req, res) => {
             { new: true }
 
         );
-        req.session.user=updatedUser;
+        req.session.user = updatedUser;
         console.log(req.session.user)/////d
 
         req.flash("success_msg", "Updated info successfully")
@@ -104,17 +109,17 @@ const editAccount = async (req, res) => {
     }
 }
 
-const changePassword=async (req,res)=>{
+const changePassword = async (req, res) => {
     try {
-        const {currentPassword,newPassword,confirmPassword}=req.body;
-        const finduser = await User.findOne({ _id:req.session.user._id });
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        const finduser = await User.findOne({ _id: req.session.user._id });
         const passwordMatch = await bcrypt.compare(currentPassword, finduser.password);
         const errors = {};
 
-        if (!currentPassword){
-            errors.currentPassword="Current password is required"
-        }else if (!passwordMatch){
-            errors.currentPassword="Invalid password"
+        if (!currentPassword) {
+            errors.currentPassword = "Current password is required"
+        } else if (!passwordMatch) {
+            errors.currentPassword = "Invalid password"
         }
 
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\d@#$%^&*!]{8,}$/;
@@ -131,8 +136,8 @@ const changePassword=async (req,res)=>{
         }
 
         if (Object.keys(errors).length > 0) {
-            return res.render('user/editAccount', { 
-                errors, 
+            return res.render('user/editAccount', {
+                errors,
                 req,
             });
         }

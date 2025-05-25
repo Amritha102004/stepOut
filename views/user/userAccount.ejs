@@ -59,13 +59,19 @@
                                 <div class="card-body">
                                     <h5 class="card-title">Default Address</h5>
                                     <div class="mt-3">
+                                        <% if(address!=null){ %>
                                         <p>
-                                            <span class="badge bg-primary">Home</span><br>
-                                            Amritha P<br>
-                                            123 Main Street, Apt 4B<br>
-                                            Bangalore, Karnataka - 560001<br>
-                                            Phone: 9845017747
+                                            <!-- <span class="badge bg-primary">Home</span><br> -->
+                                            <%=address.name%><br>
+                                            <%=address.address%><br>
+                                            <%=address.city%>,<%=address.state%>-<%=address.pincode%><br>
+                                            Phone:<%=address.mobile%>
                                         </p>
+                                        <%}else{%>
+                                            <p>
+                                                no address found
+                                            </p>
+                                        <%}%>
                                     </div>
                                     <a href="/account/addresses" class="btn btn-primary btn-sm mt-2">Manage Addresses</a>
                                 </div>

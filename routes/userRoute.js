@@ -1,20 +1,23 @@
-const express=require('express');
-const router=express.Router();
-const userController=require('../controller/userController/userController');
-const productController=require('../controller/userController/productController');
-const accountController=require('../controller/userController/accountController');
-const wishlistController=require('../controller/userController/wishlistController');
-const cartController=require('../controller/userController/cartController');
-const passport=require('passport');
-const {isLogin}=require('../middleware/userAuth')
-const {isBlocked}=require('../middleware/userAuth')
-const {checkSession}=require('../middleware/userAuth')
+const express = require('express');
+const router = express.Router();
+const userController = require('../controller/userController/userController');
+const productController = require('../controller/userController/productController');
+const accountController = require('../controller/userController/accountController');
+const wishlistController = require('../controller/userController/wishlistController');
+const cartController = require('../controller/userController/cartController');
+const addressesController = require('../controller/userController/addressesController');
+const checkoutController = require('../controller/userController/checkoutController');
+const passport = require('passport');
+const { isLogin } = require('../middleware/userAuth')
+const { isBlocked } = require('../middleware/userAuth')
+const { checkSession } = require('../middleware/userAuth')
 
-router.get('/', isBlocked,userController.loadHome);
+
+router.get('/', isBlocked, userController.loadHome);
 
 router.get('/signup', isLogin, userController.loadSignup)
 router.post('/signup', isLogin, userController.signup)
-router.post('/otp', userController.verifyOtp)  
+router.post('/otp', userController.verifyOtp)
 router.post('/resendotp', isLogin, userController.resendOtp);
 router.get('/login', isLogin, userController.loadLogin);
 router.post('/login', isLogin, userController.login);
@@ -29,42 +32,56 @@ router.get('/product/:id', isBlocked, productController.getProductDetails);
 // router.get('/about',userController.about);
 // router.get('/contact',userController.contact);
 
-router.get('/account', checkSession, isBlocked,accountController.loadAccount);
+router.get('/account', checkSession, isBlocked, accountController.loadAccount);
 router.get('/account/editAccount', checkSession, isBlocked, accountController.loadEditAccount);
 router.post('/account/editAccount', checkSession, isBlocked, accountController.editAccount);
 router.post('/account/changePassword', checkSession, isBlocked, accountController.changePassword);
 
+//address
+router.get('/account/addresses', checkSession, isBlocked, addressesController.loadAddresses);
+router.post('/account/addresses/add', checkSession, isBlocked, addressesController.addAddress);
+router.get('/account/addresses/edit/:addressId', checkSession, isBlocked, addressesController.loadEdit);
+router.post('/account/addresses/edit', checkSession, isBlocked, addressesController.editAddress);
+router.delete('/account/addresses/delete/:addressId', checkSession, isBlocked, addressesController.deleteAddress);
+
+//wishlist
 router.get('/wishlist', checkSession, isBlocked, wishlistController.loadWishlist);
 router.post('/wishlist/add', checkSession, isBlocked, wishlistController.addToWishlist);
 router.delete('/wishlist/remove/:productId', checkSession, isBlocked, wishlistController.removeFromWishlist);
 router.delete('/wishlist/clear', checkSession, isBlocked, wishlistController.clearWishlist);
 router.get('/wishlist/check/:productId', wishlistController.checkWishlistStatus);
 
-router.get('/cart',checkSession,isBlocked, cartController.loadCart)
+//cart
+router.get('/cart', checkSession, isBlocked, cartController.loadCart);
+router.post('/cart/add', checkSession, isBlocked, cartController.addToCart);
+router.put('/cart/update', checkSession, isBlocked, cartController.updateCartQuantity);
+router.delete('/cart/remove/:productId/:size', checkSession, isBlocked, cartController.removeFromCart);
+router.delete('/cart/clear', checkSession, isBlocked, cartController.clearCart);
+router.get('/cart/count', cartController.getCartCount);
 
-router.get('/account/orders',(req,res)=>{
-    res.render('user/myOrder',{req})
+//checkout
+router.get('/checkout', checkSession, isBlocked, checkoutController.loadCheckout);
+router.post('/checkout/place-order', checkSession, isBlocked, checkoutController.placeOrder);
+router.get('/order-success', checkSession, isBlocked, checkoutController.loadOrderSuccess);
+
+//order
+router.get('/account/orders', (req, res) => {
+    res.render('user/myOrder', { req })
 })
-router.get('/account/addresses',(req,res)=>{
-    res.render('user/address',{req})
-})
 
 
 
+router.get('/logout', userController.logout);
 
 
-
-router.get('/logout',userController.logout);
-
-
-router.get('/auth/google',passport.authenticate('google',{scope:['profile','email']}));
-router.get('/auth/google/callback',passport.authenticate('google',{failureRedirect:'/signup'}),(req,res)=>{               /////////////       
+router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/signup' }), (req, res) => {               /////////////       
     // console.log(req.user);
-    req.session.user=req.user;
+    req.session.user = req.user;
     res.redirect('/');
 })
 
 
 
 
-module.exports=router
+module.exports = router

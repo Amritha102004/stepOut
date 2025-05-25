@@ -49,12 +49,16 @@ const loadCategory = async (req, res) => {
 }
 
 const loadAddCategory = (req, res) => {
-  const admin = {
+  try {
+    const admin = {
     name: req.session.admin.name,
     email: req.session.admin.email,
-  }
-
+  } 
   res.render("admin/addCategory", { admin })
+  } catch (error) {
+    console.log(error)
+    res.status(statusCode.INTERNAL_SERVER_ERROR).send("error loading add category")
+  }
 }
 
 const addCategory = async (req, res) => {

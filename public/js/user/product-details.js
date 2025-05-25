@@ -226,44 +226,110 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     // Add to cart button
-    const addToCartBtn = document.querySelector('.btn-add-to-cart');
-    if (addToCartBtn) {
-        addToCartBtn.addEventListener('click', function() {
-            const selectedSize = document.querySelector('input[name="size"]:checked');
+    // const addToCartBtn = document.querySelector('.btn-add-to-cart');
+    // if (addToCartBtn) {
+    //     addToCartBtn.addEventListener('click', function() {
+    //         const selectedSize = document.querySelector('input[name="size"]:checked');
             
-            if (!selectedSize) {
-                showToast('Please select a size', 'error');
-                return;
-            }
+    //         if (!selectedSize) {
+    //             showToast('Please select a size', 'error');
+    //             return;
+    //         }
             
-            const quantity = document.querySelector('.quantity-input').value;
+    //         const quantity = document.querySelector('.quantity-input').value;
             
-            // Make AJAX call to add the item to the cart
-            fetch('/cart/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    size: selectedSize.value,
-                    quantity: quantity
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('Product added to cart successfully!');
-                } else {
-                    showToast(data.message || 'Failed to add product to cart', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error adding to cart:', error);
-                showToast('An error occurred', 'error');
-            });
-        });
+    //         // Make AJAX call to add the item to the cart
+    //         fetch('/cart/add', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             },
+    //             body: JSON.stringify({
+    //                 productId: productId,
+    //                 size: selectedSize.value,
+    //                 quantity: quantity
+    //             })
+    //         })
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             if (data.success) {
+    //                 showToast('Product added to cart successfully!');
+    //             } else {
+    //                 showToast(data.message || 'Failed to add product to cart', 'error');
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error('Error adding to cart:', error);
+    //             showToast('An error occurred', 'error');
+    //         });
+    //     });
+    // }
+    // Add to cart button
+const addToCartBtn = document.querySelector(".btn-add-to-cart")
+if (addToCartBtn) {
+  addToCartBtn.addEventListener("click", function () {
+    const selectedSize = document.querySelector('input[name="size"]:checked')
+
+    if (!selectedSize) {
+      showToast("Please select a size", "error")
+      return
     }
+
+    const quantity = Number.parseInt(document.querySelector(".quantity-input").value)
+
+    // Show loading state
+    const originalText = this.innerHTML
+    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Adding...'
+    this.disabled = true
+
+    // Make AJAX call to add the item to the cart
+    fetch("/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        productId: productId,
+        size: selectedSize.value,
+        quantity: quantity,
+      }),
+    })
+      .then((response) => {
+        if (response.redirected) {
+          window.location.href = response.url
+          return null
+        }
+        return response.json()
+      })
+      .then((data) => {
+        // Reset button state
+        this.innerHTML = originalText
+        this.disabled = false
+
+        if (!data) return // Handle redirect case
+
+        if (data.success) {
+          showToast("Product added to cart successfully!")
+
+          // Update cart count in header if element exists
+          const cartCountElement = document.querySelector(".cart-count")
+          if (cartCountElement && data.cartItemCount) {
+            cartCountElement.textContent = data.cartItemCount
+          }
+        } else {
+          showToast(data.message || "Failed to add product to cart", "error")
+        }
+      })
+      .catch((error) => {
+        // Reset button state
+        this.innerHTML = originalText
+        this.disabled = false
+
+        console.error("Error adding to cart:", error)
+        showToast("An error occurred while adding to cart", "error")
+      })
+  })
+}
 });
 
 // Function to check if product is in wishlist
