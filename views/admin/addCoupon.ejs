@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New Coupon - StepOut</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.min.css">
+
+    <link rel="stylesheet" href="/css/admin/header.css">
+    <link rel="stylesheet" href="/css/admin/sidebar.css">
+    <link rel="stylesheet" href="/css/admin/product.css">
+    <style>
+        .form-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .discount-type-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .discount-card {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .discount-card:hover {
+            border-color: #007bff;
+            background-color: #f8f9ff;
+        }
+
+        .discount-card.selected {
+            border-color: #007bff;
+            background-color: #e7f3ff;
+        }
+
+        .discount-card i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #6c757d;
+        }
+
+        .discount-card.selected i {
+            color: #007bff;
+        }
+
+        .discount-card h5 {
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .discount-card p {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .coupon-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coupon-preview::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+
+        .coupon-preview::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+
+        .coupon-code-display {
+            font-family: 'Courier New', monospace;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .coupon-discount-display {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .coupon-description-display {
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .multi-select-container {
+            position: relative;
+        }
+
+        .multi-select-dropdown {
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            min-height: 38px;
+            padding: 6px 12px;
+            cursor: pointer;
+            background-color: white;
+        }
+
+        .multi-select-dropdown:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .multi-select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ced4da;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .multi-select-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .multi-select-option:hover {
+            background-color: #f8f9fa;
+        }
+
+        .multi-select-option.selected {
+            background-color: #e7f3ff;
+            color: #0066cc;
+        }
+
+        .selected-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .selected-item {
+            background-color: #e7f3ff;
+            color: #0066cc;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .selected-item .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        }
+
+        @media (max-width: 768px) {
+            .discount-type-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <%- include('./partials/header') %>
+    <%- include('./partials/sidebar', {activePage: 'coupons' }) %>
+
+    <div class="admin-content">
+        <!-- Breadcrumb -->
+        <div class="content-header">
+            <h3 class="mb-0 label">Add New Coupon</h3>
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="/admin/dashboard" class="text-decoration-none">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="/admin/coupons" class="text-decoration-none">Coupons</a>
+                    </li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        Add New Coupon
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <form action="/admin/addCoupon" method="POST" id="couponForm">
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h4>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control <%= errors && errors.code ? 'is-invalid' : '' %>" 
+                                           id="code" name="code" placeholder="Coupon Code" 
+                                           value="<%= formData && formData.code ? formData.code : '' %>"
+                                           style="text-transform: uppercase;">
+                                    <label for="code">Coupon Code *</label>
+                                    <% if (errors && errors.code) { %>
+                                        <div class="invalid-feedback"><%= errors.code %></div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <button type="button" class="btn btn-outline-primary w-100 h-100" id="generateCode">
+                                    <i class="fas fa-random me-2"></i>Generate
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <textarea class="form-control" id="description" name="description" 
+                                          placeholder="Description" style="height: 100px;"><%= formData && formData.description ? formData.description : '' %></textarea>
+                                <label for="description">Description</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Discount Configuration -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-percentage me-2"></i>Discount Configuration
+                        </h4>
+
+                        <div class="discount-type-cards">
+                            <div class="discount-card <%= formData && formData.discountType === 'percentage' ? 'selected' : '' %>" 
+                                 data-type="percentage">
+                                <i class="fas fa-percentage"></i>
+                                <h5>Percentage</h5>
+                                <p>Discount as percentage of order value</p>
+                                <input type="radio" name="discountType" value="percentage" 
+                                       <%= formData && formData.discountType === 'percentage' ? 'checked' : '' %> hidden>
+                            </div>
+                            <div class="discount-card <%= formData && formData.discountType === 'fixed' ? 'selected' : '' %>" 
+                                 data-type="fixed">
+                                <i class="fas fa-rupee-sign"></i>
+                                <h5>Fixed Amount</h5>
+                                <p>Fixed discount amount in rupees</p>
+                                <input type="radio" name="discountType" value="fixed" 
+                                       <%= formData && formData.discountType === 'fixed' ? 'checked' : '' %> hidden>
+                            </div>
+                        </div>
+                        <% if (errors && errors.discountType) { %>
+                            <div class="text-danger mb-3"><%= errors.discountType %></div>
+                        <% } %>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control <%= errors && errors.discountValue ? 'is-invalid' : '' %>" 
+                                           id="discountValue" name="discountValue" placeholder="Discount Value" 
+                                           min="0" step="0.01"
+                                           value="<%= formData && formData.discountValue ? formData.discountValue : '' %>">
+                                    <label for="discountValue">Discount Value *</label>
+                                    <% if (errors && errors.discountValue) { %>
+                                        <div class="invalid-feedback"><%= errors.discountValue %></div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3" id="maxDiscountContainer" style="display: none;">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="maxDiscountValue" 
+                                           name="maxDiscountValue" placeholder="Maximum Discount" 
+                                           min="0" step="0.01"
+                                           value="<%= formData && formData.maxDiscountValue ? formData.maxDiscountValue : '' %>">
+                                    <label for="maxDiscountValue">Maximum Discount (₹)</label>
+                                    <div class="form-text">Optional: Set maximum discount amount for percentage coupons</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-floating">
+                                <input type="number" class="form-control" id="minOrderAmount" 
+                                       name="minOrderAmount" placeholder="Minimum Order Amount" 
+                                       min="0" step="0.01"
+                                       value="<%= formData && formData.minOrderAmount ? formData.minOrderAmount : '' %>">
+                                <label for="minOrderAmount">Minimum Order Amount (₹)</label>
+                                <div class="form-text">Minimum order value required to use this coupon</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validity Period -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-calendar-alt me-2"></i>Validity Period
+                        </h4>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="datetime-local" class="form-control <%= errors && errors.startDate ? 'is-invalid' : '' %>" 
+                                           id="startDate" name="startDate" 
+                                           value="<%= formData && formData.startDate ? formData.startDate : '' %>">
+                                    <label for="startDate">Start Date & Time *</label>
+                                    <% if (errors && errors.startDate) { %>
+                                        <div class="invalid-feedback"><%= errors.startDate %></div>
+                                    <% } %>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="datetime-local" class="form-control <%= errors && errors.expiryDate ? 'is-invalid' : '' %>" 
+                                           id="expiryDate" name="expiryDate" 
+                                           value="<%= formData && formData.expiryDate ? formData.expiryDate : '' %>">
+                                    <label for="expiryDate">Expiry Date & Time *</label>
+                                    <% if (errors && errors.expiryDate) { %>
+                                        <div class="invalid-feedback"><%= errors.expiryDate %></div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Limits -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-users me-2"></i>Usage Limits
+                        </h4>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="usageLimitGlobal" 
+                                           name="usageLimitGlobal" placeholder="Global Usage Limit" 
+                                           min="1"
+                                           value="<%= formData && formData.usageLimitGlobal ? formData.usageLimitGlobal : '' %>">
+                                    <label for="usageLimitGlobal">Global Usage Limit</label>
+                                    <div class="form-text">Total number of times this coupon can be used (leave empty for unlimited)</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="usageLimitPerUser" 
+                                           name="usageLimitPerUser" placeholder="Per User Limit" 
+                                           min="1" value="1"
+                                           value="<%= formData && formData.usageLimitPerUser ? formData.usageLimitPerUser : '1' %>">
+                                    <label for="usageLimitPerUser">Usage Limit Per User</label>
+                                    <div class="form-text">How many times each user can use this coupon</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Applicability -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-filter me-2"></i>Applicability (Optional)
+                        </h4>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="applicableCategories" class="form-label">Applicable Categories</label>
+                                <div class="multi-select-container">
+                                    <div class="multi-select-dropdown" data-target="applicableCategories">
+                                        <span class="placeholder">Select categories (leave empty for all)</span>
+                                    </div>
+                                    <div class="multi-select-options" id="categoriesOptions">
+                                        <% if (categories && categories.length > 0) { %>
+                                            <% categories.forEach(category => { %>
+                                                <div class="multi-select-option" data-value="<%= category._id %>">
+                                                    <%= category.name %>
+                                                </div>
+                                            <% }); %>
+                                        <% } %>
+                                    </div>
+                                    <div class="selected-items" id="selectedCategories"></div>
+                                </div>
+                                <select name="applicableCategories" id="applicableCategories" multiple hidden>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="applicableProducts" class="form-label">Applicable Products</label>
+                                <div class="multi-select-container">
+                                    <div class="multi-select-dropdown" data-target="applicableProducts">
+                                        <span class="placeholder">Select products (leave empty for all)</span>
+                                    </div>
+                                    <div class="multi-select-options" id="productsOptions">
+                                        <% if (products && products.length > 0) { %>
+                                            <% products.forEach(product => { %>
+                                                <div class="multi-select-option" data-value="<%= product._id %>">
+                                                    <%= product.name %>
+                                                </div>
+                                            <% }); %>
+                                        <% } %>
+                                    </div>
+                                    <div class="selected-items" id="selectedProducts"></div>
+                                </div>
+                                <select name="applicableProducts" id="applicableProducts" multiple hidden>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Coupon Preview -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-eye me-2"></i>Coupon Preview
+                        </h4>
+                        
+                        <div class="coupon-preview">
+                            <div class="coupon-code-display" id="previewCode">ENTER CODE</div>
+                            <div class="coupon-discount-display" id="previewDiscount">Enter discount details</div>
+                            <div class="coupon-description-display" id="previewDescription">Enter description</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="form-section">
+                        <h4 class="section-title">
+                            <i class="fas fa-cog me-2"></i>Actions
+                        </h4>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-dark btn-lg">
+                                <i class="fas fa-save me-2"></i>Create Coupon
+                            </button>
+                            <a href="/admin/coupons" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.32/dist/sweetalert2.all.min.js"></script>
+    <script src="/js/admin/sidebar.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Discount type selection
+            document.querySelectorAll('.discount-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    document.querySelectorAll('.discount-card').forEach(c => c.classList.remove('selected'));
+                    
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                    
+                    // Check the radio button
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    
+                    // Show/hide max discount field for percentage type
+                    const maxDiscountContainer = document.getElementById('maxDiscountContainer');
+                    if (radio.value === 'percentage') {
+                        maxDiscountContainer.style.display = 'block';
+                    } else {
+                        maxDiscountContainer.style.display = 'none';
+                    }
+                    
+                    updatePreview();
+                });
+            });
+
+            // Generate coupon code
+            document.getElementById('generateCode').addEventListener('click', function() {
+                fetch('/admin/generate-coupon-code?length=8')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('code').value = data.code;
+                            updatePreview();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error generating code:', error);
+                    });
+            });
+
+            // Multi-select functionality
+            function initMultiSelect(containerId, selectId) {
+                const container = document.querySelector(`[data-target="${selectId}"]`);
+                const options = document.getElementById(containerId);
+                const select = document.getElementById(selectId);
+                const selectedContainer = document.getElementById(`selected${selectId.charAt(0).toUpperCase() + selectId.slice(1).replace('applicable', '')}`);
+
+                container.addEventListener('click', function() {
+                    options.style.display = options.style.display === 'block' ? 'none' : 'block';
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!container.contains(e.target) && !options.contains(e.target)) {
+                        options.style.display = 'none';
+                    }
+                });
+
+                options.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('multi-select-option')) {
+                        const value = e.target.dataset.value;
+                        const text = e.target.textContent;
+                        
+                        if (e.target.classList.contains('selected')) {
+                            // Remove selection
+                            e.target.classList.remove('selected');
+                            
+                            // Remove from select
+                            const option = select.querySelector(`option[value="${value}"]`);
+                            if (option) option.remove();
+                            
+                            // Remove from display
+                            const selectedItem = selectedContainer.querySelector(`[data-value="${value}"]`);
+                            if (selectedItem) selectedItem.remove();
+                        } else {
+                            // Add selection
+                            e.target.classList.add('selected');
+                            
+                            // Add to select
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = text;
+                            option.selected = true;
+                            select.appendChild(option);
+                            
+                            // Add to display
+                            const selectedItem = document.createElement('div');
+                            selectedItem.className = 'selected-item';
+                            selectedItem.dataset.value = value;
+                            selectedItem.innerHTML = `
+                                ${text}
+                                <span class="remove" onclick="removeSelectedItem('${selectId}', '${value}')">&times;</span>
+                            `;
+                            selectedContainer.appendChild(selectedItem);
+                        }
+                        
+                        updatePlaceholder(container, selectedContainer);
+                    }
+                });
+            }
+
+            function updatePlaceholder(container, selectedContainer) {
+                const placeholder = container.querySelector('.placeholder');
+                const count = selectedContainer.children.length;
+                
+                if (count === 0) {
+                    placeholder.textContent = placeholder.textContent.includes('categories') ? 
+                        'Select categories (leave empty for all)' : 
+                        'Select products (leave empty for all)';
+                } else {
+                    placeholder.textContent = `${count} item${count > 1 ? 's' : ''} selected`;
+                }
+            }
+
+            window.removeSelectedItem = function(selectId, value) {
+                const select = document.getElementById(selectId);
+                const option = select.querySelector(`option[value="${value}"]`);
+                if (option) option.remove();
+                
+                const selectedContainer = document.getElementById(`selected${selectId.charAt(0).toUpperCase() + selectId.slice(1).replace('applicable', '')}`);
+                const selectedItem = selectedContainer.querySelector(`[data-value="${value}"]`);
+                if (selectedItem) selectedItem.remove();
+                
+                const optionElement = document.querySelector(`#${selectId.replace('applicable', '').toLowerCase()}Options [data-value="${value}"]`);
+                if (optionElement) optionElement.classList.remove('selected');
+                
+                const container = document.querySelector(`[data-target="${selectId}"]`);
+                updatePlaceholder(container, selectedContainer);
+            };
+
+            // Initialize multi-selects
+            initMultiSelect('categoriesOptions', 'applicableCategories');
+            initMultiSelect('productsOptions', 'applicableProducts');
+
+            // Preview update function
+            function updatePreview() {
+                const code = document.getElementById('code').value || 'ENTER CODE';
+                const description = document.getElementById('description').value || 'Enter description';
+                const discountType = document.querySelector('input[name="discountType"]:checked')?.value;
+                const discountValue = document.getElementById('discountValue').value;
+                const maxDiscount = document.getElementById('maxDiscountValue').value;
+
+                document.getElementById('previewCode').textContent = code;
+                document.getElementById('previewDescription').textContent = description;
+
+                let discountText = 'Enter discount details';
+                if (discountType && discountValue) {
+                    if (discountType === 'percentage') {
+                        discountText = `${discountValue}% OFF`;
+                        if (maxDiscount) {
+                            discountText += ` (Max ₹${maxDiscount})`;
+                        }
+                    } else {
+                        discountText = `₹${discountValue} OFF`;
+                    }
+                }
+                document.getElementById('previewDiscount').textContent = discountText;
+            }
+
+            // Add event listeners for preview updates
+            document.getElementById('code').addEventListener('input', updatePreview);
+            document.getElementById('description').addEventListener('input', updatePreview);
+            document.getElementById('discountValue').addEventListener('input', updatePreview);
+            document.getElementById('maxDiscountValue').addEventListener('input', updatePreview);
+
+            // Initialize preview and discount type
+            updatePreview();
+            
+            // Set initial discount type if form data exists
+            <% if (formData && formData.discountType) { %>
+                const initialType = '<%= formData.discountType %>';
+                const initialCard = document.querySelector(`[data-type="${initialType}"]`);
+                if (initialCard) {
+                    initialCard.click();
+                }
+            <% } %>
+
+            // Form validation
+            document.getElementById('couponForm').addEventListener('submit', function(e) {
+                const code = document.getElementById('code').value.trim();
+                const discountType = document.querySelector('input[name="discountType"]:checked');
+                const discountValue = document.getElementById('discountValue').value;
+                const startDate = document.getElementById('startDate').value;
+                const expiryDate = document.getElementById('expiryDate').value;
+
+                let hasError = false;
+
+                if (!code) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please enter a coupon code'
+                    });
+                    hasError = true;
+                }
+
+                if (!discountType) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please select a discount type'
+                    });
+                    hasError = true;
+                }
+
+                if (!discountValue || discountValue <= 0) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please enter a valid discount value'
+                    });
+                    hasError = true;
+                }
+
+                if (!startDate) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please select a start date'
+                    });
+                    hasError = true;
+                }
+
+                if (!expiryDate) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please select an expiry date'
+                    });
+                    hasError = true;
+                }
+
+                if (startDate && expiryDate && new Date(startDate) >= new Date(expiryDate)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Expiry date must be after start date'
+                    });
+                    hasError = true;
+                }
+
+                if (hasError) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

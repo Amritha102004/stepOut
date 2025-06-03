@@ -105,6 +105,23 @@ const addProduct = async (req, res) => {
             tags,
         } = req.body;
 
+        const category = await Category.findById(categoryId);
+
+        if (!category) {
+            req.flash("error_msg", "Invalid category");
+            const categories = await Category.find({ isListed: true });
+            return res.render("admin/addProduct", {
+                admin: req.session.admin,
+                categories,
+                error_msg: "Invalid category",
+            });
+        }
+
+        const productOffer = Number(offer) || 0;
+        const categoryOffer = Number(category.offer) || 0;
+
+        const effectiveOffer = Math.max(productOffer, categoryOffer);
+
         const variants = [];
         const sizes = ["6", "7", "8", "9", "10"];
 
@@ -120,7 +137,7 @@ const addProduct = async (req, res) => {
             const quantity = Number(varientQuantities[i]);
 
             if (!isNaN(price) && !isNaN(quantity)) {
-                const discount = (price * Number(offer || 0)) / 100;
+                const discount = (price * effectiveOffer) / 100;
                 const salePrice = price - discount;
 
                 variants.push({
@@ -180,7 +197,7 @@ const addProduct = async (req, res) => {
             categoryId: new mongoose.Types.ObjectId(categoryId),
             brand: brand || "",
             color,
-            offer: Number(offer) || 0,
+            offer: effectiveOffer,
             images,
             variants,
             sku: sku || "",
@@ -200,7 +217,7 @@ const addProduct = async (req, res) => {
     } catch (error) {
         console.error(error);
         req.flash("error_msg", "Failed to add product: " + error.message);
-        res.status(statusCode.INTERNAL_SERVER_ERROR).render("admin/addProduct", {
+        res.status(500).render("admin/addProduct", {
             admin: req.session.admin,
             error_msg: "Failed to add product: " + error.message,
         });
@@ -252,11 +269,21 @@ const editProduct = async (req, res) => {
         } = req.body;
 
         const variantPrices = req.body.varientPrice || {};
-        const offerValue = parseFloat(offer) || 0;
+        const productOffer = parseFloat(offer) || 0;
+
+        const categoryDoc = await Category.findById(category);
+        if (!categoryDoc) {
+            req.flash("error_msg", "Invalid category");
+            return res.redirect("/admin/products");
+        }
+
+        const categoryOffer = parseFloat(categoryDoc.offer) || 0;
+        const effectiveOffer = Math.max(productOffer, categoryOffer);
+
         const sizes = ["6", "7", "8", "9", "10"];
         const variants = sizes.map((size) => {
             const price = parseFloat(variantPrices[size]) || 0;
-            const discount = price * (offerValue / 100);
+            const discount = price * (effectiveOffer / 100);
             const salePrice = price - discount;
             const quantity =
                 req.body.varientquantity && req.body.varientquantity[size]
@@ -270,6 +297,7 @@ const editProduct = async (req, res) => {
                 varientquantity: quantity,
             };
         });
+
         const totalStock = variants.reduce((sum, v) => sum + v.varientquantity, 0);
 
         let images = [];
@@ -298,7 +326,7 @@ const editProduct = async (req, res) => {
             categoryId: new mongoose.Types.ObjectId(category),
             brand: req.body.brand || "",
             color,
-            offer: offerValue,
+            offer: effectiveOffer,
             sizeInfo,
             additionalInfo: Array.isArray(additionalInfo)
                 ? additionalInfo
@@ -309,6 +337,7 @@ const editProduct = async (req, res) => {
             isActive: isDeleted !== "true",
             updatedAt: Date.now(),
         });
+
         req.flash("success_msg", "Product updated successfully");
         res.redirect("/admin/products");
     } catch (error) {
@@ -317,6 +346,7 @@ const editProduct = async (req, res) => {
         res.redirect("/admin/products");
     }
 };
+
 
 
 const deleteProduct = async (req, res) => {

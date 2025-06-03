@@ -81,7 +81,13 @@ const orderSchema = new Schema(
                 timestamp: Date,
                 description: String
             }]
+        },
+        coupon: {
+            type: Schema.Types.ObjectId,
+            ref: 'Coupon',
+            default: null
         }
+
     },
     {
         timestamps: true

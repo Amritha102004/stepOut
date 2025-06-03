@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - StepOut</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="/css/user/header.css">
+    <link rel="stylesheet" href="/css/user/footer.css">
+    <style>
+        .order-failure-section {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .order-failure-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .failure-animation {
+            margin-bottom: 2rem;
+        }
+        
+        .failure-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #f8d7da;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+            }
+        }
+        
+        .failure-icon i {
+            font-size: 48px;
+            color: #dc3545;
+        }
+        
+        .failure-message h1 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .failure-message p {
+            color: #6c757d;
+            margin-bottom: 2rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .action-buttons .btn {
+            min-width: 200px;
+        }
+        
+        .additional-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+        
+        .info-card {
+            padding: 1.5rem;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+        
+        .info-card i {
+            font-size: 2rem;
+            color: #6c757d;
+            margin-bottom: 1rem;
+        }
+        
+        .info-card h5 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .error-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            text-align: left;
+        }
+        
+        .error-details h5 {
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+        
+        .error-code {
+            font-family: monospace;
+            background-color: #e9ecef;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header (from partial) -->
+    <%- include('./partials/header') %>
+
+    <!-- Order Failure Section -->
+    <section class="order-failure-section py-5">
+        <div class="container">
+            <div class="order-failure-content">
+                <!-- Failure Animation/Illustration -->
+                <div class="failure-animation">
+                    <div class="failure-icon">
+                        <i class="fas fa-times"></i>
+                    </div>
+                </div>
+
+                <!-- Failure Message -->
+                <div class="failure-message">
+                    <h1>Payment Failed</h1>
+                    <p class="lead">We're sorry, but there was an issue processing your payment. Your order has not been placed.</p>
+                </div>
+
+                <!-- Error Details (if available) -->
+                <% if (error && error.description) { %>
+                <div class="error-details">
+                    <h5>Error Details</h5>
+                    <p><%= error.description %></p>
+                    <% if (error.code) { %>
+                    <p>Error code: <span class="error-code"><%= error.code %></span></p>
+                    <% } %>
+                </div>
+                <% } %>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="/checkout/retry/<%= orderId %>" class="btn btn-lg" style="background-color: #009688;">
+                        <i class="fas fa-redo me-2"></i>Retry Payment
+                    </a>
+                    <a href="/account/orders/<%= orderId %>" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-receipt me-2"></i>View Order Details
+                    </a>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="additional-info">
+                    <div class="info-card">
+                        <i class="fas fa-credit-card"></i>
+                        <h5>Payment Issues?</h5>
+                        <p>Check your card details or try a different payment method.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-headset"></i>
+                        <h5>Need Help?</h5>
+                        <p>Contact our customer support team if you continue to face issues.</p>
+                    </div>
+                    <div class="info-card">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h5>Your Cart</h5>
+                        <p>Your items are still saved in your cart. You can try again later.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer (from partial) -->
+    <%- include('./partials/footer') %>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/user/common.js"></script>
+</body>
+</html>

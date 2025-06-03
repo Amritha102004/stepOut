@@ -14,9 +14,9 @@ const loadCategory = async (req, res) => {
     if (searchQuery) {
       filter.name = { $regex: searchQuery, $options: "i" }
     }
-    const totalCategories = await Category.countDocuments({...filter,isDeleted:false})
+    const totalCategories = await Category.countDocuments({ ...filter, isDeleted: false })
     const totalPages = Math.ceil(totalCategories / limit)
-    const categories = await Category.find({...filter,isDeleted:false}).sort({createdAt:-1}).skip(skip).limit(limit)
+    const categories = await Category.find({ ...filter, isDeleted: false }).sort({ createdAt: -1 }).skip(skip).limit(limit)
 
     const categoriesWithCounts = await Promise.all(
       categories.map(async (category) => {
@@ -51,10 +51,10 @@ const loadCategory = async (req, res) => {
 const loadAddCategory = (req, res) => {
   try {
     const admin = {
-    name: req.session.admin.name,
-    email: req.session.admin.email,
-  } 
-  res.render("admin/addCategory", { admin })
+      name: req.session.admin.name,
+      email: req.session.admin.email,
+    }
+    res.render("admin/addCategory", { admin })
   } catch (error) {
     console.log(error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).send("error loading add category")
@@ -63,8 +63,8 @@ const loadAddCategory = (req, res) => {
 
 const addCategory = async (req, res) => {
   try {
-    const { name, description, offer = 0,isDeleted = "false" } = req.body
-    const existingCategory = await Category.findOne({name:{$regex:"^"+name+"$" ,$options:"i"}})
+    const { name, description, offer = 0, isDeleted = "false" } = req.body
+    const existingCategory = await Category.findOne({ name: { $regex: "^" + name + "$", $options: "i" } })
 
     if (existingCategory) {
       req.flash("error_msg", "Category already exists")
@@ -81,7 +81,7 @@ const addCategory = async (req, res) => {
       name,
       description,
       offer: Number(offer),
-      stock: 0, 
+      stock: 0,
       isListed: isDeleted === "false",
     })
 
@@ -161,23 +161,28 @@ const editCategory = async (req, res) => {
     await Category.findByIdAndUpdate(categoryId, updateData, { new: true })
 
     if (oldOffer !== newOffer) {
-      const products = await Product.find({ categoryId: categoryId })
-      
-      for (const product of products) {
-        product.variants = product.variants.map(variant => {
-          const originalPrice = variant.varientPrice
-          const discount = (originalPrice * newOffer) / 100
-          return {
-            ...variant,
-            salePrice: Math.round(originalPrice - discount)
-          }
-        })
+      const products = await Product.find({ categoryId: categoryId });
 
-        product.offer = newOffer
-        
-        await product.save()
+      for (const product of products) {
+        const productOffer = product.offer || 0;
+
+        if (newOffer > productOffer) {
+          product.variants = product.variants.map(variant => {
+            const originalPrice = variant.varientPrice;
+            const discount = (originalPrice * newOffer) / 100;
+            return {
+              ...variant,
+              salePrice: Math.round(originalPrice - discount),
+            };
+          });
+
+          product.offer = newOffer; 
+
+          await product.save();
+        }
       }
     }
+
 
     req.flash("success_msg", "Category updated successfully")
     res.redirect("/admin/category")
@@ -200,8 +205,8 @@ const deleteCategory = async (req, res) => {
       })
     }
 
-    await Category.findByIdAndUpdate(categoryId ,
-      { isDeleted: true,isListed:false})
+    await Category.findByIdAndUpdate(categoryId,
+      { isDeleted: true, isListed: false })
     return res.status(statusCode.OK).json({
       success: true,
       message: "Category deleted successfully",

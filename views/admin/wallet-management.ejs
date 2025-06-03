@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet Management - Admin Panel</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/admin/header.css">
+    <link rel="stylesheet" href="/css/admin/sidebar.css">
+    <link rel="stylesheet" href="/css/admin/dashboard.css">
+    <link rel="stylesheet" href="/css/admin/wallet.css">
+</head>
+<body>
+    <!-- Include Admin Header -->
+    <%- include('./partials/header') %>
+    
+    <!-- Include Admin Sidebar -->
+    <%- include('./partials/sidebar', {activePage: 'wallet' }) %>
+
+    <!-- Main Content -->
+    <div class="admin-content">
+        <div class="container-fluid">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="header-left">
+                    <h1 class="page-title">Wallet Management</h1>
+                    <p class="page-subtitle">Manage user wallets, transactions, and refunds</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#walletAnalyticsModal">
+                        <i class="fas fa-chart-bar me-2"></i>View Analytics
+                    </button>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addMoneyModal">
+                        <i class="fas fa-plus me-2"></i>Add Money
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wallet Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-primary">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>₹<%= stats.totalBalance.toLocaleString('en-IN') %></h3>
+                            <p>Total Wallet Balance</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-success">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.totalWallets %></h3>
+                            <p>Active Wallets</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-info">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= stats.totalTransactions %></h3>
+                            <p>Total Transactions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="stat-icon bg-warning">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3>₹<%= (stats.totalBalance / Math.max(stats.totalWallets, 1)).toFixed(0) %></h3>
+                            <p>Average Balance</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Search Users</label>
+                            <div class="search-box">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="form-control" placeholder="Search by name or email..." 
+                                       id="searchInput" value="<%= searchQuery || '' %>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Transaction Type</label>
+                            <select class="form-select" id="transactionTypeFilter">
+                                <option value="all" <%= transactionType === 'all' ? 'selected' : '' %>>All Transactions</option>
+                                <option value="credit" <%= transactionType === 'credit' ? 'selected' : '' %>>Credits (Refunds)</option>
+                                <option value="debit" <%= transactionType === 'debit' ? 'selected' : '' %>>Debits (Payments)</option>
+                                <option value="add" <%= transactionType === 'add' ? 'selected' : '' %>>Added by Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-outline-secondary me-2" id="clearFilters">
+                                <i class="fas fa-times me-2"></i>Clear Filters
+                            </button>
+                            <button class="btn btn-primary" id="viewTransactions">
+                                <i class="fas fa-list me-2"></i>View Transactions
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wallets Table -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            User Wallets 
+                            <span class="badge bg-primary ms-2"><%= totalWallets %></span>
+                        </h5>
+                        <div class="table-actions">
+                            <button class="btn btn-sm btn-outline-primary" id="refreshBtn">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <% if (wallets && wallets.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>User Details</th>
+                                        <th>Wallet Balance</th>
+                                        <th>Total Transactions</th>
+                                        <th>Last Activity</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% wallets.forEach(wallet => { %>
+                                        <tr data-wallet-id="<%= wallet._id %>">
+                                            <td>
+                                                <div class="user-info">
+                                                    <div class="user-avatar">
+                                                        <i class="fas fa-user-circle"></i>
+                                                    </div>
+                                                    <div class="user-details">
+                                                        <strong class="user-name"><%= wallet.userId.fullName %></strong>
+                                                        <div class="user-email">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-envelope me-1"></i><%= wallet.userId.email %>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="balance-info">
+                                                    <span class="balance-amount">₹<%= wallet.balance.toLocaleString('en-IN') %></span>
+                                                    <% if (wallet.balance > 0) { %>
+                                                        <span class="badge bg-success ms-2">Active</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-secondary ms-2">Empty</span>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="transaction-count">
+                                                    <span class="count"><%= wallet.transactions.length %></span>
+                                                    <div class="transaction-breakdown">
+                                                        <small class="text-muted">
+                                                            Credits: <%= wallet.transactions.filter(t => t.type === 'credit').length %> |
+                                                            Debits: <%= wallet.transactions.filter(t => t.type === 'debit').length %>
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="last-activity">
+                                                    <% if (wallet.transactions.length > 0) { %>
+                                                        <% const lastTransaction = wallet.transactions.sort((a, b) => new Date(b.date) - new Date(a.date))[0] %>
+                                                        <span class="activity-date">
+                                                            <%= new Date(lastTransaction.date).toLocaleDateString('en-IN', { 
+                                                                day: '2-digit', 
+                                                                month: 'short',
+                                                                year: 'numeric'
+                                                            }) %>
+                                                        </span>
+                                                        <div class="activity-type">
+                                                            <small class="text-muted">
+                                                                <%= lastTransaction.type.charAt(0).toUpperCase() + lastTransaction.type.slice(1) %>: 
+                                                                ₹<%= lastTransaction.amount %>
+                                                            </small>
+                                                        </div>
+                                                    <% } else { %>
+                                                        <span class="text-muted">No transactions</span>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            onclick="viewWalletDetails('<%= wallet.userId._id %>')"
+                                                            title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-success" 
+                                                            onclick="addMoney('<%= wallet.userId._id %>')"
+                                                            title="Add Money">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-warning" 
+                                                            onclick="deductMoney('<%= wallet.userId._id %>')"
+                                                            title="Deduct Money">
+                                                        <i class="fas fa-minus"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    <% } else { %>
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <h4>No Wallets Found</h4>
+                            <p class="text-muted">
+                                <% if (searchQuery) { %>
+                                    No wallets match your search criteria. Try adjusting your search.
+                                <% } else { %>
+                                    No user wallets have been created yet.
+                                <% } %>
+                            </p>
+                        </div>
+                    <% } %>
+                </div>
+                
+                <!-- Pagination -->
+                <% if (totalPages > 1) { %>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="pagination-info">
+                                Showing <%= ((currentPage - 1) * 10) + 1 %> to <%= Math.min(currentPage * 10, totalWallets) %> of <%= totalWallets %> wallets
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0">
+                                    <% if (currentPage > 1) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=<%= currentPage - 1 %>&search=<%= searchQuery %>&type=<%= transactionType %>">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                                        <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                            <a class="page-link" href="?page=<%= i %>&search=<%= searchQuery %>&type=<%= transactionType %>"><%= i %></a>
+                                        </li>
+                                    <% } %>
+                                    
+                                    <% if (currentPage < totalPages) { %>
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page=<%= currentPage + 1 %>&search=<%= searchQuery %>&type=<%= transactionType %>">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    <% } %>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Details Modal -->
+    <div class="modal fade" id="walletDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Wallet Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="walletDetailsContent">
+                    <!-- Wallet details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Money Modal -->
+    <div class="modal fade" id="addMoneyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Money to Wallet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addMoneyForm">
+                        <div class="mb-3">
+                            <label for="userSelect" class="form-label">Select User</label>
+                            <select class="form-select" id="userSelect" required>
+                                <option value="">Choose a user...</option>
+                                <% wallets.forEach(wallet => { %>
+                                    <option value="<%= wallet.userId._id %>">
+                                        <%= wallet.userId.fullName %> (<%= wallet.userId.email %>)
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addAmount" class="form-label">Amount (₹)</label>
+                            <input type="number" class="form-control" id="addAmount" min="1" max="100000" required>
+                            <div class="form-text">Maximum: ₹100,000</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addReason" class="form-label">Reason</label>
+                            <textarea class="form-control" id="addReason" rows="3" placeholder="Enter reason for adding money..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="submitAddMoney()">Add Money</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deduct Money Modal -->
+    <div class="modal fade" id="deductMoneyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Deduct Money from Wallet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="deductMoneyForm">
+                        <input type="hidden" id="deductUserId">
+                        <div class="mb-3">
+                            <label for="deductAmount" class="form-label">Amount (₹)</label>
+                            <input type="number" class="form-control" id="deductAmount" min="1" required>
+                            <div class="form-text" id="availableBalance"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="deductReason" class="form-label">Reason</label>
+                            <textarea class="form-control" id="deductReason" rows="3" placeholder="Enter reason for deducting money..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="submitDeductMoney()">Deduct Money</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallet Analytics Modal -->
+    <div class="modal fade" id="walletAnalyticsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Wallet Analytics</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="analyticsContent">
+                    <!-- Analytics content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Modal -->
+    <div class="modal fade" id="transactionsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">All Wallet Transactions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="transactionsContent">
+                    <!-- Transactions content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
+        <!-- Toasts will be added here -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/admin/wallet.js"></script>
+</body>
+</html>

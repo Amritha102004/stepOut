@@ -1,10 +1,11 @@
-const User = require("../../model/userModel");
-const Product = require("../../model/productModel");
-const Order = require("../../model/orderModel");
-const Address = require("../../model/addressModel");
-const PDFDocument = require("pdfkit")
+const User = require("../../model/userModel")
+const Product = require("../../model/productModel")
+const Order = require("../../model/orderModel")
+const Address = require("../../model/addressModel")
+const Wallet = require("../../model/walletModel")
+const mongoose = require("mongoose")
 const statusCode = require("../../utils/httpStatusCodes")
-const generateInvoicePDF = require("../../utils/invoiceGenerator")
+const PDFDocument = require("pdfkit")
 
 const loadOrders = async (req, res) => {
   try {
@@ -29,6 +30,7 @@ const loadOrders = async (req, res) => {
         select: "name images",
       })
       .populate("address")
+      .populate("coupon", "code discountType discountValue")
       .sort({ orderDate: -1 })
       .skip(skip)
       .limit(limit)
@@ -55,15 +57,16 @@ const loadOrders = async (req, res) => {
 
 const loadOrderDetail = async (req, res) => {
   try {
+    const { orderId } = req.params
     const userId = req.session.user._id
-    const orderId = req.params.orderId
 
     const order = await Order.findOne({ _id: orderId, user: userId })
       .populate("address")
       .populate({
         path: "products.product",
-        select: "name images",
+        select: "name images brand",
       })
+      .populate("coupon", "code discountType discountValue description")
       .lean()
 
     if (!order) {
@@ -71,9 +74,40 @@ const loadOrderDetail = async (req, res) => {
       return res.redirect("/account/orders")
     }
 
+    const timeline = [
+      {
+        status: "pending",
+        label: "Order Placed",
+        date: order.createdAt,
+        completed: true,
+      },
+      {
+        status: "confirmed",
+        label: "Order Confirmed",
+        date:
+          order.orderStatus === "confirmed" || order.orderStatus === "shipped" || order.orderStatus === "delivered"
+            ? order.updatedAt
+            : null,
+        completed: ["confirmed", "shipped", "delivered"].includes(order.orderStatus),
+      },
+      {
+        status: "shipped",
+        label: "Shipped",
+        date: order.orderStatus === "shipped" || order.orderStatus === "delivered" ? order.updatedAt : null,
+        completed: ["shipped", "delivered"].includes(order.orderStatus),
+      },
+      {
+        status: "delivered",
+        label: "Delivered",
+        date: order.orderStatus === "delivered" ? order.updatedAt : null,
+        completed: order.orderStatus === "delivered",
+      },
+    ]
+
     res.render("user/order-detail", {
       req,
       order,
+      timeline,
     })
   } catch (error) {
     console.log("Error loading order detail:", error)
@@ -82,15 +116,54 @@ const loadOrderDetail = async (req, res) => {
   }
 }
 
+const processWalletRefund = async (userId, amount, orderId, reason, refundedItems = []) => {
+  try {
+    console.log(`Processing wallet refund: User ${userId}, Amount: ₹${amount}, Order: ${orderId}`)
+
+    let wallet = await Wallet.findOne({ userId })
+    if (!wallet) {
+      console.log(`Creating new wallet for user ${userId}`)
+      wallet = new Wallet({
+        userId,
+        balance: 0,
+        transactions: [],
+      })
+    }
+
+    const transaction = {
+      type: "credit",
+      amount: amount,
+      orderId: orderId,
+      reason: reason,
+      refundedItems: refundedItems,
+      date: new Date(),
+    }
+
+    wallet.transactions.push(transaction)
+    wallet.balance += amount
+
+    await wallet.save()
+
+    console.log(`Wallet refund successful: New balance ₹${wallet.balance}`)
+    return { success: true, newBalance: wallet.balance, transactionId: transaction._id }
+  } catch (error) {
+    console.error("Error processing wallet refund:", error)
+    return { success: false, error: error.message }
+  }
+}
+
 const cancelOrder = async (req, res) => {
   try {
-    const userId = req.session.user._id
-    const orderId = req.params.orderId
+    const { orderId } = req.params
     const { reason } = req.body
+    const userId = req.session.user._id
+
+    console.log(`Cancel order request: Order ${orderId}, User ${userId}, Reason: ${reason}`)
 
     const order = await Order.findOne({ _id: orderId, user: userId }).populate("products.product")
 
     if (!order) {
+      console.log(`Order not found: ${orderId}`)
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
         message: "Order not found",
@@ -98,42 +171,90 @@ const cancelOrder = async (req, res) => {
     }
 
     if (!["pending", "confirmed"].includes(order.orderStatus)) {
+      console.log(`Order cannot be cancelled - current status: ${order.orderStatus}`)
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
         message: "Order cannot be cancelled at this stage",
       })
     }
 
+    const cancellableItems = order.products.filter((item) => !["cancelled", "returned"].includes(item.status))
+
+    if (cancellableItems.length === 0) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "No items available for cancellation",
+      })
+    }
+
     order.orderStatus = "cancelled"
-    order.cancelReason = reason || "No reason provided"
+    order.cancellationReason = reason
+    order.cancelledAt = new Date()
 
     order.products.forEach((item) => {
-      if (item.status === "pending") {
+      if (!["cancelled", "returned"].includes(item.status)) {
         item.status = "cancelled"
-        item.cancelReason = reason || "Order cancelled"
+        item.cancelledAt = new Date()
+        item.cancellationReason = reason
       }
     })
 
     await order.save()
+    console.log(`Order ${orderId} cancelled successfully`)
 
-    for (const item of order.products) {
-      if (item.status === "cancelled") {
-        const product = await Product.findById(item.product._id)
+    for (const item of cancellableItems) {
+      const product = await Product.findById(item.product._id)
+      if (product) {
         const variantIndex = product.variants.findIndex((v) => v.size === item.variant.size)
-
         if (variantIndex !== -1) {
           product.variants[variantIndex].varientquantity += item.quantity
           await product.save()
+          console.log(`Stock restored for product ${item.product._id}, size ${item.variant.size}`)
         }
       }
     }
 
-    res.status(statusCode.OK).json({
-      success: true,
-      message: "Order cancelled successfully",
-    })
+    if (order.paymentMethod === "online" && order.paymentStatus === "completed") {
+      console.log(`Processing refund for online payment: ₹${order.finalAmount}`)
+
+      const refundResult = await processWalletRefund(
+        userId,
+        order.finalAmount,
+        order._id,
+        `Order cancellation refund - ${reason}`,
+        cancellableItems.map((item) => item.product._id),
+      )
+
+      if (refundResult.success) {
+        order.refundStatus = "completed"
+        order.refundAmount = order.finalAmount
+        order.refundProcessedAt = new Date()
+        order.refundMethod = "wallet"
+        await order.save()
+
+        console.log(`Refund processed successfully: ₹${order.finalAmount} to wallet`)
+
+        res.status(statusCode.OK).json({
+          success: true,
+          message: `Order cancelled successfully. Refund of ₹${order.finalAmount} has been processed to your wallet.`,
+          refundAmount: order.finalAmount,
+          newWalletBalance: refundResult.newBalance,
+        })
+      } else {
+        console.error(`Refund processing failed: ${refundResult.error}`)
+        res.status(statusCode.OK).json({
+          success: true,
+          message: "Order cancelled successfully, but refund processing failed. Please contact support.",
+        })
+      }
+    } else {
+      res.status(statusCode.OK).json({
+        success: true,
+        message: "Order cancelled successfully",
+      })
+    }
   } catch (error) {
-    console.log("Error cancelling order:", error)
+    console.error("Error cancelling order:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Failed to cancel order",
@@ -143,16 +264,11 @@ const cancelOrder = async (req, res) => {
 
 const returnOrder = async (req, res) => {
   try {
-    const userId = req.session.user._id
-    const orderId = req.params.orderId
+    const { orderId } = req.params
     const { reason } = req.body
+    const userId = req.session.user._id
 
-    if (!reason) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Return reason is required",
-      })
-    }
+    console.log(`Return order request: Order ${orderId}, User ${userId}, Reason: ${reason}`)
 
     const order = await Order.findOne({ _id: orderId, user: userId }).populate("products.product")
 
@@ -170,70 +286,85 @@ const returnOrder = async (req, res) => {
       })
     }
 
-    order.orderStatus = "returned"
+    const deliveryDate = order.deliveredAt || order.updatedAt
+    const daysSinceDelivery = Math.floor((new Date() - deliveryDate) / (1000 * 60 * 60 * 24))
+
+    if (daysSinceDelivery > 30) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Return window has expired (30 days)",
+      })
+    }
+
+    const returnableItems = order.products.filter((item) => !["cancelled", "returned"].includes(item.status))
+
+    if (returnableItems.length === 0) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "No items available for return",
+      })
+    }
+
+    order.orderStatus = "return_requested"
     order.returnReason = reason
+    order.returnRequestedAt = new Date()
 
     order.products.forEach((item) => {
-      if (item.status === "delivered") {
-        item.status = "returned"
+      if (!["cancelled", "returned"].includes(item.status)) {
+        item.status = "return_requested"
+        item.returnRequestedAt = new Date()
         item.returnReason = reason
       }
     })
 
     await order.save()
-
-    for (const item of order.products) {
-      if (item.status === "returned") {
-        const product = await Product.findById(item.product._id)
-        const variantIndex = product.variants.findIndex((v) => v.size === item.variant.size)
-
-        if (variantIndex !== -1) {
-          product.variants[variantIndex].varientquantity += item.quantity
-          await product.save()
-        }
-      }
-    }
+    console.log(`Return request submitted for order ${orderId}`)
 
     res.status(statusCode.OK).json({
       success: true,
-      message: "Return request submitted successfully",
+      message: "Return request submitted successfully. We will process your request within 2-3 business days.",
     })
   } catch (error) {
-    console.log("Error processing return:", error)
+    console.log("Error returning order:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to process return request",
+      message: "Failed to submit return request",
     })
   }
 }
 
 const cancelOrderItem = async (req, res) => {
   try {
+    const { orderId } = req.params
+    const { productId, size, reason } = req.body
     const userId = req.session.user._id
-    const orderId = req.params.orderId
-    const { productId, variantSize, reason } = req.body
+
+    console.log(`Cancel item request: Order ${orderId}, Product ${productId}, Size ${size}, User ${userId}`)
 
     const order = await Order.findOne({ _id: orderId, user: userId }).populate("products.product")
 
     if (!order) {
+      console.log(`Order not found: ${orderId}`)
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
         message: "Order not found",
       })
     }
 
-    if (!["pending", "confirmed"].includes(order.orderStatus)) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Order items cannot be cancelled at this stage",
-      })
-    }
-
-    const itemIndex = order.products.findIndex(
-      (item) => item.product._id.toString() === productId && item.variant.size === variantSize,
-    )
+    const itemIndex = order.products.findIndex((item) => {
+      const productMatch = item.product._id.toString() === productId.toString()
+      const sizeMatch = item.variant.size === size
+      console.log(
+        `Checking item: Product ${item.product._id} vs ${productId} (${productMatch}), Size ${item.variant.size} vs ${size} (${sizeMatch})`,
+      )
+      return productMatch && sizeMatch
+    })
 
     if (itemIndex === -1) {
+      console.log(`Item not found in order. Available items:`)
+      order.products.forEach((item, index) => {
+        console.log(`  ${index}: Product ${item.product._id}, Size ${item.variant.size}, Status ${item.status}`)
+      })
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
         message: "Item not found in order",
@@ -241,39 +372,91 @@ const cancelOrderItem = async (req, res) => {
     }
 
     const item = order.products[itemIndex]
+    console.log(`Found item: ${item.product.name}, Size: ${item.variant.size}, Current status: ${item.status}`)
 
-    if (item.status !== "pending") {
+    if (["cancelled", "returned"].includes(item.status)) {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
-        message: "Item cannot be cancelled",
+        message: "Item is already cancelled or returned",
+      })
+    }
+
+    if (!["pending", "confirmed"].includes(order.orderStatus)) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Item cannot be cancelled at this stage",
       })
     }
 
     item.status = "cancelled"
-    item.cancelReason = reason || "Item cancelled"
+    item.cancelledAt = new Date()
+    item.cancellationReason = reason
 
-    const activeitems = order.products.filter((item) => item.status !== "cancelled")
-    if (activeitems.length === 0) {
+    const activeItems = order.products.filter((item) => !["cancelled", "returned"].includes(item.status))
+
+    if (activeItems.length === 0) {
       order.orderStatus = "cancelled"
-      order.cancelReason = "All items cancelled"
+      order.cancellationReason = "All items cancelled"
+      order.cancelledAt = new Date()
     }
 
     await order.save()
+    console.log(`Item cancelled successfully: ${item.product.name}`)
 
     const product = await Product.findById(productId)
-    const variantIndex = product.variants.findIndex((v) => v.size === variantSize)
-
-    if (variantIndex !== -1) {
-      product.variants[variantIndex].varientquantity += item.quantity
-      await product.save()
+    if (product) {
+      const variantIndex = product.variants.findIndex((v) => v.size === size)
+      if (variantIndex !== -1) {
+        product.variants[variantIndex].varientquantity += item.quantity
+        await product.save()
+        console.log(`Stock restored: Product ${productId}, Size ${size}, Quantity ${item.quantity}`)
+      }
     }
 
-    res.status(statusCode.OK).json({
-      success: true,
-      message: "Item cancelled successfully",
-    })
+    const itemRefundAmount = item.variant.salePrice * item.quantity
+    console.log(`Item refund amount: ₹${itemRefundAmount}`)
+
+    if (order.paymentMethod === "online" && order.paymentStatus === "completed") {
+      console.log(`Processing partial refund for online payment`)
+
+      const refundResult = await processWalletRefund(
+        userId,
+        itemRefundAmount,
+        order._id,
+        `Item cancellation refund - ${item.product.name} (${size}) - ${reason}`,
+        [item.product._id],
+      )
+
+      if (refundResult.success) {
+        order.refundStatus = order.refundStatus === "completed" ? "completed" : "partial"
+        order.refundAmount = (order.refundAmount || 0) + itemRefundAmount
+        order.refundProcessedAt = new Date()
+        order.refundMethod = "wallet"
+        await order.save()
+
+        console.log(`Partial refund processed: ₹${itemRefundAmount}`)
+
+        res.status(statusCode.OK).json({
+          success: true,
+          message: `Item cancelled successfully. Refund of ₹${itemRefundAmount} has been processed to your wallet.`,
+          refundAmount: itemRefundAmount,
+          newWalletBalance: refundResult.newBalance,
+        })
+      } else {
+        console.error(`Refund processing failed: ${refundResult.error}`)
+        res.status(statusCode.OK).json({
+          success: true,
+          message: "Item cancelled successfully, but refund processing failed. Please contact support.",
+        })
+      }
+    } else {
+      res.status(statusCode.OK).json({
+        success: true,
+        message: "Item cancelled successfully",
+      })
+    }
   } catch (error) {
-    console.log("Error cancelling item:", error)
+    console.error("Error cancelling order item:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Failed to cancel item",
@@ -283,16 +466,11 @@ const cancelOrderItem = async (req, res) => {
 
 const returnOrderItem = async (req, res) => {
   try {
+    const { orderId } = req.params
+    const { productId, size, reason } = req.body
     const userId = req.session.user._id
-    const orderId = req.params.orderId
-    const { productId, variantSize, reason } = req.body
 
-    if (!reason) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Return reason is required",
-      })
-    }
+    console.log(`Return item request: Order ${orderId}, Product ${productId}, Size ${size}`)
 
     const order = await Order.findOne({ _id: orderId, user: userId }).populate("products.product")
 
@@ -302,17 +480,15 @@ const returnOrderItem = async (req, res) => {
         message: "Order not found",
       })
     }
-
     if (order.orderStatus !== "delivered") {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
-        message: "Only delivered items can be returned",
+        message: "Only delivered orders can be returned",
       })
     }
-
-    const itemIndex = order.products.findIndex(
-      (item) => item.product._id.toString() === productId && item.variant.size === variantSize,
-    )
+    const itemIndex = order.products.findIndex((item) => {
+      return item.product._id.toString() === productId.toString() && item.variant.size === size
+    })
 
     if (itemIndex === -1) {
       return res.status(statusCode.NOT_FOUND).json({
@@ -323,48 +499,56 @@ const returnOrderItem = async (req, res) => {
 
     const item = order.products[itemIndex]
 
-    if (item.status !== "delivered") {
+    if (["cancelled", "returned", "return_requested"].includes(item.status)) {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
-        message: "Item cannot be returned",
+        message: "Item is already cancelled, returned, or return requested",
       })
     }
 
-    item.status = "returned"
+    const deliveryDate = order.deliveredAt || order.updatedAt
+    const daysSinceDelivery = Math.floor((new Date() - deliveryDate) / (1000 * 60 * 60 * 24))
+
+    if (daysSinceDelivery > 30) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Return window has expired (30 days)",
+      })
+    }
+
+    item.status = "return_requested"
+    item.returnRequestedAt = new Date()
     item.returnReason = reason
 
     await order.save()
-
-    const product = await Product.findById(productId)
-    const variantIndex = product.variants.findIndex((v) => v.size === variantSize)
-
-    if (variantIndex !== -1) {
-      product.variants[variantIndex].varientquantity += item.quantity
-      await product.save()
-    }
+    console.log(`Return request submitted for item: ${item.product.name}`)
 
     res.status(statusCode.OK).json({
       success: true,
-      message: "Return request submitted successfully",
+      message: "Return request submitted successfully for this item",
     })
   } catch (error) {
-    console.log("Error processing item return:", error)
+    console.log("Error returning order item:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to process return request",
+      message: "Failed to submit return request",
     })
   }
 }
 
 const downloadInvoice = async (req, res) => {
   try {
+    const { orderId } = req.params
     const userId = req.session.user._id
-    const orderId = req.params.orderId
 
     const order = await Order.findOne({ _id: orderId, user: userId })
       .populate("address")
-      .populate("user", "name email")
-      .populate({ path: "products.product", select: "name" })
+      .populate("user", "fullName email phoneNumber")
+      .populate({
+        path: "products.product",
+        select: "name brand",
+      })
+      .populate("coupon", "code discountType discountValue")
       .lean()
 
     if (!order) {
@@ -372,7 +556,97 @@ const downloadInvoice = async (req, res) => {
       return res.redirect("/account/orders")
     }
 
-    generateInvoicePDF(order, res)
+    const doc = new PDFDocument({ margin: 50 })
+
+    res.setHeader("Content-Type", "application/pdf")
+    res.setHeader("Content-Disposition", `attachment; filename="invoice-${orderId}.pdf"`)
+
+    doc.pipe(res)
+
+    // Add company header
+    doc.fontSize(20).text("StepOut", 50, 50)
+    doc.fontSize(10).text("Premium Footwear Store", 50, 75)
+    doc.text("Email: support@stepout.com", 50, 90)
+    doc.text("Phone: +91 9876543210", 50, 105)
+
+    // Add invoice title
+    doc.fontSize(16).text("INVOICE", 400, 50)
+    doc.fontSize(10).text(`Invoice #: ${order.orderID}`, 400, 75)
+    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 400, 90)
+
+    // Add customer details
+    doc.fontSize(12).text("Bill To:", 50, 150)
+    doc.fontSize(10).text(order.user.fullName, 50, 170)
+    doc.text(order.user.email, 50, 185)
+    doc.text(order.user.phoneNumber, 50, 200)
+
+    // Add shipping address
+    doc.fontSize(12).text("Ship To:", 300, 150)
+    doc.fontSize(10).text(order.address.name, 300, 170)
+    doc.text(order.address.address, 300, 185)
+    doc.text(`${order.address.city}, ${order.address.state}`, 300, 200)
+    doc.text(order.address.pincode, 300, 215)
+
+    const tableTop = 280
+    doc.fontSize(10)
+    doc.text("Item", 50, tableTop)
+    doc.text("Size", 200, tableTop)
+    doc.text("Qty", 250, tableTop)
+    doc.text("Price", 300, tableTop)
+    doc.text("Total", 400, tableTop)
+    doc
+      .moveTo(50, tableTop + 15)
+      .lineTo(500, tableTop + 15)
+      .stroke()
+
+    let yPosition = tableTop + 30
+    order.products.forEach((item, index) => {
+      doc.text(item.product.name, 50, yPosition)
+      doc.text(item.variant.size, 200, yPosition)
+      doc.text(item.quantity.toString(), 250, yPosition)
+      doc.text(`₹${item.variant.salePrice}`, 300, yPosition)
+      doc.text(`₹${item.variant.salePrice * item.quantity}`, 400, yPosition)
+      yPosition += 20
+    })
+
+    yPosition += 20
+    doc.moveTo(300, yPosition).lineTo(500, yPosition).stroke()
+    yPosition += 15
+
+    doc.text("Subtotal:", 300, yPosition)
+    doc.text(`₹${order.totalAmount}`, 400, yPosition)
+    yPosition += 15
+
+    if (order.discount > 0) {
+      doc.text("Discount:", 300, yPosition)
+      if (order.coupon) {
+        const couponText =
+          order.coupon.discountType === "percentage"
+            ? `${order.coupon.discountValue}% (${order.coupon.code})`
+            : `₹${order.coupon.discountValue} (${order.coupon.code})`
+        doc.text(`-₹${order.discount} ${couponText}`, 400, yPosition)
+      } else {
+        doc.text(`-₹${order.discount}`, 400, yPosition)
+      }
+      yPosition += 15
+    }
+
+    doc.text("Tax (18%):", 300, yPosition)
+    doc.text(`₹${Math.round(order.totalAmount * 0.18)}`, 400, yPosition)
+    yPosition += 15
+
+    doc.fontSize(12).text("Total:", 300, yPosition)
+    doc.text(`₹${order.finalAmount}`, 400, yPosition)
+
+    yPosition += 40
+    doc
+      .fontSize(10)
+      .text(`Payment Method: ${order.paymentMethod === "COD" ? "Cash on Delivery" : "Online Payment"}`, 50, yPosition)
+    doc.text(`Payment Status: ${order.paymentStatus}`, 50, yPosition + 15)
+
+    doc.text("Thank you for shopping with StepOut!", 50, yPosition + 50)
+
+    doc.end()
   } catch (error) {
     console.log("Error generating invoice:", error)
     req.flash("error_msg", "Failed to generate invoice")

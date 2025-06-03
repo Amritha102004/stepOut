@@ -9,7 +9,7 @@
 }
 
 .profile-header {
-  background-color: #0d6efd;
+  background-color: #009688;
   color: white;
   padding: 15px;
   text-align: center;
@@ -52,8 +52,8 @@
 
 .profile-nav a.active {
   background-color: #f0f7ff;
-  color: #0d6efd;
-  border-left: 3px solid #0d6efd;
+  color: #009688;
+  border-left: 3px solid #009688;
 }
 
 .profile-nav i {

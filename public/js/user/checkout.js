@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Import Bootstrap
+  // Import Bootstrap and Razorpay
   const bootstrap = window.bootstrap
+  const Razorpay = window.Razorpay
 
   // Initialize checkout functionality
   initializeAddressSelection()
@@ -75,6 +76,23 @@ document.addEventListener("DOMContentLoaded", () => {
   function initializeCouponSection() {
     const applyCouponBtn = document.getElementById("applyCoupon")
     const couponInput = document.getElementById("couponCode")
+    const removeCouponBtn = document.getElementById("removeCoupon")
+    const couponInfoContainer = document.getElementById("couponInfoContainer")
+    const couponSuggestions = document.getElementById("couponSuggestions")
+
+    // Handle coupon suggestion clicks
+    if (couponSuggestions) {
+      const couponBadges = couponSuggestions.querySelectorAll(".coupon-badge")
+      couponBadges.forEach((badge) => {
+        badge.addEventListener("click", () => {
+          const couponCode = badge.getAttribute("data-code")
+          if (couponInput) {
+            couponInput.value = couponCode
+            applyCouponBtn.click()
+          }
+        })
+      })
+    }
 
     if (applyCouponBtn && couponInput) {
       applyCouponBtn.addEventListener("click", () => {
@@ -90,23 +108,83 @@ document.addEventListener("DOMContentLoaded", () => {
         applyCouponBtn.textContent = "Applying..."
         applyCouponBtn.disabled = true
 
-        // Apply coupon (implement your coupon logic here)
-        setTimeout(() => {
-          // Reset button
-          applyCouponBtn.textContent = originalText
-          applyCouponBtn.disabled = false
+        // Validate coupon with server
+        fetch("/checkout/validate-coupon", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ code: couponCode }),
+        })
+          .then((response) => response.json())
+          .then((result) => {
+            // Reset button
+            applyCouponBtn.textContent = originalText
+            applyCouponBtn.disabled = false
 
-          // Simulate coupon validation
-          if (couponCode.toUpperCase() === "SAVE10") {
-            applyCoupon(10) // 10% discount
-            showToast("Coupon applied successfully!", true)
-          } else if (couponCode.toUpperCase() === "FLAT50") {
-            applyCoupon(50, true) // ₹50 flat discount
-            showToast("Coupon applied successfully!", true)
-          } else {
-            showToast("Invalid coupon code", false)
-          }
-        }, 1000)
+            if (result.success) {
+              // Apply coupon discount
+              applyCoupon(result.coupon.discountAmount, result.coupon)
+
+              // Show coupon info
+              if (couponInfoContainer) {
+                couponInfoContainer.style.display = "block"
+                const couponInfo = couponInfoContainer.querySelector(".coupon-info")
+                if (couponInfo) {
+                  let discountText = ""
+                  if (result.coupon.discountType === "percentage") {
+                    discountText = `${result.coupon.discountValue}% off`
+                    if (result.coupon.maxDiscountValue) {
+                      discountText += ` (max ₹${result.coupon.maxDiscountValue})`
+                    }
+                  } else {
+                    discountText = `₹${result.coupon.discountValue} off`
+                  }
+
+                  couponInfo.innerHTML = `
+                    <div class="coupon-applied">
+                      <span class="coupon-code">${result.coupon.code}</span>
+                      <span class="coupon-discount">${discountText}</span>
+                    </div>
+                    <div class="coupon-description">${result.coupon.description || ""}</div>
+                  `
+                }
+
+                // Show remove button
+                if (removeCouponBtn) {
+                  removeCouponBtn.style.display = "block"
+                }
+
+                // Hide input and apply button
+                couponInput.style.display = "none"
+                applyCouponBtn.style.display = "none"
+              }
+
+              showToast("Coupon applied successfully!", true)
+
+              // If there are product restrictions, show applicable products
+              if (result.applicableProducts && result.applicableProducts.length > 0) {
+                const applicableProductsContainer = document.getElementById("applicableProductsContainer")
+                if (applicableProductsContainer) {
+                  applicableProductsContainer.style.display = "block"
+                  const productsList = applicableProductsContainer.querySelector(".applicable-products-list")
+                  if (productsList) {
+                    productsList.innerHTML = result.applicableProducts
+                      .map((product) => `<li>${product.name} (₹${product.price} × ${product.quantity})</li>`)
+                      .join("")
+                  }
+                }
+              }
+            } else {
+              showToast(result.message || "Invalid coupon code", false)
+            }
+          })
+          .catch((error) => {
+            console.error("Error validating coupon:", error)
+            applyCouponBtn.textContent = originalText
+            applyCouponBtn.disabled = false
+            showToast("Failed to validate coupon. Please try again.", false)
+          })
       })
 
       // Allow Enter key to apply coupon
@@ -116,43 +194,95 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
     }
+
+    // Handle remove coupon
+    if (removeCouponBtn) {
+      removeCouponBtn.addEventListener("click", () => {
+        removeCoupon()
+      })
+    }
   }
 
   // Apply coupon discount
-  function applyCoupon(discount, isFlat = false) {
+  function applyCoupon(discountAmount, couponData) {
     const finalTotalElement = document.getElementById("finalTotal")
     const discountRow = document.getElementById("discountRow")
-    const discountAmount = document.getElementById("discountAmount")
+    const discountAmountElement = document.getElementById("discountAmount")
 
     if (!finalTotalElement) return
 
     const currentTotal = Number.parseFloat(finalTotalElement.textContent)
-    let discountValue = 0
-
-    if (isFlat) {
-      discountValue = discount
-    } else {
-      // Calculate percentage discount on subtotal (excluding tax)
-      const subtotalElement = document.querySelector(".price-row span:last-child")
-      if (subtotalElement) {
-        const subtotalText = subtotalElement.textContent.replace("₹", "")
-        const subtotal = Number.parseFloat(subtotalText)
-        discountValue = (subtotal * discount) / 100
-      }
-    }
 
     // Update discount display
-    if (discountAmount && discountRow) {
-      discountAmount.textContent = discountValue.toFixed(0)
+    if (discountAmountElement && discountRow) {
+      discountAmountElement.textContent = discountAmount.toFixed(0)
       discountRow.style.display = "flex"
     }
 
     // Update final total
-    const newTotal = currentTotal - discountValue
+    const newTotal = currentTotal - discountAmount
     finalTotalElement.textContent = newTotal.toFixed(0)
+
+    // Store coupon data for order placement
+    window.appliedCoupon = couponData
   }
 
-  // Initialize place order button
+  // Remove coupon
+  function removeCoupon() {
+    const finalTotalElement = document.getElementById("finalTotal")
+    const discountRow = document.getElementById("discountRow")
+    const discountAmountElement = document.getElementById("discountAmount")
+    const couponInput = document.getElementById("couponCode")
+    const applyCouponBtn = document.getElementById("applyCoupon")
+    const removeCouponBtn = document.getElementById("removeCoupon")
+    const couponInfoContainer = document.getElementById("couponInfoContainer")
+    const applicableProductsContainer = document.getElementById("applicableProductsContainer")
+
+    if (!finalTotalElement || !discountAmountElement) return
+
+    const currentTotal = Number.parseFloat(finalTotalElement.textContent)
+    const discountAmount = Number.parseFloat(discountAmountElement.textContent)
+
+    // Restore original total
+    const originalTotal = currentTotal + discountAmount
+    finalTotalElement.textContent = originalTotal.toFixed(0)
+
+    // Hide discount row
+    if (discountRow) {
+      discountRow.style.display = "none"
+    }
+
+    // Reset coupon input
+    if (couponInput) {
+      couponInput.value = ""
+      couponInput.style.display = "block"
+    }
+
+    // Show apply button, hide remove button
+    if (applyCouponBtn) {
+      applyCouponBtn.style.display = "block"
+    }
+    if (removeCouponBtn) {
+      removeCouponBtn.style.display = "none"
+    }
+
+    // Hide coupon info
+    if (couponInfoContainer) {
+      couponInfoContainer.style.display = "none"
+    }
+
+    // Hide applicable products
+    if (applicableProductsContainer) {
+      applicableProductsContainer.style.display = "none"
+    }
+
+    // Clear stored coupon data
+    window.appliedCoupon = null
+
+    showToast("Coupon removed successfully", true)
+  }
+
+  // Initialize place order button with Razorpay integration
   function initializePlaceOrderButton() {
     const placeOrderBtn = document.getElementById("placeOrderBtn")
 
@@ -181,38 +311,187 @@ document.addEventListener("DOMContentLoaded", () => {
         const orderData = {
           addressId: selectedAddress.value,
           paymentMethod: selectedPayment.value,
-          couponCode: document.getElementById("couponCode")?.value || null,
+          couponCode: window.appliedCoupon ? window.appliedCoupon.code : null,
         }
 
-        // Place order
-        fetch("/checkout/place-order", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(orderData),
-        })
-          .then((response) => response.json())
-          .then((result) => {
-            if (result.success) {
-              // Redirect to order success page
-              window.location.href = `/order-success?orderId=${result.orderId}`
-            } else {
-              showToast(result.message || "Failed to place order", false)
-              // Reset button
-              placeOrderBtn.innerHTML = originalText
-              placeOrderBtn.disabled = false
-            }
-          })
-          .catch((error) => {
-            console.error("Error placing order:", error)
-            showToast("An error occurred while placing the order", false)
-            // Reset button
-            placeOrderBtn.innerHTML = originalText
-            placeOrderBtn.disabled = false
-          })
+        if (selectedPayment.value === "COD") {
+          // Place COD order directly
+          placeCODOrder(orderData, originalText)
+        } else {
+          // Process online payment with Razorpay
+          processOnlinePayment(orderData, originalText)
+        }
       })
     }
+  }
+
+  // Place COD order
+  function placeCODOrder(orderData, originalButtonText) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    fetch("/checkout/place-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderData),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          // Redirect to order success page
+          window.location.href = `/order-success?orderId=${result.orderId}`
+        } else {
+          showToast(result.message || "Failed to place order", false)
+          // Reset button
+          placeOrderBtn.innerHTML = originalButtonText
+          placeOrderBtn.disabled = false
+        }
+      })
+      .catch((error) => {
+        console.error("Error placing order:", error)
+        showToast("An error occurred while placing the order", false)
+        // Reset button
+        placeOrderBtn.innerHTML = originalButtonText
+        placeOrderBtn.disabled = false
+      })
+  }
+
+  // Process online payment with Razorpay
+  function processOnlinePayment(orderData, originalButtonText) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    // First create Razorpay order
+    fetch("/checkout/create-razorpay-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(orderData),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          // Initialize Razorpay payment
+          initializeRazorpayPayment(result, orderData, originalButtonText)
+        } else {
+          showToast(result.message || "Failed to create payment order", false)
+          // Reset button
+          placeOrderBtn.innerHTML = originalButtonText
+          placeOrderBtn.disabled = false
+        }
+      })
+      .catch((error) => {
+        console.error("Error creating Razorpay order:", error)
+        showToast("An error occurred while creating payment order", false)
+        // Reset button
+        placeOrderBtn.innerHTML = originalButtonText
+        placeOrderBtn.disabled = false
+      })
+  }
+
+  // Initialize Razorpay payment
+  function initializeRazorpayPayment(paymentData, orderData, originalButtonText) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    const options = {
+      key: window.RAZORPAY_KEY_ID,
+      amount: paymentData.amount * 100, // Amount in paise
+      currency: paymentData.currency,
+      name: "StepOut",
+      description: "Order Payment",
+      order_id: paymentData.orderId,
+      handler: (response) => {
+        // Payment successful, verify and place order
+        verifyPaymentAndPlaceOrder(response, orderData)
+      },
+      prefill: {
+        name: "Customer Name",
+        email: "customer@example.com",
+        contact: "9999999999",
+      },
+      theme: {
+        color: "#009688",
+      },
+      modal: {
+        ondismiss: () => {
+          // Payment cancelled by user
+          showToast("Payment cancelled", false)
+          // Reset button
+          placeOrderBtn.innerHTML = originalButtonText
+          placeOrderBtn.disabled = false
+        },
+      },
+    }
+
+    const rzp = new Razorpay(options)
+
+    rzp.on("payment.failed", (response) => {
+      // Payment failed
+      console.error("Payment failed:", response.error)
+
+      // Redirect to payment failure page
+      const errorData = {
+        code: response.error.code,
+        description: response.error.description,
+        source: response.error.source,
+        step: response.error.step,
+        reason: response.error.reason,
+      }
+
+      window.location.href = `/payment-failure?orderId=${paymentData.orderId}&error=${encodeURIComponent(JSON.stringify(errorData))}`
+    })
+
+    // Reset button text before opening Razorpay
+    placeOrderBtn.innerHTML = originalButtonText
+    placeOrderBtn.disabled = false
+
+    // Open Razorpay checkout
+    rzp.open()
+  }
+
+  // Verify payment and place order
+  function verifyPaymentAndPlaceOrder(paymentResponse, orderData) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    // Show processing state
+    placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Verifying Payment...'
+    placeOrderBtn.disabled = true
+
+    const verificationData = {
+      razorpay_order_id: paymentResponse.razorpay_order_id,
+      razorpay_payment_id: paymentResponse.razorpay_payment_id,
+      razorpay_signature: paymentResponse.razorpay_signature,
+      addressId: orderData.addressId,
+      couponCode: orderData.couponCode,
+    }
+
+    fetch("/checkout/verify-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(verificationData),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          // Redirect to order success page
+          window.location.href = `/order-success?orderId=${result.orderId}`
+        } else {
+          showToast(result.message || "Payment verification failed", false)
+          // Reset button
+          placeOrderBtn.innerHTML = '<i class="fas fa-lock me-2"></i>Place Order'
+          placeOrderBtn.disabled = false
+        }
+      })
+      .catch((error) => {
+        console.error("Error verifying payment:", error)
+        showToast("Payment verification failed. Please contact support.", false)
+        // Reset button
+        placeOrderBtn.innerHTML = '<i class="fas fa-lock me-2"></i>Place Order'
+        placeOrderBtn.disabled = false
+      })
   }
 
   // Initialize address modals (reuse from addresses page)

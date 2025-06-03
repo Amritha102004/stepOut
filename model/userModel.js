@@ -1,18 +1,18 @@
 const mongoose = require('mongoose');
-const {Schema}=mongoose;
+const { Schema } = mongoose;
 
 const userSchema = new Schema(
   {
     fullName: {
-      type: String, 
+      type: String,
       required: true,
-      trim:true,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      lowercase:true,
+      lowercase: true,
     },
     phoneNumber: {
       type: String,
@@ -24,18 +24,18 @@ const userSchema = new Schema(
     googleId: {
       type: String,
       unique: true,
-      sparse:true,
+      sparse: true,
     },
     password: {
       type: String,
-      required:  function() {
+      required: function () {
         return !this.googleId;
       }
 
-    }, 
+    },
     image: {
       type: [String],
-      default:[], 
+      default: [],
     },
     isBlocked: {
       type: Boolean,
@@ -45,6 +45,15 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    referredBy: {
+      type: String,
+      default: null,
+    }
   },
   {
     timestamps: true,

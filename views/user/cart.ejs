@@ -148,18 +148,6 @@
                                 <span>₹<span id="summary-total"><%= totalAmount + Math.round(totalAmount * 0.18) %></span></span>
                             </div>
                             
-                            <!-- Coupon Section -->
-                            <!-- <div class="coupon-section">
-                                <div class="coupon-input">
-                                    <input type="text" class="form-control" placeholder="Enter coupon code" id="couponCode">
-                                    <button class="btn btn-outline-primary" id="applyCoupon">Apply</button>
-                                </div>
-                                <div class="coupon-discount" id="couponDiscount" style="display: none;">
-                                    <span>Coupon Discount</span>
-                                    <span class="text-success">-₹<span id="discount-amount">0</span></span>
-                                </div>
-                            </div> -->
-                            
                             <!-- Checkout Button -->
                             <% if (hasOutOfStockItems) { %>
                                 <div class="alert alert-warning mb-3">
@@ -168,7 +156,7 @@
                                 </div>
                             <% } %>
                             
-                            <button class="btn btn-primary btn-checkout" id="proceedCheckout" <%= hasOutOfStockItems ? 'disabled' : '' %>>
+                            <button class="btn btn-checkout" style="background-color: #009688;" id="proceedCheckout" <%= hasOutOfStockItems ? 'disabled' : '' %>>
                                 <i class="fas fa-lock me-2"></i> Proceed to Checkout
                             </button>
                             
@@ -204,7 +192,7 @@
                         </div>
                         <h2>Your cart is empty</h2>
                         <p>Looks like you haven't added anything to your cart yet. Start shopping to fill it up!</p>
-                        <a href="/shop" class="btn btn-primary btn-lg mt-3">
+                        <a href="/shop" class="btn btn-lg mt-3" style="background-color: #009688;">
                             <i class="fas fa-shopping-bag me-2"></i> Start Shopping
                         </a>
                         

@@ -8,6 +8,8 @@ const cartController = require('../controller/userController/cartController');
 const addressesController = require('../controller/userController/addressesController');
 const checkoutController = require('../controller/userController/checkoutController');
 const orderController = require('../controller/userController/orderController');
+const couponController = require('../controller/userController/couponController');
+const walletController = require('../controller/userController/walletController');
 const passport = require('passport');
 const { isLogin } = require('../middleware/userAuth')
 const { isBlocked } = require('../middleware/userAuth')
@@ -60,10 +62,19 @@ router.delete('/cart/remove/:productId/:size', checkSession, isBlocked, cartCont
 router.delete('/cart/clear', checkSession, isBlocked, cartController.clearCart);
 router.get('/cart/count', cartController.getCartCount);
 
-//checkout
+//checkout,razorpay
 router.get('/checkout', checkSession, isBlocked, checkoutController.loadCheckout);
+router.post('/checkout/create-razorpay-order', checkSession, isBlocked, checkoutController.createRazorpayOrder)
+router.post('/checkout/verify-payment', checkSession, isBlocked, checkoutController.verifyPaymentAndPlaceOrder)
 router.post('/checkout/place-order', checkSession, isBlocked, checkoutController.placeOrder);
+router.post('/checkout/payment-failure', checkSession, isBlocked, checkoutController.handlePaymentFailure)
+router.get('/payment-failure', checkSession, isBlocked, checkoutController.loadPaymentFailure)
+router.get('/checkout/retry/:orderId', checkSession, isBlocked, checkoutController.retryPayment)
 router.get('/order-success', checkSession, isBlocked, checkoutController.loadOrderSuccess);
+
+//coupon
+router.post("/checkout/validate-coupon", checkSession, isBlocked, couponController.validateCoupon)
+router.get("/checkout/available-coupons", checkSession, isBlocked, couponController.getAvailableCoupons);
 
 //order
 router.get('/account/orders', checkSession, isBlocked, orderController.loadOrders);
@@ -73,6 +84,17 @@ router.post('/account/orders/:orderId/return', checkSession, isBlocked, orderCon
 router.post('/account/orders/:orderId/cancel-item', checkSession, isBlocked, orderController.cancelOrderItem);
 router.post('/account/orders/:orderId/return-item', checkSession, isBlocked, orderController.returnOrderItem);
 router.get('/account/orders/:orderId/invoice', checkSession, isBlocked, orderController.downloadInvoice);
+
+//wallet
+router.get('/account/wallet', checkSession, isBlocked, walletController.loadWallet)
+router.post("/account/wallet/add-money", checkSession, isBlocked, walletController.addMoney)
+router.get('/account/wallet/balance', checkSession, isBlocked, walletController.getWalletBalance)
+router.get(
+  "/account/wallet/transaction/:transactionId",
+  checkSession,
+  isBlocked,
+  walletController.getTransactionDetails,
+)
 
 router.get('/logout', userController.logout);
 

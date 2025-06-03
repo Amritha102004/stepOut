@@ -107,7 +107,7 @@
                                         
                                         <!-- Action Buttons -->
                                         <div class="wishlist-actions">
-                                            <button class="btn btn-primary btn-add-to-cart" <%= !inStock ? 'disabled' : '' %> data-product-id="<%= item._id %>">
+                                            <button class="btn btn-add-to-cart" style="background-color: #009688;" <%= !inStock ? 'disabled' : '' %> data-product-id="<%= item._id %>">
                                                 <i class="fas fa-shopping-cart me-2"></i> Add to Cart
                                             </button>
                                             <a href="/product/<%= item._id %>" class="btn btn-outline-secondary">
@@ -136,7 +136,7 @@
                         </div>
                         <h2>Your wishlist is empty</h2>
                         <p>Add items you love to your wishlist. Review them anytime and easily move them to the cart.</p>
-                        <a href="/shop" class="btn btn-primary btn-lg mt-3">
+                        <a href="/shop" class="btn btn-lg mt-3" style="background-color: #009688;">
                             <i class="fas fa-shopping-bag me-2"></i> Continue Shopping
                         </a>
                     </div>
