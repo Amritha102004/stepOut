@@ -6,6 +6,7 @@ const statusCode = require("../../utils/httpStatusCodes")
 
 const getAllProducts = async (req, res, next) => {
     try {
+        const user = req.session.user;
         const page = Number.parseInt(req.query.page) || 1;
         const limit = Number.parseInt(req.query.limit) || 12;
         const skip = (page - 1) * limit;
@@ -116,8 +117,7 @@ const getAllProducts = async (req, res, next) => {
                 sort: req.query.sort || "newest",
                 search: req.query.search || "",
             },
-            user: req.session.user || null,//
-            req
+            user: req.session.user || null
         });
     } catch (error) {
         console.error("Product listing error:", error);
@@ -128,6 +128,7 @@ const getAllProducts = async (req, res, next) => {
 
 const getProductDetails = async (req, res, next) => {
     try {
+        const user =req.session.user;
         if (!mongoose.isValidObjectId(req.params.id)) {
             req.flash("error_msg", "Invalid product ID");
             return res.redirect("/shop");
@@ -155,8 +156,7 @@ const getProductDetails = async (req, res, next) => {
         res.render("user/product-details", {
             product,
             relatedProducts,
-            user: req.session.user || null,//
-            req
+            user: req.session.user || null,
         });
     } catch (error) {
         console.error("Product details error:", error);

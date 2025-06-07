@@ -7,6 +7,7 @@ const statusCode = require("../../utils/httpStatusCodes");
 
 const loadWishlist = async (req, res) => {
     try {
+        const user =req.session.user;
         const userId = req.session.user._id;
         const wishlist = await Wishlist.findOne({ user: userId })
             .populate({
@@ -18,7 +19,7 @@ const loadWishlist = async (req, res) => {
         if (!wishlist) {
             return res.render('user/wishlist', { 
                 wishlistItems: [],
-                req
+                user
             });
         }
 
@@ -26,7 +27,7 @@ const loadWishlist = async (req, res) => {
 
         res.render('user/wishlist', {
             wishlistItems,
-            req
+            user
         });
     } catch (error) {
         console.log("Error loading wishlist:", error);
@@ -56,7 +57,7 @@ const addToWishlist = async (req, res) => {
         let wishlist = await Wishlist.findOne({ user: userId });
         
         if (!wishlist) {
-            wishlist = new Wishlist({
+            wishlist = new Wishlist({   
                 user: userId,
                 products: [productId]
             });
@@ -76,7 +77,7 @@ const addToWishlist = async (req, res) => {
                 inWishlist: true
             });
         }
-
+  
         wishlist.products.push(productId);
         await wishlist.save();
 
@@ -173,7 +174,7 @@ const checkWishlistStatus = async (req, res) => {
         const productId = req.params.productId;
         const wishlist = await Wishlist.findOne({ user: userId });
         const inWishlist = wishlist && wishlist.products.includes(productId);
-
+        
         res.status(statusCode.OK).json({
             inWishlist
         });

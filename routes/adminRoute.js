@@ -6,7 +6,7 @@ const productController=require('../controller/adminController/productController
 const categoryController=require('../controller/adminController/categoryController');
 const orderController=require('../controller/adminController/orderController');
 const couponController=require('../controller/adminController/couponController');
-const walletController=require('../controller/adminController/walletController')
+// const walletController=require('../controller/adminController/walletController')
 const {checkSession}=require('../middleware/adminAuth');
 const {isAdmin}=require('../middleware/adminAuth');
 const upload=require('../middleware/upload');
@@ -42,6 +42,7 @@ router.post('/editProduct', checkSession, isAdmin, upload.fields([
 router.delete("/deleteProduct/:id", checkSession, isAdmin, productController.deleteProduct);
 router.put("/toggleProductListing/:id", checkSession, isAdmin, productController.toggleProductListing);
 
+//orders
 router.get("/orders", checkSession, orderController.loadOrders);
 router.get("/orders/:orderId/details", checkSession, orderController.getOrderDetails)
 router.patch("/orders/:orderId/status", checkSession, isAdmin, orderController.updateOrderStatus);
@@ -59,13 +60,14 @@ router.patch("/coupons/:id/toggle", checkSession, isAdmin, couponController.togg
 router.delete("/coupons/:id", checkSession, isAdmin, couponController.deleteCoupon)
 router.get("/coupons/:id/details", checkSession, couponController.getCouponDetails)
 router.get("/generate-coupon-code", checkSession, couponController.generateCouponCode);
-    
-router.get("/wallet", checkSession, isAdmin, walletController.loadWalletManagement)
-router.get("/wallet/transactions", checkSession, isAdmin, walletController.getWalletTransactions)
-router.get("/wallet/user/:userId/details", checkSession, isAdmin, walletController.getUserWalletDetails)
-router.post("/wallet/user/:userId/add-money", checkSession, isAdmin, walletController.addMoneyToWallet)
-router.post("/wallet/user/:userId/deduct-money", checkSession, isAdmin, walletController.deductMoneyFromWallet)
-router.get("/wallet/analytics", checkSession, isAdmin, walletController.getWalletAnalytics)
+
+ // Not using anymore
+// router.get("/wallet", checkSession, isAdmin, walletController.loadWalletManagement)
+// router.get("/wallet/transactions", checkSession, isAdmin, walletController.getWalletTransactions)
+// router.get("/wallet/user/:userId/details", checkSession, isAdmin, walletController.getUserWalletDetails)
+// router.post("/wallet/user/:userId/add-money", checkSession, isAdmin, walletController.addMoneyToWallet)
+// router.post("/wallet/user/:userId/deduct-money", checkSession, isAdmin, walletController.deductMoneyFromWallet)
+// router.get("/wallet/analytics", checkSession, isAdmin, walletController.getWalletAnalytics)
 
 
 

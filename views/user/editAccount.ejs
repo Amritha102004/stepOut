@@ -42,7 +42,7 @@
                                         <div class="mb-3">
                                             <label for="fullName" class="form-label">Full name</label>
                                             <input type="text" class="form-control" id="fullName" name="fullName"
-                                                value="<%=req.session.user.fullName%>" >
+                                                value="<%=user.fullName%>" >
                                             <% if (errors && errors.fullName) { %>
                                                 <p class="error ">
                                                     <%= errors.fullName %>
@@ -53,7 +53,7 @@
                                         <div class="mb-3">
                                             <label for="email" class="form-label">Email</label>
                                             <input type="email" class="form-control" id="email" name="email"
-                                                value="<%=req.session.user.email%>" >
+                                                value="<%=user.email%>" >
                                             <% if (errors && errors.email) { %>
                                                 <p class="error ">
                                                     <%= errors.email %>
@@ -64,7 +64,7 @@
                                         <div class="mb-3">
                                             <label for="phoneNumber" class="form-label">Phone number</label>
                                             <input type="tel" class="form-control" id="phoneNumber" name="phoneNumber"
-                                                value="<%=req.session.user.phoneNumber%>" >
+                                                value="<%=user.phoneNumber%>" >
                                             <% if (errors && errors.phoneNumber) { %>
                                                 <p class="error ">
                                                     <%= errors.phoneNumber %>

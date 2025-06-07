@@ -15,19 +15,22 @@ const securePassword = require('../../utils/hashPassword');
 const loadAccount = async (req, res) => {
     try {
         const userId = req.session.user._id;
+        const user =req.session.user;
         const address = await Address.findOne({ user: userId ,isDefault:true});
         if (!address) {
-            return res.render('user/userAccount', { req ,address:null});
+            return res.render('user/userAccount', { user, address:null});
         }
-        res.render('user/userAccount', { req ,address})
+        res.render('user/userAccount', {address, user})
     } catch (error) {
+        console.log(error)
         res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error: "page not loading" })
     }
 }
 
 const loadEditAccount = async (req, res) => {
     try {
-        res.render('user/editAccount', { req, errors: null })
+        const user= req.session.user;
+        res.render('user/editAccount', { user, errors: null })
     } catch (error) {
         res.status(statusCode.INTERNAL_SERVER_ERROR).json({ error: "page not loading" })
     }
@@ -35,10 +38,11 @@ const loadEditAccount = async (req, res) => {
 
 const editAccount = async (req, res) => {
     try {
-        const user = await User.findOne({ _id: req.session.user._id })
+        const user=req.session.user
+        const findUser = await User.findOne({ _id: user._id })
         const { fullName, email, phoneNumber } = req.body
-        if (!user) {
-            return res.render('user/editAccount', { error: "something wrong user not found" })
+        if (!findUser) {
+            return res.render('user/editAccount', { error: "something wrong user not found" ,user})
         }
         const errors = {};
         const nameRegex = /^[A-Za-z\s]{3,}$/;
@@ -70,11 +74,11 @@ const editAccount = async (req, res) => {
         if (Object.keys(errors).length > 0) {
             return res.render('user/editAccount', {
                 errors,
-                req,
+                user
             });
         }
 
-        if (email !== user.email) {
+        if (email !== findUser.email) {
             const otp = generateOtp();
             const emailsent = await sendEmail.sendVerificationEmail(email, otp);
             if (!emailsent) {
@@ -111,9 +115,10 @@ const editAccount = async (req, res) => {
 
 const changePassword = async (req, res) => {
     try {
+        const user=req.session.user
         const { currentPassword, newPassword, confirmPassword } = req.body;
-        const finduser = await User.findOne({ _id: req.session.user._id });
-        const passwordMatch = await bcrypt.compare(currentPassword, finduser.password);
+        const findUser = await User.findOne({ _id: req.session.user._id });
+        const passwordMatch = await bcrypt.compare(currentPassword, findUser.password);
         const errors = {};
 
         if (!currentPassword) {
@@ -138,12 +143,12 @@ const changePassword = async (req, res) => {
         if (Object.keys(errors).length > 0) {
             return res.render('user/editAccount', {
                 errors,
-                req,
+                user
             });
         }
 
         const passwordHash = await securePassword(newPassword);
-        await User.findOneAndUpdate({ _id: finduser._id }, { password: passwordHash });
+        await User.findOneAndUpdate({ _id: findUser._id }, { password: passwordHash });
 
         req.flash("success_msg", "Updated the password successfully")
         res.redirect('/account');

@@ -30,7 +30,7 @@ const orderSchema = new Schema(
             },
             status: {
                 type: String,
-                enum: ['pending', 'shipped', 'out for delivery', 'delivered', 'cancelled', 'returned', 'return pending'],
+                enum: ['pending', 'shipped', 'out for delivery', 'delivered', 'cancelled', 'returned', 'return pending','return_requested'],
                 default: 'pending'
             },
             cancellationReason: String,
@@ -58,12 +58,12 @@ const orderSchema = new Schema(
         },
         paymentMethod: {
             type: String,
-            enum: ['COD', 'online'],
+            enum: ['COD', 'online', 'wallet'],
             required: true
         },
         orderStatus: {
             type: String,
-            enum: ['pending', 'shipped', 'out for delivery', 'delivered', 'cancelled', 'returned', 'return pending'],
+            enum: ['pending', 'shipped', 'out for delivery', 'delivered', 'cancelled', 'returned', 'return pending','return_requested'],
             default: 'pending'
         },
         orderDate: {

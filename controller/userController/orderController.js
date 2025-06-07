@@ -9,6 +9,7 @@ const PDFDocument = require("pdfkit")
 
 const loadOrders = async (req, res) => {
   try {
+    const user = req.session.user;
     const userId = req.session.user._id
     const page = Number.parseInt(req.query.page) || 1
     const limit = 10
@@ -40,7 +41,7 @@ const loadOrders = async (req, res) => {
     const totalPages = Math.ceil((await Order.countDocuments(query)) / limit)
 
     res.render("user/orders", {
-      req,
+      user,
       orders,
       currentPage: page,
       totalPages,
@@ -57,6 +58,7 @@ const loadOrders = async (req, res) => {
 
 const loadOrderDetail = async (req, res) => {
   try {
+    const user =req.session.user;
     const { orderId } = req.params
     const userId = req.session.user._id
 
@@ -105,7 +107,7 @@ const loadOrderDetail = async (req, res) => {
     ]
 
     res.render("user/order-detail", {
-      req,
+      user,
       order,
       timeline,
     })

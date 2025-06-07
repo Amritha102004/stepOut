@@ -16,6 +16,7 @@ const razorpay = new Razorpay({
 
 const loadCheckout = async (req, res) => {
   try {
+    const user =req.session.user;
     const userId = req.session.user._id
 
     const cart = await Cart.findOne({ user: userId })
@@ -111,7 +112,7 @@ const loadCheckout = async (req, res) => {
     }))
 
     res.render("user/checkout", {
-      req,
+      user,
       addresses,
       cartItems,
       totalAmount,
@@ -624,10 +625,11 @@ const handlePaymentFailure = async (req, res) => {
 
 const loadPaymentFailure = async (req, res) => {
   try {
-    const { orderId, error } = req.query
+    const user=req.session.user;
+    const { orderId, error } = req.query;
 
     res.render("user/order-failure", {
-      req,
+      user,
       orderId: orderId || null,
       error: error ? JSON.parse(error) : null,
     })
@@ -652,6 +654,7 @@ const retryPayment = async (req, res) => {
 
 const loadOrderSuccess = async (req, res) => {
   try {
+    const user =req.session.user;
     const { orderId } = req.query
     const userId = req.session.user._id
 
@@ -675,7 +678,7 @@ const loadOrderSuccess = async (req, res) => {
     }
 
     res.render("user/order-success", {
-      req,
+      user,
       order,
     })
   } catch (error) {

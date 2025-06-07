@@ -5,13 +5,13 @@ const statusCode = require("../../utils/httpStatusCodes");
 
 const loadAddresses = async (req, res) => {
     try {
-        const userId = req.session.user._id;
-        const addresses = await Address.find({ user: userId }).sort({ isDefault: -1, createdAt: -1 });
+        const user=req.session.user;
+        const addresses = await Address.find({ user: user._id }).sort({ isDefault: -1, createdAt: -1 });
 
         if (!addresses) {
-            return res.render('user/addresses', { req, addresses: [] })
+            return res.render('user/addresses', { addresses: [], user })
         }
-        res.render('user/addresses', { req, addresses })
+        res.render('user/addresses', { addresses, user})
     } catch (error) {
         console.log(error)
         res.status(statusCode.INTERNAL_SERVER_ERROR).send("cannot load address page")

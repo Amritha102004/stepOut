@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeCouponSection()
   initializePlaceOrderButton()
   initializeAddressModals()
+  initializeWalletFeatures() // NEW
 
   // Toast container
   const toastContainer = document.getElementById("toast-container")
@@ -44,6 +45,149 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 5000)
   }
 
+  // NEW: Initialize wallet features
+  function initializeWalletFeatures() {
+    loadWalletBalance()
+    initializeWalletPaymentOptions()
+    initializePartialWalletPayment()
+  }
+
+  // NEW: Load wallet balance
+  function loadWalletBalance() {
+    fetch("/account/wallet/balance")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const balance = data.balance
+          document.getElementById("walletBalance").textContent = balance.toFixed(2)
+          document.getElementById("walletBalanceDisplay").textContent = balance.toFixed(2)
+          document.getElementById("walletAmount").max = balance
+
+          // Disable wallet payment if balance is 0
+          const walletRadio = document.getElementById("wallet")
+          const partialWalletRadio = document.getElementById("partial-wallet")
+
+          if (balance <= 0) {
+            walletRadio.disabled = true
+            partialWalletRadio.disabled = true
+            walletRadio.parentElement.style.opacity = "0.5"
+            partialWalletRadio.parentElement.style.opacity = "0.5"
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading wallet balance:", error)
+      })
+  }
+
+  // NEW: Initialize wallet payment options
+  function initializeWalletPaymentOptions() {
+    const walletRadio = document.getElementById("wallet")
+    const partialWalletRadio = document.getElementById("partial-wallet")
+    const walletSection = document.getElementById("walletAmountSection")
+
+    if (walletRadio) {
+      walletRadio.addEventListener("change", function () {
+        if (this.checked) {
+          walletSection.style.display = "none"
+          updatePriceDisplay()
+        }
+      })
+    }
+
+    if (partialWalletRadio) {
+      partialWalletRadio.addEventListener("change", function () {
+        if (this.checked) {
+          walletSection.style.display = "block"
+          updatePriceDisplay()
+        }
+      })
+    }
+
+    // Hide wallet section when other payment methods are selected
+    const otherPaymentRadios = document.querySelectorAll(
+      'input[name="paymentMethod"]:not(#wallet):not(#partial-wallet)',
+    )
+    otherPaymentRadios.forEach((radio) => {
+      radio.addEventListener("change", function () {
+        if (this.checked) {
+          walletSection.style.display = "none"
+          updatePriceDisplay()
+        }
+      })
+    })
+  }
+
+  // NEW: Initialize partial wallet payment
+  function initializePartialWalletPayment() {
+    const walletAmountInput = document.getElementById("walletAmount")
+    const useFullWalletBtn = document.getElementById("useFullWallet")
+
+    if (walletAmountInput) {
+      walletAmountInput.addEventListener("input", () => {
+        updatePriceDisplay()
+      })
+    }
+
+    if (useFullWalletBtn) {
+      useFullWalletBtn.addEventListener("click", () => {
+        const balance = Number.parseFloat(document.getElementById("walletBalanceDisplay").textContent)
+        walletAmountInput.value = balance
+        updatePriceDisplay()
+      })
+    }
+  }
+
+  // NEW: Update price display based on payment method
+  function updatePriceDisplay() {
+    const selectedPayment = document.querySelector('input[name="paymentMethod"]:checked')
+    const finalTotalElement = document.getElementById("finalTotal")
+    const walletRow = document.getElementById("walletRow")
+    const payRow = document.getElementById("payRow")
+    const walletUsageElement = document.getElementById("walletUsageAmount")
+    const amountToPayElement = document.getElementById("amountToPay")
+    const remainingAmountElement = document.getElementById("remainingAmount")
+
+    if (!selectedPayment || !finalTotalElement) return
+
+    const totalAmount = Number.parseFloat(finalTotalElement.textContent)
+    let walletUsage = 0
+    let amountToPay = totalAmount
+
+    if (selectedPayment.value === "wallet") {
+      const walletBalance = Number.parseFloat(document.getElementById("walletBalance").textContent)
+      walletUsage = Math.min(walletBalance, totalAmount)
+      amountToPay = Math.max(0, totalAmount - walletUsage)
+    } else if (selectedPayment.value === "partial-wallet") {
+      const walletAmountInput = document.getElementById("walletAmount")
+      const inputAmount = Number.parseFloat(walletAmountInput.value) || 0
+      const walletBalance = Number.parseFloat(document.getElementById("walletBalance").textContent)
+      walletUsage = Math.min(inputAmount, walletBalance, totalAmount)
+      amountToPay = Math.max(0, totalAmount - walletUsage)
+    }
+
+    // Update display
+    if (walletUsage > 0) {
+      walletRow.style.display = "flex"
+      walletUsageElement.textContent = walletUsage.toFixed(2)
+
+      if (amountToPay > 0) {
+        payRow.style.display = "flex"
+        amountToPayElement.textContent = amountToPay.toFixed(2)
+      } else {
+        payRow.style.display = "none"
+      }
+    } else {
+      walletRow.style.display = "none"
+      payRow.style.display = "none"
+    }
+
+    // Update remaining amount for partial wallet
+    if (remainingAmountElement) {
+      remainingAmountElement.textContent = amountToPay.toFixed(2)
+    }
+  }
+
   // Initialize address selection
   function initializeAddressSelection() {
     const addressRadios = document.querySelectorAll(".address-radio")
@@ -68,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     paymentRadios.forEach((radio) => {
       radio.addEventListener("change", () => {
         console.log("Payment method selected:", radio.value)
+        updatePriceDisplay() // NEW: Update price display when payment method changes
       })
     })
   }
@@ -175,6 +320,9 @@ document.addEventListener("DOMContentLoaded", () => {
                   }
                 }
               }
+
+              // Update price display after coupon application
+              updatePriceDisplay()
             } else {
               showToast(result.message || "Invalid coupon code", false)
             }
@@ -279,10 +427,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Clear stored coupon data
     window.appliedCoupon = null
 
+    // Update price display after coupon removal
+    updatePriceDisplay()
+
     showToast("Coupon removed successfully", true)
   }
 
-  // Initialize place order button with Razorpay integration
+  // Initialize place order button with enhanced payment options
   function initializePlaceOrderButton() {
     const placeOrderBtn = document.getElementById("placeOrderBtn")
 
@@ -302,6 +453,22 @@ document.addEventListener("DOMContentLoaded", () => {
           return
         }
 
+        // Validate partial wallet amount if selected
+        if (selectedPayment.value === "partial-wallet") {
+          const walletAmount = Number.parseFloat(document.getElementById("walletAmount").value) || 0
+          const walletBalance = Number.parseFloat(document.getElementById("walletBalance").textContent)
+
+          if (walletAmount <= 0) {
+            showToast("Please enter a valid wallet amount", false)
+            return
+          }
+
+          if (walletAmount > walletBalance) {
+            showToast("Wallet amount cannot exceed available balance", false)
+            return
+          }
+        }
+
         // Show loading state
         const originalText = placeOrderBtn.innerHTML
         placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing Order...'
@@ -314,9 +481,20 @@ document.addEventListener("DOMContentLoaded", () => {
           couponCode: window.appliedCoupon ? window.appliedCoupon.code : null,
         }
 
+        // Add wallet amount for partial payment
+        if (selectedPayment.value === "partial-wallet") {
+          orderData.walletAmount = Number.parseFloat(document.getElementById("walletAmount").value) || 0
+        }
+
         if (selectedPayment.value === "COD") {
           // Place COD order directly
           placeCODOrder(orderData, originalText)
+        } else if (selectedPayment.value === "wallet") {
+          // Place full wallet order
+          placeWalletOrder(orderData, originalText)
+        } else if (selectedPayment.value === "partial-wallet") {
+          // Process partial wallet + online payment
+          processPartialWalletPayment(orderData, originalText)
         } else {
           // Process online payment with Razorpay
           processOnlinePayment(orderData, originalText)
@@ -351,6 +529,81 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch((error) => {
         console.error("Error placing order:", error)
         showToast("An error occurred while placing the order", false)
+        // Reset button
+        placeOrderBtn.innerHTML = originalButtonText
+        placeOrderBtn.disabled = false
+      })
+  }
+
+  // NEW: Place full wallet order
+  function placeWalletOrder(orderData, originalButtonText) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    fetch("/checkout/create-order-with-wallet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...orderData,
+        useWalletAmount: Number.parseFloat(document.getElementById("finalTotal").textContent),
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          // Redirect to order success page
+          window.location.href = `/order-success?orderId=${result.orderId}`
+        } else {
+          showToast(result.message || "Failed to place order", false)
+          // Reset button
+          placeOrderBtn.innerHTML = originalButtonText
+          placeOrderBtn.disabled = false
+        }
+      })
+      .catch((error) => {
+        console.error("Error placing wallet order:", error)
+        showToast("An error occurred while placing the order", false)
+        // Reset button
+        placeOrderBtn.innerHTML = originalButtonText
+        placeOrderBtn.disabled = false
+      })
+  }
+
+  // NEW: Process partial wallet payment
+  function processPartialWalletPayment(orderData, originalButtonText) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    fetch("/checkout/create-order-with-wallet", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...orderData,
+        useWalletAmount: orderData.walletAmount,
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          if (result.orderId && !result.amount) {
+            // Full wallet payment completed
+            window.location.href = `/order-success?orderId=${result.orderId}`
+          } else {
+            // Partial payment - proceed with Razorpay for remaining amount
+            initializeRazorpayPayment(result, orderData, originalButtonText)
+          }
+        } else {
+          showToast(result.message || "Failed to create payment order", false)
+          // Reset button
+          placeOrderBtn.innerHTML = originalButtonText
+          placeOrderBtn.disabled = false
+        }
+      })
+      .catch((error) => {
+        console.error("Error creating partial wallet order:", error)
+        showToast("An error occurred while creating payment order", false)
         // Reset button
         placeOrderBtn.innerHTML = originalButtonText
         placeOrderBtn.disabled = false
@@ -399,11 +652,13 @@ document.addEventListener("DOMContentLoaded", () => {
       amount: paymentData.amount * 100, // Amount in paise
       currency: paymentData.currency,
       name: "StepOut",
-      description: "Order Payment",
+      description: paymentData.walletAmount
+        ? `Partial Payment (Wallet: ₹${paymentData.walletAmount})`
+        : "Order Payment",
       order_id: paymentData.orderId,
       handler: (response) => {
         // Payment successful, verify and place order
-        verifyPaymentAndPlaceOrder(response, orderData)
+        verifyPaymentAndPlaceOrder(response, orderData, paymentData.walletAmount)
       },
       prefill: {
         name: "Customer Name",
@@ -451,7 +706,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Verify payment and place order
-  function verifyPaymentAndPlaceOrder(paymentResponse, orderData) {
+  function verifyPaymentAndPlaceOrder(paymentResponse, orderData, walletAmount = 0) {
     const placeOrderBtn = document.getElementById("placeOrderBtn")
 
     // Show processing state
@@ -464,9 +719,12 @@ document.addEventListener("DOMContentLoaded", () => {
       razorpay_signature: paymentResponse.razorpay_signature,
       addressId: orderData.addressId,
       couponCode: orderData.couponCode,
+      walletAmount: walletAmount,
     }
 
-    fetch("/checkout/verify-payment", {
+    const endpoint = walletAmount > 0 ? "/checkout/verify-partial-payment" : "/checkout/verify-payment"
+
+    fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

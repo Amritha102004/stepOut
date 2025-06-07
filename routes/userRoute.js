@@ -89,11 +89,7 @@ router.get('/account/orders/:orderId/invoice', checkSession, isBlocked, orderCon
 router.get('/account/wallet', checkSession, isBlocked, walletController.loadWallet)
 router.post("/account/wallet/add-money", checkSession, isBlocked, walletController.addMoney)
 router.get('/account/wallet/balance', checkSession, isBlocked, walletController.getWalletBalance)
-router.get(
-  "/account/wallet/transaction/:transactionId",
-  checkSession,
-  isBlocked,
-  walletController.getTransactionDetails,
+router.get("/account/wallet/transaction/:transactionId",checkSession,isBlocked,walletController.getTransactionDetails,
 )
 
 router.get('/logout', userController.logout);

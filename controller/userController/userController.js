@@ -12,6 +12,7 @@ const securePassword=require('../../utils/hashPassword');
 
 const loadHome = async (req, res) => {
     try {
+        const user = req.session.user;
         const page = Number.parseInt(req.query.page) || 1;
         const limit = Number.parseInt(req.query.limit) || 12;
         const skip = (page - 1) * limit;
@@ -52,7 +53,8 @@ const loadHome = async (req, res) => {
             brands,
             colors,
             query: req.query,
-            req });
+            user 
+        });
     } catch (error) {
         console.log("homepage not loading:", error);
         res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");

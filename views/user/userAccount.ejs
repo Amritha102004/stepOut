@@ -44,9 +44,9 @@
                                                  class="profile-image" alt="Profile Image">
                                         </div>
                                         <div class="profile-details">
-                                            <p><strong>Name:</strong> <%=req.session.user.fullName%></p>
-                                            <p><strong>Email:</strong> <%=req.session.user.email%></p>
-                                            <p><strong>Phone:</strong> <%=req.session.user.phoneNumber%></p>
+                                            <p><strong>Name:</strong> <%=user.fullName%></p>
+                                            <p><strong>Email:</strong> <%=user.email%></p>
+                                            <p><strong>Phone:</strong> <%=user.phoneNumber%></p>
                                             <a href="/account/editAccount" class="btn  btn-sm mt-2" style="background-color: #009688;">Edit Profile</a>
                                         </div>
                                     </div>

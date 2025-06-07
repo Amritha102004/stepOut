@@ -6,6 +6,7 @@ const statusCode = require("../../utils/httpStatusCodes")
 
 const loadWallet = async (req, res) => {
   try {
+    const user =req.session.user;
     const userId = req.session.user._id
     const page = Number.parseInt(req.query.page) || 1
     const limit = 10
@@ -40,7 +41,7 @@ const loadWallet = async (req, res) => {
     }
 
     res.render("user/wallet", {
-      req,
+      user,
       wallet,
       transactions: paginatedTransactions,
       currentPage: page,
