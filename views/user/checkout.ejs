@@ -150,6 +150,62 @@
                                         </div>
                                     </label>
                                 </div>
+
+                                <!-- Wallet Payment Option -->
+                                <div class="payment-option">
+                                    <input type="radio" class="payment-radio" name="paymentMethod" id="wallet" value="wallet">
+                                    <label for="wallet" class="payment-label">
+                                        <div class="payment-card">
+                                            <div class="payment-icon">
+                                                <i class="fas fa-wallet"></i>
+                                            </div>
+                                            <div class="payment-details">
+                                                <h5>Wallet Payment</h5>
+                                                <p>Pay using your wallet balance: ₹<span id="walletBalance"><%= walletBalance %></span></p>
+                                            </div>
+                                            <div class="payment-badge">
+                                                <span class="badge bg-info">Instant</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Partial Wallet Payment Option -->
+                                <div class="payment-option">
+                                    <input type="radio" class="payment-radio" name="paymentMethod" id="partial-wallet" value="partial-wallet">
+                                    <label for="partial-wallet" class="payment-label">
+                                        <div class="payment-card">
+                                            <div class="payment-icon">
+                                                <i class="fas fa-coins"></i>
+                                            </div>
+                                            <div class="payment-details">
+                                                <h5>Partial Wallet + Online</h5>
+                                                <p>Use wallet balance + online payment</p>
+                                            </div>
+                                            <div class="payment-badge">
+                                                <span class="badge bg-warning">Flexible</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Wallet Amount Selection -->
+                                <div class="wallet-amount-section" id="walletAmountSection" style="display: none;">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-6">
+                                            <label for="walletAmount" class="form-label">Wallet Amount to Use</label>
+                                            <input type="number" class="form-control" id="walletAmount" 
+                                                   min="1" max="<%= walletBalance %>" step="1" 
+                                                   placeholder="Enter amount">
+                                            <small class="text-muted">Available: ₹<span id="walletBalanceDisplay"><%= walletBalance %></span></small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" id="useFullWallet">
+                                                Use Full Balance
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -208,12 +264,22 @@
                                     <span>Discount</span>
                                     <span class="text-success">-₹<span id="discountAmount">0</span></span>
                                 </div>
+                                <!-- Wallet Usage Display -->
+                                <div class="price-row" id="walletRow" style="display: none;">
+                                    <span>Wallet Used</span>
+                                    <span class="text-info">-₹<span id="walletUsageAmount">0</span></span>
+                                </div>
                                 <hr>
                                 <div class="price-row total-row">
                                     <span>Total Amount</span>
                                     <span>₹<span id="finalTotal">
                                             <%= totalAmount + Math.round(totalAmount * 0.18) %>
                                         </span></span>
+                                </div>
+                                <!-- Amount to Pay Display -->
+                                <div class="price-row" id="payRow" style="display: none;">
+                                    <span><strong>Amount to Pay</strong></span>
+                                    <span><strong>₹<span id="amountToPay">0</span></strong></span>
                                 </div>
                             </div>
 

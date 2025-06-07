@@ -1,9 +1,9 @@
-const Order = require("../../model/orderModel");
+const Order = require("../../model/orderModel")
 const User = require("../../model/userModel")
-const Product = require("../../model/productModel");
+const Product = require("../../model/productModel")
 const Address = require("../../model/addressModel")
-const Wallet = require("../../model/walletModel");
-const PDFDocument = require("pdfkit");
+const Wallet = require("../../model/walletModel")
+const PDFDocument = require("pdfkit")
 const statusCode = require("../../utils/httpStatusCodes")
 const ExcelJS = require("exceljs")
 
@@ -76,7 +76,7 @@ const loadOrders = async (req, res) => {
       case "amount_low":
         sortOptions = { finalAmount: 1 }
         break
-      default: 
+      default:
         sortOptions = { orderDate: -1 }
     }
 
@@ -85,7 +85,7 @@ const loadOrders = async (req, res) => {
     }
 
     const orders = await Order.find(query)
-      .populate("user", "name email")
+      .populate("user", "fullName email")
       .populate("address")
       .populate({
         path: "products.product",
@@ -139,7 +139,7 @@ const getOrderDetails = async (req, res) => {
     const orderId = req.params.orderId
 
     const order = await Order.findById(orderId)
-      .populate("user", "name email")
+      .populate("user", "fullName email")
       .populate("address")
       .populate({
         path: "products.product",
@@ -176,7 +176,7 @@ const updateOrderStatus = async (req, res) => {
     const orderId = req.params.orderId
     const { status } = req.body
 
-    const validStatuses = ["pending", "confirmed", "shipped", "delivered", "cancelled", "returned"]
+    const validStatuses = ["pending", "confirmed", "shipped", "out for delivery", "delivered", "cancelled", "returned"]
     if (!validStatuses.includes(status)) {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
@@ -184,7 +184,7 @@ const updateOrderStatus = async (req, res) => {
       })
     }
 
-    const order = await Order.findById(orderId).populate("user", "_id name email")
+    const order = await Order.findById(orderId).populate("user", "_id fullName email")
     if (!order) {
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
@@ -195,7 +195,14 @@ const updateOrderStatus = async (req, res) => {
     const previousStatus = order.orderStatus
     order.orderStatus = status
 
-    if (status === "cancelled") {
+    if (status === "delivered") {
+      order.deliveredAt = new Date()
+      order.products.forEach((item) => {
+        if (item.status === "shipped" || item.status === "out for delivery") {
+          item.status = "delivered"
+        }
+      })
+    } else if (status === "cancelled") {
       order.products.forEach((item) => {
         if (item.status === "pending" || item.status === "confirmed") {
           item.status = status
@@ -206,7 +213,7 @@ const updateOrderStatus = async (req, res) => {
 
       await restoreInventory(order)
 
-      if (order.paymentMethod === "online") {
+      if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
         await processRefundToWallet(order, "Order cancelled by admin")
       }
     } else if (status === "returned") {
@@ -239,6 +246,274 @@ const updateOrderStatus = async (req, res) => {
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Failed to update order status",
+    })
+  }
+}
+
+const updateItemStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params
+    const { productId, size, status } = req.body
+
+    const validStatuses = ["pending", "confirmed", "shipped", "out for delivery", "delivered", "cancelled", "returned"]
+    if (!validStatuses.includes(status)) {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Invalid status",
+      })
+    }
+
+    const order = await Order.findById(orderId).populate("products.product")
+    if (!order) {
+      return res.status(statusCode.NOT_FOUND).json({
+        success: false,
+        message: "Order not found",
+      })
+    }
+
+    const itemIndex = order.products.findIndex(
+      (item) => item.product._id.toString() === productId && item.variant.size === size,
+    )
+
+    if (itemIndex === -1) {
+      return res.status(statusCode.NOT_FOUND).json({
+        success: false,
+        message: "Item not found in order",
+      })
+    }
+
+    const item = order.products[itemIndex]
+    const previousStatus = item.status
+    item.status = status
+
+    if (status === "delivered") {
+      item.deliveredAt = new Date()
+    } else if (status === "cancelled") {
+      item.cancelledAt = new Date()
+      item.cancellationReason = "Cancelled by admin"
+
+      // Restore stock for this item
+      const product = await Product.findById(productId)
+      if (product) {
+        const variantIndex = product.variants.findIndex((v) => v.size === size)
+        if (variantIndex !== -1) {
+          product.variants[variantIndex].varientquantity += item.quantity
+          await product.save()
+        }
+      }
+
+      // Process partial refund if needed
+      if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
+        const itemRefundAmount = item.variant.salePrice * item.quantity
+        await processItemRefund(order, item, itemRefundAmount, "Item cancelled by admin")
+      }
+    }
+
+    // Update overall order status based on item statuses
+    const allItemStatuses = order.products.map((p) => p.status)
+    const uniqueStatuses = [...new Set(allItemStatuses)]
+
+    if (uniqueStatuses.length === 1) {
+      order.orderStatus = uniqueStatuses[0]
+    } else if (allItemStatuses.every((s) => ["delivered", "cancelled", "returned"].includes(s))) {
+      order.orderStatus = "delivered" // Mixed final states
+    }
+
+    await order.save()
+
+    res.status(statusCode.OK).json({
+      success: true,
+      message: `Item status updated to ${status}`,
+    })
+  } catch (error) {
+    console.log("Error updating item status:", error)
+    res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Failed to update item status",
+    })
+  }
+}
+
+const approveReturn = async (req, res) => {
+  try {
+    const orderId = req.params.orderId
+    const { reason, itemId } = req.body
+
+    const order = await Order.findById(orderId).populate("user", "_id fullName email")
+    if (!order) {
+      return res.status(statusCode.NOT_FOUND).json({
+        success: false,
+        message: "Order not found",
+      })
+    }
+
+    if (itemId) {
+      // Approve individual item return
+      const item = order.products.id(itemId)
+      if (!item) {
+        return res.status(statusCode.NOT_FOUND).json({
+          success: false,
+          message: "Item not found",
+        })
+      }
+
+      if (item.status !== "return_requested") {
+        return res.status(statusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Item is not in return requested status",
+        })
+      }
+
+      item.status = "returned"
+      item.returnApprovedAt = new Date()
+      item.returnApprovalReason = reason || "Return approved by admin"
+
+      // Restore stock for this item
+      const product = await Product.findById(item.product)
+      if (product) {
+        const variantIndex = product.variants.findIndex((v) => v.size === item.variant.size)
+        if (variantIndex !== -1) {
+          product.variants[variantIndex].varientquantity += item.quantity
+          await product.save()
+        }
+      }
+
+      // Process refund for this item
+      const itemRefundAmount = item.variant.salePrice * item.quantity
+      const refundResult = await processItemRefund(order, item, itemRefundAmount, "Item return approved by admin")
+
+      await order.save()
+
+      if (refundResult.success) {
+        res.status(statusCode.OK).json({
+          success: true,
+          message: `Item return approved and refund of ₹${itemRefundAmount} processed to user's wallet`,
+        })
+      } else {
+        res.status(statusCode.OK).json({
+          success: true,
+          message: "Item return approved but refund processing failed. Please process refund manually.",
+        })
+      }
+    } else {
+      // Approve entire order return
+      if (order.orderStatus !== "return_requested") {
+        return res.status(statusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Order is not in return requested status",
+        })
+      }
+
+      order.orderStatus = "returned"
+      order.returnApprovedAt = new Date()
+      order.returnApprovalReason = reason || "Return approved by admin"
+
+      order.products.forEach((item) => {
+        if (item.status === "return_requested") {
+          item.status = "returned"
+          item.returnApprovedAt = new Date()
+        }
+      })
+
+      await order.save()
+
+      await restoreInventory(order)
+      const refundResult = await processRefundToWallet(order, "Return approved - refund processed")
+
+      if (refundResult.success) {
+        res.status(statusCode.OK).json({
+          success: true,
+          message: `Return approved and refund of ₹${refundResult.amount} processed to user's wallet`,
+        })
+      } else {
+        res.status(statusCode.OK).json({
+          success: true,
+          message: "Return approved but refund processing failed. Please process refund manually.",
+        })
+      }
+    }
+  } catch (error) {
+    console.log("Error approving return:", error)
+    res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Failed to approve return",
+    })
+  }
+}
+
+const rejectReturn = async (req, res) => {
+  try {
+    const orderId = req.params.orderId
+    const { reason, itemId } = req.body
+
+    const order = await Order.findById(orderId)
+    if (!order) {
+      return res.status(statusCode.NOT_FOUND).json({
+        success: false,
+        message: "Order not found",
+      })
+    }
+
+    if (itemId) {
+      // Reject individual item return
+      const item = order.products.id(itemId)
+      if (!item) {
+        return res.status(statusCode.NOT_FOUND).json({
+          success: false,
+          message: "Item not found",
+        })
+      }
+
+      if (item.status !== "return_requested") {
+        return res.status(statusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Item is not in return requested status",
+        })
+      }
+
+      item.status = "delivered"
+      item.returnRejectedAt = new Date()
+      item.returnRejectionReason = reason || "Return rejected by admin"
+
+      await order.save()
+
+      res.status(statusCode.OK).json({
+        success: true,
+        message: "Item return request rejected successfully",
+      })
+    } else {
+      // Reject entire order return
+      if (order.orderStatus !== "return_requested") {
+        return res.status(statusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Order is not in return requested status",
+        })
+      }
+
+      order.orderStatus = "delivered"
+      order.returnRejectedAt = new Date()
+      order.returnRejectionReason = reason || "Return rejected by admin"
+
+      order.products.forEach((item) => {
+        if (item.status === "return_requested") {
+          item.status = "delivered"
+          item.returnRejectedAt = new Date()
+          item.returnRejectionReason = reason || "Return rejected by admin"
+        }
+      })
+
+      await order.save()
+
+      res.status(statusCode.OK).json({
+        success: true,
+        message: "Return request rejected successfully",
+      })
+    }
+  } catch (error) {
+    console.log("Error rejecting return:", error)
+    res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Failed to reject return",
     })
   }
 }
@@ -279,6 +554,41 @@ const processRefundToWallet = async (order, reason) => {
   }
 }
 
+const processItemRefund = async (order, item, refundAmount, reason) => {
+  try {
+    const userId = order.user._id
+
+    let wallet = await Wallet.findOne({ userId })
+    if (!wallet) {
+      wallet = new Wallet({ userId, balance: 0, transactions: [] })
+    }
+
+    wallet.transactions.push({
+      type: "credit",
+      amount: refundAmount,
+      orderId: order._id,
+      reason: reason,
+      refundedItems: [item.product],
+      date: new Date(),
+    })
+
+    wallet.balance += refundAmount
+    await wallet.save()
+
+    // Update order refund tracking
+    order.refundAmount = (order.refundAmount || 0) + refundAmount
+    order.refundStatus = order.refundStatus === "completed" ? "completed" : "partial"
+    order.refundProcessedAt = new Date()
+    order.refundMethod = "wallet"
+
+    console.log(`Item refund processed: ₹${refundAmount} added to user ${userId} wallet`)
+    return { success: true, amount: refundAmount }
+  } catch (error) {
+    console.log("Error processing item refund:", error)
+    return { success: false, error: error.message }
+  }
+}
+
 const restoreInventory = async (order) => {
   try {
     for (const item of order.products) {
@@ -303,7 +613,7 @@ const processRefund = async (req, res) => {
     const orderId = req.params.orderId
     const { refundAmount, reason } = req.body
 
-    const order = await Order.findById(orderId).populate("user", "_id name email")
+    const order = await Order.findById(orderId).populate("user", "_id fullName email")
     if (!order) {
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
@@ -365,109 +675,6 @@ const processRefund = async (req, res) => {
   }
 }
 
-const approveReturn = async (req, res) => {
-  try {
-    const orderId = req.params.orderId
-    const { reason } = req.body
-
-    const order = await Order.findById(orderId).populate("user", "_id name email")
-    if (!order) {
-      return res.status(statusCode.NOT_FOUND).json({
-        success: false,
-        message: "Order not found",
-      })
-    }
-
-    if (order.orderStatus !== "return_requested") {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Order is not in return requested status",
-      })
-    }
-
-    order.orderStatus = "returned"
-    order.returnApprovedAt = new Date()
-    order.returnApprovalReason = reason || "Return approved by admin"
-
-    order.products.forEach((item) => {
-      if (item.status === "return_requested") {
-        item.status = "returned"
-        item.returnApprovedAt = new Date()
-      }
-    })
-
-    await order.save()
-
-    await restoreInventory(order)
-    const refundResult = await processRefundToWallet(order, "Return approved - refund processed")
-
-    if (refundResult.success) {
-      res.status(statusCode.OK).json({
-        success: true,
-        message: `Return approved and refund of ₹${refundResult.amount} processed to user's wallet`,
-      })
-    } else {
-      res.status(statusCode.OK).json({
-        success: true,
-        message: "Return approved but refund processing failed. Please process refund manually.",
-      })
-    }
-  } catch (error) {
-    console.log("Error approving return:", error)
-    res.status(statusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "Failed to approve return",
-    })
-  }
-}
-
-const rejectReturn = async (req, res) => {
-  try {
-    const orderId = req.params.orderId
-    const { reason } = req.body
-
-    const order = await Order.findById(orderId)
-    if (!order) {
-      return res.status(statusCode.NOT_FOUND).json({
-        success: false,
-        message: "Order not found",
-      })
-    }
-
-    if (order.orderStatus !== "return_requested") {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Order is not in return requested status",
-      })
-    }
-
-    order.orderStatus = "delivered"
-    order.returnRejectedAt = new Date()
-    order.returnRejectionReason = reason || "Return rejected by admin"
-
-    order.products.forEach((item) => {
-      if (item.status === "return_requested") {
-        item.status = "delivered"
-        item.returnRejectedAt = new Date()
-        item.returnRejectionReason = reason || "Return rejected by admin"
-      }
-    })
-
-    await order.save()
-
-    res.status(statusCode.OK).json({
-      success: true,
-      message: "Return request rejected successfully",
-    })
-  } catch (error) {
-    console.log("Error rejecting return:", error)
-    res.status(statusCode.INTERNAL_SERVER_ERROR).json({
-      success: false,
-      message: "Failed to reject return",
-    })
-  }
-}
-
 const getWalletTransactions = async (req, res) => {
   try {
     const page = Number.parseInt(req.query.page) || 1
@@ -482,7 +689,7 @@ const getWalletTransactions = async (req, res) => {
     }
 
     const wallets = await Wallet.find(query)
-      .populate("userId", "name email")
+      .populate("userId", "fullName email")
       .populate({
         path: "transactions.orderId",
         select: "orderID orderDate",
@@ -498,7 +705,7 @@ const getWalletTransactions = async (req, res) => {
           ...transaction.toObject(),
           userInfo: {
             _id: wallet.userId._id,
-            name: wallet.userId.name,
+            name: wallet.userId.fullName,
             email: wallet.userId.email,
           },
           walletBalance: wallet.balance,
@@ -537,7 +744,7 @@ const sendNotification = async (req, res) => {
   try {
     const orderId = req.params.orderId
 
-    const order = await Order.findById(orderId).populate("user", "email name")
+    const order = await Order.findById(orderId).populate("user", "email fullName")
     if (!order) {
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
@@ -545,8 +752,7 @@ const sendNotification = async (req, res) => {
       })
     }
 
-    // email
-
+    // Here you would implement email notification
     console.log(`Sending notification to ${order.user.email} for order ${order.orderID}`)
 
     res.status(statusCode.OK).json({
@@ -566,7 +772,7 @@ const cancelOrder = async (req, res) => {
   try {
     const orderId = req.params.orderId
 
-    const order = await Order.findById(orderId).populate("user", "_id name email")
+    const order = await Order.findById(orderId).populate("user", "_id fullName email")
     if (!order) {
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
@@ -582,13 +788,13 @@ const cancelOrder = async (req, res) => {
     }
 
     order.orderStatus = "cancelled"
-    order.cancelReason = "Cancelled by admin"
+    order.cancellationReason = "Cancelled by admin"
     order.cancelledAt = new Date()
 
     order.products.forEach((item) => {
       if (item.status === "pending" || item.status === "confirmed") {
         item.status = "cancelled"
-        item.cancelReason = "Cancelled by admin"
+        item.cancellationReason = "Cancelled by admin"
         item.cancelledAt = new Date()
       }
     })
@@ -596,7 +802,7 @@ const cancelOrder = async (req, res) => {
     await order.save()
     await restoreInventory(order)
 
-    if (order.paymentMethod === "online") {
+    if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
       const refundResult = await processRefundToWallet(order, "Order cancelled by admin - automatic refund")
 
       if (refundResult.success) {
@@ -657,7 +863,7 @@ const downloadInvoice = async (req, res) => {
     const orderId = req.params.orderId
 
     const order = await Order.findById(orderId)
-      .populate("user", "name email")
+      .populate("user", "fullName email")
       .populate("address")
       .populate({
         path: "products.product",
@@ -669,6 +875,14 @@ const downloadInvoice = async (req, res) => {
       return res.status(statusCode.NOT_FOUND).json({
         success: false,
         message: "Order not found",
+      })
+    }
+
+    // Only allow invoice download for delivered orders
+    if (order.orderStatus !== "delivered") {
+      return res.status(statusCode.BAD_REQUEST).json({
+        success: false,
+        message: "Invoice can only be downloaded for delivered orders",
       })
     }
 
@@ -699,8 +913,17 @@ const downloadInvoice = async (req, res) => {
     doc.text(`Phone: ${order.address.mobile}`, 50, 230)
 
     doc.fontSize(14).text("Payment Information:", 300, 150)
-    doc.fontSize(12).text(`Method: ${order.paymentMethod === "COD" ? "Cash on Delivery" : "Online Payment"}`, 300, 170)
-    doc.text(`Payment Status: ${order.paymentMethod === "COD" ? "Pending" : "Completed"}`, 300, 185)
+    doc
+      .fontSize(12)
+      .text(
+        `Method: ${order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod === "wallet" ? "Wallet Payment" : "Online Payment"}`,
+        300,
+        170,
+      )
+    doc.text(`Payment Status: ${order.paymentStatus}`, 300, 185)
+    if (order.walletAmountUsed > 0) {
+      doc.text(`Wallet Used: ₹${order.walletAmountUsed}`, 300, 200)
+    }
 
     let yPosition = 270
     doc.fontSize(12).text("Item", 50, yPosition)
@@ -736,6 +959,12 @@ const downloadInvoice = async (req, res) => {
       yPosition += 20
     }
 
+    if (order.walletAmountUsed > 0) {
+      doc.text("Wallet Used:", 350, yPosition)
+      doc.text(`-₹${order.walletAmountUsed}`, 450, yPosition)
+      yPosition += 20
+    }
+
     doc.text("Tax (18% GST):", 350, yPosition)
     doc.text(`₹${Math.round(order.totalAmount * 0.18)}`, 450, yPosition)
     yPosition += 20
@@ -764,11 +993,10 @@ const downloadInvoice = async (req, res) => {
   }
 }
 
-// excel thing
 const exportOrders = async (req, res, query, sortOptions) => {
   try {
     const orders = await Order.find(query)
-      .populate("user", "name email")
+      .populate("user", "fullName email")
       .populate("address")
       .populate({
         path: "products.product",
@@ -789,6 +1017,7 @@ const exportOrders = async (req, res, query, sortOptions) => {
       { header: "Total Amount", key: "totalAmount", width: 15 },
       { header: "Final Amount", key: "finalAmount", width: 15 },
       { header: "Payment Method", key: "paymentMethod", width: 15 },
+      { header: "Wallet Used", key: "walletUsed", width: 12 },
       { header: "Status", key: "status", width: 12 },
       { header: "Order Date", key: "orderDate", width: 20 },
       { header: "Address", key: "address", width: 40 },
@@ -803,13 +1032,14 @@ const exportOrders = async (req, res, query, sortOptions) => {
 
       worksheet.addRow({
         orderID: order.orderID,
-        customerName: order.user.name,
+        customerName: order.user.fullName,
         customerEmail: order.user.email,
         phone: order.address.mobile,
         items: itemsText,
         totalAmount: order.totalAmount,
         finalAmount: order.finalAmount,
         paymentMethod: order.paymentMethod,
+        walletUsed: order.walletAmountUsed || 0,
         status: order.orderStatus,
         orderDate: new Date(order.orderDate).toLocaleString(),
         address: addressText,
@@ -844,6 +1074,7 @@ module.exports = {
   loadOrders,
   getOrderDetails,
   updateOrderStatus,
+  updateItemStatus,
   processRefund,
   approveReturn,
   rejectReturn,

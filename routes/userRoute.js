@@ -71,6 +71,9 @@ router.post('/checkout/payment-failure', checkSession, isBlocked, checkoutContro
 router.get('/payment-failure', checkSession, isBlocked, checkoutController.loadPaymentFailure)
 router.get('/checkout/retry/:orderId', checkSession, isBlocked, checkoutController.retryPayment)
 router.get('/order-success', checkSession, isBlocked, checkoutController.loadOrderSuccess);
+router.post("/checkout/create-order-with-wallet", checkSession, checkoutController.createOrderWithWallet)
+router.post("/checkout/verify-partial-payment", checkSession, checkoutController.verifyPartialPayment)
+router.post("/checkout/validate-coupon", checkSession, checkoutController.validateCoupon)
 
 //coupon
 router.post("/checkout/validate-coupon", checkSession, isBlocked, couponController.validateCoupon)

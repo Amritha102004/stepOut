@@ -6,7 +6,7 @@ const statusCode = require("../../utils/httpStatusCodes")
 
 const loadWallet = async (req, res) => {
   try {
-    const user =req.session.user;
+    const user = req.session.user
     const userId = req.session.user._id
     const page = Number.parseInt(req.query.page) || 1
     const limit = 10
@@ -74,6 +74,7 @@ const addMoney = async (req, res) => {
     if (!wallet) {
       wallet = new Wallet({ userId, balance: 0, transactions: [] })
     }
+
     wallet.transactions.push({
       type: "add",
       amount: amount,
@@ -100,7 +101,6 @@ const addMoney = async (req, res) => {
 
 const processRefund = async (userId, amount, orderId, reason, refundedItems = []) => {
   try {
- 
     let wallet = await Wallet.findOne({ userId })
     if (!wallet) {
       wallet = new Wallet({ userId, balance: 0, transactions: [] })

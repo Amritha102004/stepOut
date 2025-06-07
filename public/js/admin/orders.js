@@ -1,705 +1,745 @@
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize order management functionality
   initializeFilters()
-  initializeTableActions()
-  initializeBulkActions()
-  initializeStatusUpdates()
-  initializeOrderDetails()
-
-  // Toast notification system
-  const toastContainer = document.getElementById("toastContainer")
-  const bootstrap = window.bootstrap // Declare the bootstrap variable
-
-  function showToast(message, type = "success") {
-    const toastId = "toast-" + Date.now()
-    const toastHTML = `
-            <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="toast-header">
-                    <i class="fas fa-${type === "success" ? "check-circle text-success" : "exclamation-triangle text-danger"} me-2"></i>
-                    <strong class="me-auto">${type === "success" ? "Success" : "Error"}</strong>
-                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-                </div>
-                <div class="toast-body">
-                    ${message}
-                </div>
-            </div>
-        `
-
-    toastContainer.insertAdjacentHTML("beforeend", toastHTML)
-    const toast = new bootstrap.Toast(document.getElementById(toastId))
-    toast.show()
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-      const toastElement = document.getElementById(toastId)
-      if (toastElement) {
-        toastElement.remove()
-      }
-    }, 5000)
-  }
-
-  // Initialize filters
-  function initializeFilters() {
-    const searchInput = document.getElementById("searchInput")
-    const statusFilter = document.getElementById("statusFilter")
-    const paymentFilter = document.getElementById("paymentFilter")
-    const dateFilter = document.getElementById("dateFilter")
-    const sortFilter = document.getElementById("sortFilter")
-    const clearFiltersBtn = document.getElementById("clearFilters")
-    const clearFiltersBtn2 = document.getElementById("clearFiltersBtn")
-    const customDateRange = document.getElementById("customDateRange")
-    const applyDateFilter = document.getElementById("applyDateFilter")
-
-    // Search functionality
-    let searchTimeout
-    if (searchInput) {
-      searchInput.addEventListener("input", () => {
-        clearTimeout(searchTimeout)
-        searchTimeout = setTimeout(() => {
-          applyFilters()
-        }, 500)
-      })
-    }
-    // Filter change handlers
-    ;[statusFilter, paymentFilter, sortFilter].forEach((filter) => {
-      if (filter) {
-        filter.addEventListener("change", applyFilters)
-      }
-    })
-
-    // Date filter handler
-    if (dateFilter) {
-      dateFilter.addEventListener("change", function () {
-        if (this.value === "custom") {
-          customDateRange.style.display = "flex"
-        } else {
-          customDateRange.style.display = "none"
-          applyFilters()
-        }
-      })
-    }
-
-    // Apply custom date filter
-    if (applyDateFilter) {
-      applyDateFilter.addEventListener("click", applyFilters)
-    }
-    // Clear filters
-    ;[clearFiltersBtn, clearFiltersBtn2].forEach((btn) => {
-      if (btn) {
-        btn.addEventListener("click", () => {
-          // Reset all filters
-          if (searchInput) searchInput.value = ""
-          if (statusFilter) statusFilter.value = ""
-          if (paymentFilter) paymentFilter.value = ""
-          if (dateFilter) dateFilter.value = ""
-          if (sortFilter) sortFilter.value = "newest"
-          if (customDateRange) customDateRange.style.display = "none"
-
-          // Apply filters (which will be empty, showing all orders)
-          applyFilters()
-        })
-      }
-    })
-
-    function applyFilters() {
-      const params = new URLSearchParams()
-
-      if (searchInput && searchInput.value) {
-        params.append("search", searchInput.value)
-      }
-      if (statusFilter && statusFilter.value) {
-        params.append("status", statusFilter.value)
-      }
-      if (paymentFilter && paymentFilter.value) {
-        params.append("payment", paymentFilter.value)
-      }
-      if (dateFilter && dateFilter.value) {
-        params.append("date", dateFilter.value)
-
-        if (dateFilter.value === "custom") {
-          const fromDate = document.getElementById("fromDate")
-          const toDate = document.getElementById("toDate")
-          if (fromDate && fromDate.value) {
-            params.append("fromDate", fromDate.value)
-          }
-          if (toDate && toDate.value) {
-            params.append("toDate", toDate.value)
-          }
-        }
-      }
-      if (sortFilter && sortFilter.value) {
-        params.append("sort", sortFilter.value)
-      }
-
-      // Redirect with new parameters
-      window.location.href = "/admin/orders?" + params.toString()
-    }
-  }
-
-  // Initialize table actions
-  function initializeTableActions() {
-    const selectAllCheckbox = document.getElementById("selectAllCheckbox")
-    const orderCheckboxes = document.querySelectorAll(".order-checkbox")
-    const selectAllBtn = document.getElementById("selectAllBtn")
-    const refreshBtn = document.getElementById("refreshBtn")
-
-    // Select all functionality
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener("change", function () {
-        orderCheckboxes.forEach((checkbox) => {
-          checkbox.checked = this.checked
-        })
-        updateSelectedCount()
-      })
-    }
-
-    if (selectAllBtn) {
-      selectAllBtn.addEventListener("click", () => {
-        const allChecked = Array.from(orderCheckboxes).every((cb) => cb.checked)
-        orderCheckboxes.forEach((checkbox) => {
-          checkbox.checked = !allChecked
-        })
-        if (selectAllCheckbox) {
-          selectAllCheckbox.checked = !allChecked
-        }
-        updateSelectedCount()
-      })
-    }
-
-    // Individual checkbox handlers
-    orderCheckboxes.forEach((checkbox) => {
-      checkbox.addEventListener("change", () => {
-        updateSelectedCount()
-
-        // Update select all checkbox state
-        if (selectAllCheckbox) {
-          const checkedCount = document.querySelectorAll(".order-checkbox:checked").length
-          selectAllCheckbox.checked = checkedCount === orderCheckboxes.length
-          selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < orderCheckboxes.length
-        }
-      })
-    })
-
-    // Refresh button
-    if (refreshBtn) {
-      refreshBtn.addEventListener("click", () => {
-        window.location.reload()
-      })
-    }
-
-    function updateSelectedCount() {
-      const selectedCount = document.querySelectorAll(".order-checkbox:checked").length
-      const selectedCountElement = document.getElementById("selectedCount")
-      if (selectedCountElement) {
-        selectedCountElement.textContent = selectedCount
-      }
-    }
-  }
-
-  // Initialize bulk actions
-  function initializeBulkActions() {
-    const executeBulkActionBtn = document.getElementById("executeBulkAction")
-    const bulkActionSelect = document.getElementById("bulkActionSelect")
-
-    if (executeBulkActionBtn) {
-      executeBulkActionBtn.addEventListener("click", () => {
-        const selectedOrders = Array.from(document.querySelectorAll(".order-checkbox:checked")).map((cb) => cb.value)
-        const action = bulkActionSelect.value
-
-        if (!action) {
-          showToast("Please select an action", "error")
-          return
-        }
-
-        if (selectedOrders.length === 0) {
-          showToast("Please select at least one order", "error")
-          return
-        }
-
-        executeBulkAction(action, selectedOrders)
-      })
-    }
-
-    function executeBulkAction(action, orderIds) {
-      // Show loading state
-      const originalText = executeBulkActionBtn.textContent
-      executeBulkActionBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...'
-      executeBulkActionBtn.disabled = true
-
-      fetch("/admin/orders/bulk-action", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: action,
-          orderIds: orderIds,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            showToast(data.message)
-
-            // Close modal and refresh page
-            const modal = bootstrap.Modal.getInstance(document.getElementById("bulkActionModal"))
-            modal.hide()
-
-            setTimeout(() => {
-              window.location.reload()
-            }, 1000)
-          } else {
-            showToast(data.message || "Failed to execute bulk action", "error")
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error)
-          showToast("An error occurred while processing the request", "error")
-        })
-        .finally(() => {
-          // Reset button state
-          executeBulkActionBtn.textContent = originalText
-          executeBulkActionBtn.disabled = false
-        })
-    }
-  }
-
-  // Initialize status updates
-  function initializeStatusUpdates() {
-    const statusSelects = document.querySelectorAll(".status-select")
-
-    statusSelects.forEach((select) => {
-      select.addEventListener("change", function () {
-        const orderId = this.dataset.orderId
-        const newStatus = this.value
-        const currentStatus = this.dataset.currentStatus
-
-        if (newStatus === currentStatus) {
-          return // No change
-        }
-
-        updateOrderStatus(orderId, newStatus, this)
-      })
-    })
-
-    function updateOrderStatus(orderId, newStatus, selectElement) {
-      // Show loading state
-      selectElement.disabled = true
-
-      fetch(`/admin/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          status: newStatus,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            showToast(`Order status updated to ${newStatus}`)
-            selectElement.dataset.currentStatus = newStatus
-          } else {
-            showToast(data.message || "Failed to update order status", "error")
-            // Revert to previous status
-            selectElement.value = selectElement.dataset.currentStatus
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error)
-          showToast("An error occurred while updating order status", "error")
-          // Revert to previous status
-          selectElement.value = selectElement.dataset.currentStatus
-        })
-        .finally(() => {
-          selectElement.disabled = false
-        })
-    }
-  }
-
-  // Initialize order details modal
-  function initializeOrderDetails() {
-    const orderDetailModal = document.getElementById("orderDetailModal")
-
-    if (orderDetailModal) {
-      orderDetailModal.addEventListener("show.bs.modal", (event) => {
-        const button = event.relatedTarget
-        const orderId = button.dataset.orderId
-
-        if (orderId) {
-          loadOrderDetails(orderId)
-        }
-      })
-    }
-
-    function loadOrderDetails(orderId) {
-      const modalContent = document.getElementById("orderDetailContent")
-
-      // Show loading state
-      modalContent.innerHTML = `
-                <div class="text-center py-5">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    <p class="mt-3">Loading order details...</p>
-                </div>
-            `
-
-      fetch(`/admin/orders/${orderId}/details`)
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            renderOrderDetails(data.order)
-          } else {
-            modalContent.innerHTML = `
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                Failed to load order details: ${data.message}
-                            </div>
-                        `
-          }
-        })
-        .catch((error) => {
-          console.error("Error:", error)
-          modalContent.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            An error occurred while loading order details.
-                        </div>
-                    `
-        })
-    }
-
-    function renderOrderDetails(order) {
-      const modalContent = document.getElementById("orderDetailContent")
-
-      modalContent.innerHTML = `
-                <div class="row">
-                    <div class="col-md-8">
-                        <!-- Order Information -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-info-circle me-2"></i>Order Information</h6>
-                            <div class="detail-row">
-                                <span class="detail-label">Order ID:</span>
-                                <span class="detail-value">#${order.orderID}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Order Date:</span>
-                                <span class="detail-value">${new Date(order.orderDate).toLocaleString()}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Status:</span>
-                                <span class="detail-value">
-                                    <span class="badge bg-${getStatusColor(order.orderStatus)}">${order.orderStatus.toUpperCase()}</span>
-                                </span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Payment Method:</span>
-                                <span class="detail-value">${order.paymentMethod === "COD" ? "Cash on Delivery" : "Online Payment"}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Customer Information -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-user me-2"></i>Customer Information</h6>
-                            <div class="detail-row">
-                                <span class="detail-label">Name:</span>
-                                <span class="detail-value">${order.user.name}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Email:</span>
-                                <span class="detail-value">${order.user.email}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Phone:</span>
-                                <span class="detail-value">${order.address.mobile}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Delivery Address -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-map-marker-alt me-2"></i>Delivery Address</h6>
-                            <div class="detail-row">
-                                <span class="detail-label">Name:</span>
-                                <span class="detail-value">${order.address.name}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Address:</span>
-                                <span class="detail-value">${order.address.address}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">City:</span>
-                                <span class="detail-value">${order.address.city}, ${order.address.state}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Pincode:</span>
-                                <span class="detail-value">${order.address.pincode}</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Order Items -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-shopping-bag me-2"></i>Order Items</h6>
-                            ${order.products
-                              .map(
-                                (item) => `
-                                <div class="product-item">
-                                    <img src="${
-                                      item.product.images && item.product.images.length > 0
-                                        ? (item.product.images.find((img) => img.isMain) || item.product.images[0]).url
-                                        : "/placeholder.svg?height=60&width=60&query=shoe"
-                                    }" 
-                                         alt="${item.product.name}" class="product-image">
-                                    <div class="product-details">
-                                        <div class="product-name">${item.product.name}</div>
-                                        <div class="product-specs">Size: ${item.variant.size} | Quantity: ${item.quantity}</div>
-                                        <div class="product-price">₹${item.variant.salePrice} × ${item.quantity} = ₹${item.variant.salePrice * item.quantity}</div>
-                                        ${item.status !== "pending" ? `<div class="mt-1"><span class="badge bg-${getStatusColor(item.status)}">${item.status.toUpperCase()}</span></div>` : ""}
-                                        ${item.cancelReason ? `<div class="mt-1"><small class="text-muted">Cancel Reason: ${item.cancelReason}</small></div>` : ""}
-                                        ${item.returnReason ? `<div class="mt-1"><small class="text-muted">Return Reason: ${item.returnReason}</small></div>` : ""}
-                                    </div>
-                                </div>
-                            `,
-                              )
-                              .join("")}
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <!-- Order Summary -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-receipt me-2"></i>Order Summary</h6>
-                            <div class="detail-row">
-                                <span class="detail-label">Subtotal:</span>
-                                <span class="detail-value">₹${order.totalAmount}</span>
-                            </div>
-                            ${
-                              order.discount > 0
-                                ? `
-                                <div class="detail-row">
-                                    <span class="detail-label">Discount:</span>
-                                    <span class="detail-value text-success">-₹${order.discount}</span>
-                                </div>
-                            `
-                                : ""
-                            }
-                            <div class="detail-row">
-                                <span class="detail-label">Tax (18% GST):</span>
-                                <span class="detail-value">₹${Math.round(order.totalAmount * 0.18)}</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Shipping:</span>
-                                <span class="detail-value text-success">FREE</span>
-                            </div>
-                            <hr>
-                            <div class="detail-row">
-                                <span class="detail-label"><strong>Total Amount:</strong></span>
-                                <span class="detail-value"><strong>₹${order.finalAmount}</strong></span>
-                            </div>
-                        </div>
-                        
-                        <!-- Order Timeline -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-clock me-2"></i>Order Timeline</h6>
-                            <div class="timeline">
-                                <div class="timeline-item active">
-                                    <div class="timeline-content">
-                                        <h6>Order Placed</h6>
-                                        <p>${new Date(order.orderDate).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                ${
-                                  order.orderStatus !== "cancelled" && order.orderStatus !== "returned"
-                                    ? `
-                                    <div class="timeline-item ${["confirmed", "shipped", "delivered"].includes(order.orderStatus) ? "active" : ""}">
-                                        <div class="timeline-content">
-                                            <h6>Order Confirmed</h6>
-                                            <p>${["confirmed", "shipped", "delivered"].includes(order.orderStatus) ? "Order confirmed by admin" : "Pending confirmation"}</p>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-item ${["shipped", "delivered"].includes(order.orderStatus) ? "active" : ""}">
-                                        <div class="timeline-content">
-                                            <h6>Order Shipped</h6>
-                                            <p>${["shipped", "delivered"].includes(order.orderStatus) ? "Order shipped to customer" : "Will be shipped soon"}</p>
-                                        </div>
-                                    </div>
-                                    <div class="timeline-item ${order.orderStatus === "delivered" ? "active" : ""}">
-                                        <div class="timeline-content">
-                                            <h6>Order Delivered</h6>
-                                            <p>${order.orderStatus === "delivered" ? "Order delivered successfully" : "Estimated delivery in 5-7 days"}</p>
-                                        </div>
-                                    </div>
-                                `
-                                    : `
-                                    <div class="timeline-item active">
-                                        <div class="timeline-content">
-                                            <h6>Order ${order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}</h6>
-                                            <p>${order.cancelReason || order.returnReason || `Order has been ${order.orderStatus}`}</p>
-                                        </div>
-                                    </div>
-                                `
-                                }
-                            </div>
-                        </div>
-                        
-                        <!-- Quick Actions -->
-                        <div class="order-detail-section">
-                            <h6><i class="fas fa-cog me-2"></i>Quick Actions</h6>
-                            <div class="d-grid gap-2">
-                                <a href="/admin/orders/${order._id}/invoice" class="btn btn-outline-primary btn-sm" target="_blank">
-                                    <i class="fas fa-file-pdf me-2"></i>Download Invoice
-                                </a>
-                                <button class="btn btn-outline-info btn-sm" onclick="sendNotification('${order._id}')">
-                                    <i class="fas fa-bell me-2"></i>Send Notification
-                                </button>
-                                ${
-                                  order.orderStatus === "pending" || order.orderStatus === "confirmed"
-                                    ? `
-                                    <button class="btn btn-outline-danger btn-sm" onclick="cancelOrder('${order._id}')">
-                                        <i class="fas fa-times me-2"></i>Cancel Order
-                                    </button>
-                                `
-                                    : ""
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `
-    }
-
-    function getStatusColor(status) {
-      const colors = {
-        pending: "warning",
-        confirmed: "info",
-        shipped: "primary",
-        delivered: "success",
-        cancelled: "danger",
-        returned: "secondary",
-      }
-      return colors[status] || "secondary"
-    }
-  }
-
-  // Export orders functionality
-  const exportOrdersBtn = document.getElementById("exportOrdersBtn")
-  if (exportOrdersBtn) {
-    exportOrdersBtn.addEventListener("click", () => {
-      const currentUrl = new URL(window.location.href)
-      const params = currentUrl.searchParams
-
-      // Add export parameter
-      params.set("export", "true")
-
-      // Create download link
-      const downloadUrl = "/admin/orders?" + params.toString()
-      window.open(downloadUrl, "_blank")
-    })
-  }
+  initializeModals()
+  initializeActions()
 })
 
-// Global functions for inline actions
-function sendNotification(orderId) {
-  fetch(`/admin/orders/${orderId}/notify`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        showToast("Notification sent successfully")
+// Initialize filter functionality
+function initializeFilters() {
+  const dateFilter = document.getElementById("dateFilter")
+  const customDateRange = document.getElementById("customDateRange")
+
+  if (dateFilter) {
+    dateFilter.addEventListener("change", function () {
+      if (this.value === "custom") {
+        customDateRange.style.display = "block"
       } else {
-        showToast(data.message || "Failed to send notification", "error")
+        customDateRange.style.display = "none"
       }
     })
-    .catch((error) => {
-      console.error("Error:", error)
-      showToast("An error occurred while sending notification", "error")
-    })
+  }
 }
 
-function cancelOrder(orderId) {
-  if (confirm("Are you sure you want to cancel this order?")) {
-    fetch(`/admin/orders/${orderId}/cancel`, {
+// Apply filters
+function applyFilters() {
+  const searchQuery = document.getElementById("searchInput").value
+  const statusFilter = document.getElementById("statusFilter").value
+  const paymentFilter = document.getElementById("paymentFilter").value
+  const dateFilter = document.getElementById("dateFilter").value
+  const sortFilter = document.getElementById("sortFilter").value
+  const fromDate = document.getElementById("fromDate").value
+  const toDate = document.getElementById("toDate").value
+
+  const params = new URLSearchParams()
+  if (searchQuery) params.append("search", searchQuery)
+  if (statusFilter) params.append("status", statusFilter)
+  if (paymentFilter) params.append("payment", paymentFilter)
+  if (dateFilter) params.append("date", dateFilter)
+  if (sortFilter) params.append("sort", sortFilter)
+  if (fromDate) params.append("fromDate", fromDate)
+  if (toDate) params.append("toDate", toDate)
+
+  window.location.href = `/admin/orders?${params.toString()}`
+}
+
+// Export orders
+function exportOrders() {
+  const currentUrl = new URL(window.location.href)
+  currentUrl.searchParams.set("export", "true")
+  window.open(currentUrl.toString(), "_blank")
+}
+
+// Initialize modals
+function initializeModals() {
+  // Return approval modal
+  const returnApprovalModal = document.getElementById("returnApprovalModal")
+  const confirmApprovalBtn = document.getElementById("confirmApprovalBtn")
+
+  if (confirmApprovalBtn) {
+    confirmApprovalBtn.addEventListener("click", () => {
+      const orderId = document.getElementById("returnOrderId").value
+      const itemId = document.getElementById("returnItemId").value
+      const reason = document.getElementById("approvalReason").value
+
+      confirmReturnApproval(orderId, reason, itemId)
+    })
+  }
+
+  // Return rejection modal
+  const returnRejectionModal = document.getElementById("returnRejectionModal")
+  const confirmRejectionBtn = document.getElementById("confirmRejectionBtn")
+
+  if (confirmRejectionBtn) {
+    confirmRejectionBtn.addEventListener("click", () => {
+      const orderId = document.getElementById("rejectOrderId").value
+      const itemId = document.getElementById("rejectItemId").value
+      const reason = document.getElementById("rejectionReason").value
+
+      if (!reason.trim()) {
+        document.getElementById("rejectionReason").classList.add("is-invalid")
+        return
+      }
+
+      confirmReturnRejection(orderId, reason, itemId)
+    })
+  }
+
+  // Refund modal
+  const refundModal = document.getElementById("refundModal")
+  const confirmRefundBtn = document.getElementById("confirmRefundBtn")
+
+  if (confirmRefundBtn) {
+    confirmRefundBtn.addEventListener("click", () => {
+      const orderId = document.getElementById("refundOrderId").value
+      const amount = document.getElementById("refundAmount").value
+      const reason = document.getElementById("refundReason").value
+
+      if (!amount || amount <= 0) {
+        document.getElementById("refundAmount").classList.add("is-invalid")
+        return
+      }
+
+      confirmRefundProcessing(orderId, amount, reason)
+    })
+  }
+}
+
+// Initialize action handlers
+function initializeActions() {
+  // Add event listeners for dynamic content
+}
+
+// View order details
+async function viewOrderDetails(orderId) {
+  try {
+    showLoading("Loading order details...")
+
+    const response = await fetch(`/admin/orders/${orderId}/details`)
+    const data = await response.json()
+
+    hideLoading()
+
+    if (data.success) {
+      displayOrderDetails(data.order)
+      const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("orderDetailsModal"))
+      modal.show()
+    } else {
+      showToast(data.message || "Failed to load order details", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error loading order details:", error)
+    showToast("Failed to load order details", "error")
+  }
+}
+
+// Display order details in modal
+function displayOrderDetails(order) {
+  const content = document.getElementById("orderDetailsContent")
+
+  const html = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="order-info-section">
+                    <h6 class="section-title">Order Information</h6>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Order ID:</label>
+                            <span>${order.orderID}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Status:</label>
+                            <span class="status-badge status-${order.orderStatus.replace("_", "-")}">${order.orderStatus.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Order Date:</label>
+                            <span>${new Date(order.orderDate).toLocaleString("en-IN")}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Payment Method:</label>
+                            <span>${getPaymentMethodDisplay(order.paymentMethod)}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Payment Status:</label>
+                            <span class="badge bg-${order.paymentStatus === "completed" ? "success" : order.paymentStatus === "failed" ? "danger" : "warning"}">${order.paymentStatus}</span>
+                        </div>
+                        ${
+                          order.walletAmountUsed > 0
+                            ? `
+                        <div class="info-item">
+                            <label>Wallet Used:</label>
+                            <span class="text-info">₹${order.walletAmountUsed}</span>
+                        </div>
+                        `
+                            : ""
+                        }
+                        ${
+                          order.remainingAmount > 0
+                            ? `
+                        <div class="info-item">
+                            <label>Remaining Amount:</label>
+                            <span class="text-warning">₹${order.remainingAmount}</span>
+                        </div>
+                        `
+                            : ""
+                        }
+                    </div>
+                </div>
+                
+                <div class="customer-info-section mt-4">
+                    <h6 class="section-title">Customer Information</h6>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Name:</label>
+                            <span>${order.user.fullName}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Email:</label>
+                            <span>${order.user.email}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Wallet Balance:</label>
+                            <span class="text-success">₹${order.userWalletBalance || 0}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="address-info-section mt-4">
+                    <h6 class="section-title">Delivery Address</h6>
+                    <div class="address-card">
+                        <strong>${order.address.name}</strong><br>
+                        ${order.address.address}<br>
+                        ${order.address.city}, ${order.address.state} - ${order.address.pincode}<br>
+                        <i class="fas fa-phone"></i> ${order.address.mobile}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="order-items-section">
+                    <h6 class="section-title">Order Items</h6>
+                    <div class="items-list">
+                        ${order.products
+                          .map(
+                            (item) => `
+                            <div class="item-card">
+                                <div class="item-info">
+                                    <h6>${item.product.name}</h6>
+                                    <p>Size: ${item.variant.size} | Quantity: ${item.quantity}</p>
+                                    <p>Price: ₹${item.variant.salePrice} × ${item.quantity} = ₹${item.variant.salePrice * item.quantity}</p>
+                                    <div class="item-status">
+                                        <span class="status-badge status-${item.status.replace("_", "-")}">${item.status.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</span>
+                                    </div>
+                                    ${item.cancellationReason ? `<small class="text-muted">Cancelled: ${item.cancellationReason}</small>` : ""}
+                                    ${item.returnReason ? `<small class="text-muted">Return Reason: ${item.returnReason}</small>` : ""}
+                                </div>
+                                <div class="item-actions">
+                                    ${getItemActionButtons(order._id, item)}
+                                </div>
+                            </div>
+                        `,
+                          )
+                          .join("")}
+                    </div>
+                </div>
+                
+                <div class="order-summary-section mt-4">
+                    <h6 class="section-title">Order Summary</h6>
+                    <div class="summary-grid">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span>₹${order.totalAmount}</span>
+                        </div>
+                        ${
+                          order.discount > 0
+                            ? `
+                        <div class="summary-row">
+                            <span>Discount:</span>
+                            <span class="text-success">-₹${order.discount}</span>
+                        </div>
+                        `
+                            : ""
+                        }
+                        ${
+                          order.walletAmountUsed > 0
+                            ? `
+                        <div class="summary-row">
+                            <span>Wallet Used:</span>
+                            <span class="text-info">-₹${order.walletAmountUsed}</span>
+                        </div>
+                        `
+                            : ""
+                        }
+                        <div class="summary-row">
+                            <span>Tax (18%):</span>
+                            <span>₹${Math.round(order.totalAmount * 0.18)}</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span><strong>Final Amount:</strong></span>
+                            <span><strong>₹${order.finalAmount}</strong></span>
+                        </div>
+                        ${
+                          order.refundAmount > 0
+                            ? `
+                        <div class="summary-row">
+                            <span>Refunded:</span>
+                            <span class="text-success">₹${order.refundAmount}</span>
+                        </div>
+                        `
+                            : ""
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="order-actions-section">
+                    <h6 class="section-title">Quick Actions</h6>
+                    <div class="action-buttons">
+                        ${getOrderActionButtons(order)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `
+
+  content.innerHTML = html
+}
+
+// Get payment method display text
+function getPaymentMethodDisplay(method) {
+  switch (method) {
+    case "COD":
+      return "Cash on Delivery"
+    case "wallet":
+      return "Wallet Payment"
+    case "partial-wallet":
+      return "Partial Wallet + Online"
+    case "online":
+      return "Online Payment"
+    default:
+      return method
+  }
+}
+
+// Get item action buttons
+function getItemActionButtons(orderId, item) {
+  let buttons = ""
+
+  if (item.status === "return_requested") {
+    buttons += `
+            <button class="btn btn-sm btn-success me-1" onclick="approveItemReturn('${orderId}', '${item._id}')" title="Approve Return">
+                <i class="fas fa-check"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="rejectItemReturn('${orderId}', '${item._id}')" title="Reject Return">
+                <i class="fas fa-times"></i>
+            </button>
+        `
+  }
+
+  if (["pending", "confirmed"].includes(item.status)) {
+    buttons += `
+            <div class="dropdown d-inline">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Status
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="updateItemStatus('${orderId}', '${item.product._id}', '${item.variant.size}', 'confirmed')">Confirm</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateItemStatus('${orderId}', '${item.product._id}', '${item.variant.size}', 'shipped')">Ship</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateItemStatus('${orderId}', '${item.product._id}', '${item.variant.size}', 'delivered')">Deliver</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="updateItemStatus('${orderId}', '${item.product._id}', '${item.variant.size}', 'cancelled')">Cancel</a></li>
+                </ul>
+            </div>
+        `
+  }
+
+  return buttons
+}
+
+// Get order action buttons
+function getOrderActionButtons(order) {
+  let buttons = ""
+
+  if (["pending", "confirmed", "shipped"].includes(order.orderStatus)) {
+    buttons += `
+            <div class="dropdown d-inline me-2">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Update Status
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('${order._id}', 'confirmed')">Confirm Order</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('${order._id}', 'shipped')">Mark as Shipped</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="updateOrderStatus('${order._id}', 'delivered')">Mark as Delivered</a></li>
+                </ul>
+            </div>
+        `
+  }
+
+  if (order.orderStatus === "return_requested") {
+    buttons += `
+            <button class="btn btn-success me-2" onclick="approveReturn('${order._id}')">
+                <i class="fas fa-check me-1"></i>Approve Return
+            </button>
+            <button class="btn btn-danger me-2" onclick="rejectReturn('${order._id}')">
+                <i class="fas fa-times me-1"></i>Reject Return
+            </button>
+        `
+  }
+
+  if (["pending", "confirmed"].includes(order.orderStatus)) {
+    buttons += `
+            <button class="btn btn-outline-danger me-2" onclick="cancelOrder('${order._id}')">
+                <i class="fas fa-ban me-1"></i>Cancel Order
+            </button>
+        `
+  }
+
+  buttons += `
+        <button class="btn btn-outline-info me-2" onclick="processRefund('${order._id}')">
+            <i class="fas fa-money-bill-wave me-1"></i>Process Refund
+        </button>
+        <button class="btn btn-outline-secondary" onclick="sendNotification('${order._id}')">
+            <i class="fas fa-bell me-1"></i>Send Notification
+        </button>
+    `
+
+  return buttons
+}
+
+// Update order status
+async function updateOrderStatus(orderId, status) {
+  try {
+    showLoading("Updating order status...")
+
+    const response = await fetch(`/admin/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      showToast(data.message || "Failed to update order status", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error updating order status:", error)
+    showToast("Failed to update order status", "error")
+  }
+}
+
+// Update item status
+async function updateItemStatus(orderId, productId, size, status) {
+  try {
+    showLoading("Updating item status...")
+
+    const response = await fetch(`/admin/orders/${orderId}/item-status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ productId, size, status }),
+    })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      // Refresh order details
+      viewOrderDetails(orderId)
+    } else {
+      showToast(data.message || "Failed to update item status", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error updating item status:", error)
+    showToast("Failed to update item status", "error")
+  }
+}
+
+// Approve return
+function approveReturn(orderId, itemId = null) {
+  document.getElementById("returnOrderId").value = orderId
+  document.getElementById("returnItemId").value = itemId || ""
+  document.getElementById("approvalReason").value = ""
+
+  const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("returnApprovalModal"))
+  modal.show()
+}
+
+// Approve item return
+function approveItemReturn(orderId, itemId) {
+  approveReturn(orderId, itemId)
+}
+
+// Confirm return approval
+async function confirmReturnApproval(orderId, reason, itemId = null) {
+  try {
+    showLoading("Processing return approval...")
+
+    const body = { reason }
+    if (itemId) body.itemId = itemId
+
+    const response = await fetch(`/admin/orders/${orderId}/approve-return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("returnApprovalModal"))
+      modal.hide()
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      showToast(data.message || "Failed to approve return", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error approving return:", error)
+    showToast("Failed to approve return", "error")
+  }
+}
+
+// Reject return
+function rejectReturn(orderId, itemId = null) {
+  document.getElementById("rejectOrderId").value = orderId
+  document.getElementById("rejectItemId").value = itemId || ""
+  document.getElementById("rejectionReason").value = ""
+  document.getElementById("rejectionReason").classList.remove("is-invalid")
+
+  const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("returnRejectionModal"))
+  modal.show()
+}
+
+// Reject item return
+function rejectItemReturn(orderId, itemId) {
+  rejectReturn(orderId, itemId)
+}
+
+// Confirm return rejection
+async function confirmReturnRejection(orderId, reason, itemId = null) {
+  try {
+    showLoading("Processing return rejection...")
+
+    const body = { reason }
+    if (itemId) body.itemId = itemId
+
+    const response = await fetch(`/admin/orders/${orderId}/reject-return`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("returnRejectionModal"))
+      modal.hide()
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      showToast(data.message || "Failed to reject return", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error rejecting return:", error)
+    showToast("Failed to reject return", "error")
+  }
+}
+
+// Process refund
+function processRefund(orderId) {
+  document.getElementById("refundOrderId").value = orderId
+  document.getElementById("refundAmount").value = ""
+  document.getElementById("refundReason").value = ""
+  document.getElementById("refundAmount").classList.remove("is-invalid")
+
+  const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("refundModal"))
+  modal.show()
+}
+
+// Confirm refund processing
+async function confirmRefundProcessing(orderId, amount, reason) {
+  try {
+    showLoading("Processing refund...")
+
+    const response = await fetch(`/admin/orders/${orderId}/process-refund`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refundAmount: Number.parseFloat(amount),
+        reason,
+      }),
+    })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("refundModal"))
+      modal.hide()
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      showToast(data.message || "Failed to process refund", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error processing refund:", error)
+    showToast("Failed to process refund", "error")
+  }
+}
+
+// Cancel order
+async function cancelOrder(orderId) {
+  if (!confirm("Are you sure you want to cancel this order?")) {
+    return
+  }
+
+  try {
+    showLoading("Cancelling order...")
+
+    const response = await fetch(`/admin/orders/${orderId}/cancel`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
     })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          showToast("Order cancelled successfully")
-          setTimeout(() => {
-            window.location.reload()
-          }, 1000)
-        } else {
-          showToast(data.message || "Failed to cancel order", "error")
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error)
-        showToast("An error occurred while cancelling order", "error")
-      })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      showToast(data.message || "Failed to cancel order", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error cancelling order:", error)
+    showToast("Failed to cancel order", "error")
   }
 }
 
-function deleteOrder(orderId) {
-  if (confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
-    fetch(`/admin/orders/${orderId}`, {
+// Delete order
+async function deleteOrder(orderId) {
+  if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) {
+    return
+  }
+
+  try {
+    showLoading("Deleting order...")
+
+    const response = await fetch(`/admin/orders/${orderId}`, {
       method: "DELETE",
+    })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+      setTimeout(() => window.location.reload(), 1500)
+    } else {
+      showToast(data.message || "Failed to delete order", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error deleting order:", error)
+    showToast("Failed to delete order", "error")
+  }
+}
+
+// Send notification
+async function sendNotification(orderId) {
+  try {
+    showLoading("Sending notification...")
+
+    const response = await fetch(`/admin/orders/${orderId}/notify`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
     })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          showToast("Order deleted successfully")
-          setTimeout(() => {
-            window.location.reload()
-          }, 1000)
-        } else {
-          showToast(data.message || "Failed to delete order", "error")
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error)
-        showToast("An error occurred while deleting order", "error")
-      })
+
+    const data = await response.json()
+    hideLoading()
+
+    if (data.success) {
+      showToast(data.message, "success")
+    } else {
+      showToast(data.message || "Failed to send notification", "error")
+    }
+  } catch (error) {
+    hideLoading()
+    console.error("Error sending notification:", error)
+    showToast("Failed to send notification", "error")
   }
 }
 
-// Helper function to show toast notifications
-function showToast(message, type = "success") {
-  const toastContainer = document.getElementById("toastContainer")
-  const bootstrap = window.bootstrap // Declare the bootstrap variable
-  const toastId = "toast-" + Date.now()
-  const toastHTML = `
-        <div class="toast" id="${toastId}" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <i class="fas fa-${type === "success" ? "check-circle text-success" : "exclamation-triangle text-danger"} me-2"></i>
-                <strong class="me-auto">${type === "success" ? "Success" : "Error"}</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
+// Download invoice
+function downloadInvoice(orderId) {
+  window.open(`/admin/orders/${orderId}/invoice`, "_blank")
+}
+
+// Utility functions
+function showLoading(message = "Loading...") {
+  // Implementation for loading indicator
+  console.log(message)
+}
+
+function hideLoading() {
+  // Implementation to hide loading indicator
+}
+
+function showToast(message, type = "info") {
+  // Create toast element
+  const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === "success" ? "success" : type === "error" ? "danger" : "info"} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>
     `
 
-  toastContainer.insertAdjacentHTML("beforeend", toastHTML)
-  const toast = new bootstrap.Toast(document.getElementById(toastId))
+  // Add to toast container
+  const toastContainer = document.getElementById("toast-container")
+  toastContainer.insertAdjacentHTML("beforeend", toastHtml)
+
+  // Show toast
+  const toastElement = toastContainer.lastElementChild
+  const toast = window.bootstrap.Toast.getOrCreateInstance(toastElement)
   toast.show()
 
-  // Auto remove after 5 seconds
-  setTimeout(() => {
-    const toastElement = document.getElementById(toastId)
-    if (toastElement) {
-      toastElement.remove()
-    }
-  }, 5000)
+  // Remove toast element after it's hidden
+  toastElement.addEventListener("hidden.bs.toast", () => {
+    toastElement.remove()
+  })
 }

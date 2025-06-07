@@ -44,31 +44,26 @@ router.put("/toggleProductListing/:id", checkSession, isAdmin, productController
 
 //orders
 router.get("/orders", checkSession, orderController.loadOrders);
-router.get("/orders/:orderId/details", checkSession, orderController.getOrderDetails)
-router.patch("/orders/:orderId/status", checkSession, isAdmin, orderController.updateOrderStatus);
-router.post("/orders/:orderId/notify", checkSession, isAdmin, orderController.sendNotification);
+router.get('/orders/:orderId/details', checkSession, orderController.getOrderDetails);
+router.patch("/orders/:orderId/status", checkSession, isAdmin, orderController.updateOrderStatus)
+router.patch("/orders/:orderId/item-status", checkSession, isAdmin, orderController.updateItemStatus)
+router.post("/orders/:orderId/approve-return", checkSession, isAdmin, orderController.approveReturn)
+router.post("/orders/:orderId/reject-return", checkSession, isAdmin, orderController.rejectReturn)
+router.post("/orders/:orderId/process-refund", checkSession, isAdmin, orderController.processRefund)
+router.post("/orders/:orderId/notify", checkSession, isAdmin, orderController.sendNotification)
 router.post("/orders/:orderId/cancel", checkSession, isAdmin, orderController.cancelOrder)
 router.delete("/orders/:orderId", checkSession, isAdmin, orderController.deleteOrder)
-router.get("/orders/:orderId/invoice", checkSession, orderController.downloadInvoice);
-    
-router.get("/coupons", checkSession, couponController.loadCoupons);
-router.get("/addCoupon", checkSession, isAdmin, couponController.loadAddCoupon);
+router.get("/orders/:orderId/invoice", checkSession, orderController.downloadInvoice)
+router.get("/wallet/transactions", checkSession, isAdmin, orderController.getWalletTransactions)
+
+router.get("/coupons", checkSession, couponController.loadCoupons)
+router.get("/addCoupon", checkSession, isAdmin, couponController.loadAddCoupon)
 router.post("/addCoupon", checkSession, isAdmin, couponController.addCoupon)
-router.get("/editCoupon", checkSession, isAdmin, couponController.loadEditCoupon);
+router.get("/editCoupon", checkSession, isAdmin, couponController.loadEditCoupon)
 router.put("/coupons/:id", checkSession, isAdmin, couponController.updateCoupon)
 router.patch("/coupons/:id/toggle", checkSession, isAdmin, couponController.toggleCouponStatus)
 router.delete("/coupons/:id", checkSession, isAdmin, couponController.deleteCoupon)
 router.get("/coupons/:id/details", checkSession, couponController.getCouponDetails)
-router.get("/generate-coupon-code", checkSession, couponController.generateCouponCode);
+router.get("/generate-coupon-code", checkSession, couponController.generateCouponCode)
 
- // Not using anymore
-// router.get("/wallet", checkSession, isAdmin, walletController.loadWalletManagement)
-// router.get("/wallet/transactions", checkSession, isAdmin, walletController.getWalletTransactions)
-// router.get("/wallet/user/:userId/details", checkSession, isAdmin, walletController.getUserWalletDetails)
-// router.post("/wallet/user/:userId/add-money", checkSession, isAdmin, walletController.addMoneyToWallet)
-// router.post("/wallet/user/:userId/deduct-money", checkSession, isAdmin, walletController.deductMoneyFromWallet)
-// router.get("/wallet/analytics", checkSession, isAdmin, walletController.getWalletAnalytics)
-
-
-
-module.exports=router;
+module.exports = router

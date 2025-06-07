@@ -305,7 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
           confirmCancelItemBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cancelling...'
           confirmCancelItemBtn.disabled = true
 
-          // Send cancel item request
+          // FIXED: Send cancel item request with correct parameter name 'size'
           fetch(`/account/orders/${orderId}/cancel-item`, {
             method: "POST",
             headers: {
@@ -313,7 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify({
               productId: productId,
-              variantSize: variantSize,
+              size: variantSize, // CHANGED: from 'variantSize' to 'size'
               reason: cancelReason,
             }),
           })
@@ -427,7 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
           confirmReturnItemBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...'
           confirmReturnItemBtn.disabled = true
 
-          // Send return item request
+          // FIXED: Send return item request with correct parameter name 'size'
           fetch(`/account/orders/${orderId}/return-item`, {
             method: "POST",
             headers: {
@@ -435,7 +435,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify({
               productId: productId,
-              variantSize: variantSize,
+              size: variantSize, // CHANGED: from 'variantSize' to 'size'
               reason: returnReason,
             }),
           })

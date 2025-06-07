@@ -3,13 +3,14 @@ const Product = require("../../model/productModel")
 const Order = require("../../model/orderModel")
 const Address = require("../../model/addressModel")
 const Wallet = require("../../model/walletModel")
+const { processRefund } = require("./walletController")
 const mongoose = require("mongoose")
 const statusCode = require("../../utils/httpStatusCodes")
 const PDFDocument = require("pdfkit")
 
 const loadOrders = async (req, res) => {
   try {
-    const user = req.session.user;
+    const user = req.session.user
     const userId = req.session.user._id
     const page = Number.parseInt(req.query.page) || 1
     const limit = 10
@@ -58,7 +59,7 @@ const loadOrders = async (req, res) => {
 
 const loadOrderDetail = async (req, res) => {
   try {
-    const user =req.session.user;
+    const user = req.session.user
     const { orderId } = req.params
     const userId = req.session.user._id
 
@@ -204,6 +205,7 @@ const cancelOrder = async (req, res) => {
     await order.save()
     console.log(`Order ${orderId} cancelled successfully`)
 
+    // Restore stock
     for (const item of cancellableItems) {
       const product = await Product.findById(item.product._id)
       if (product) {
@@ -216,7 +218,8 @@ const cancelOrder = async (req, res) => {
       }
     }
 
-    if (order.paymentMethod === "online" && order.paymentStatus === "completed") {
+    // Process refund for online payments
+    if ((order.paymentMethod === "online" || order.walletAmountUsed > 0) && order.paymentStatus === "completed") {
       console.log(`Processing refund for online payment: ₹${order.finalAmount}`)
 
       const refundResult = await processWalletRefund(
@@ -298,7 +301,9 @@ const returnOrder = async (req, res) => {
       })
     }
 
-    const returnableItems = order.products.filter((item) => !["cancelled", "returned"].includes(item.status))
+    const returnableItems = order.products.filter(
+      (item) => !["cancelled", "returned", "return_requested"].includes(item.status),
+    )
 
     if (returnableItems.length === 0) {
       return res.status(statusCode.BAD_REQUEST).json({
@@ -312,9 +317,9 @@ const returnOrder = async (req, res) => {
     order.returnRequestedAt = new Date()
 
     order.products.forEach((item) => {
-      if (!["cancelled", "returned"].includes(item.status)) {
+      if (!["cancelled", "returned", "return_requested"].includes(item.status)) {
         item.status = "return_requested"
-        item.returnRequestedAt = new Date()
+        item.returnRequestDate = new Date()
         item.returnReason = reason
       }
     })
@@ -405,6 +410,7 @@ const cancelOrderItem = async (req, res) => {
     await order.save()
     console.log(`Item cancelled successfully: ${item.product.name}`)
 
+    // Restore stock
     const product = await Product.findById(productId)
     if (product) {
       const variantIndex = product.variants.findIndex((v) => v.size === size)
@@ -418,7 +424,8 @@ const cancelOrderItem = async (req, res) => {
     const itemRefundAmount = item.variant.salePrice * item.quantity
     console.log(`Item refund amount: ₹${itemRefundAmount}`)
 
-    if (order.paymentMethod === "online" && order.paymentStatus === "completed") {
+    // Process refund for online payments
+    if ((order.paymentMethod === "online" || order.walletAmountUsed > 0) && order.paymentStatus === "completed") {
       console.log(`Processing partial refund for online payment`)
 
       const refundResult = await processWalletRefund(
@@ -482,12 +489,14 @@ const returnOrderItem = async (req, res) => {
         message: "Order not found",
       })
     }
+
     if (order.orderStatus !== "delivered") {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
         message: "Only delivered orders can be returned",
       })
     }
+
     const itemIndex = order.products.findIndex((item) => {
       return item.product._id.toString() === productId.toString() && item.variant.size === size
     })
@@ -519,7 +528,7 @@ const returnOrderItem = async (req, res) => {
     }
 
     item.status = "return_requested"
-    item.returnRequestedAt = new Date()
+    item.returnRequestDate = new Date()
     item.returnReason = reason
 
     await order.save()
@@ -555,6 +564,12 @@ const downloadInvoice = async (req, res) => {
 
     if (!order) {
       req.flash("error_msg", "Order not found")
+      return res.redirect("/account/orders")
+    }
+
+    // Only allow invoice download for delivered orders
+    if (order.orderStatus !== "delivered") {
+      req.flash("error_msg", "Invoice can only be downloaded for delivered orders")
       return res.redirect("/account/orders")
     }
 
@@ -633,6 +648,12 @@ const downloadInvoice = async (req, res) => {
       yPosition += 15
     }
 
+    if (order.walletAmountUsed > 0) {
+      doc.text("Wallet Used:", 300, yPosition)
+      doc.text(`-₹${order.walletAmountUsed}`, 400, yPosition)
+      yPosition += 15
+    }
+
     doc.text("Tax (18%):", 300, yPosition)
     doc.text(`₹${Math.round(order.totalAmount * 0.18)}`, 400, yPosition)
     yPosition += 15
@@ -643,7 +664,11 @@ const downloadInvoice = async (req, res) => {
     yPosition += 40
     doc
       .fontSize(10)
-      .text(`Payment Method: ${order.paymentMethod === "COD" ? "Cash on Delivery" : "Online Payment"}`, 50, yPosition)
+      .text(
+        `Payment Method: ${order.paymentMethod === "COD" ? "Cash on Delivery" : order.paymentMethod === "wallet" ? "Wallet Payment" : "Online Payment"}`,
+        50,
+        yPosition,
+      )
     doc.text(`Payment Status: ${order.paymentStatus}`, 50, yPosition + 15)
 
     doc.text("Thank you for shopping with StepOut!", 50, yPosition + 50)
