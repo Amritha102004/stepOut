@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Program - StepOut</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="/css/user/header.css">
+    <link rel="stylesheet" href="/css/user/footer.css">
+    <link rel="stylesheet" href="/css/user/accountCommon.css">
+    <link rel="stylesheet" href="/css/user/accountSidebar.css">
+    <link rel="stylesheet" href="/css/user/userAccount.css">
+    
+    <style>
+        /* Referral-specific styles that match your design */
+        .referral-code-card {
+            background: linear-gradient(135deg, #009688 0%, #00796b 100%);
+            color: white;
+            border: none;
+        }
+        
+        .referral-code-display {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .referral-code-text {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 3px;
+            margin: 0;
+        }
+        
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            padding: 8px 20px;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #009688;
+            margin: 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .step-circle {
+            background: #009688;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .step-content {
+            flex: 1;
+        }
+        
+        .how-it-works-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .earnings-highlight {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header (from partial) -->
+    <%- include('./partials/header') %>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        <div class="account-layout">
+            <!-- Sidebar -->
+            <div class="account-sidebar-container">
+                <%- include('./partials/accountSidebar', { activePage: 'referral' }) %>
+            </div>
+            
+            <!-- Content Area -->
+            <div class="account-content-container">
+                <div class="content-area">
+                    <h2 class="section-title">🎉 Referral Program</h2>
+                    
+                    <!-- Referral Code Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card account-card referral-code-card">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title mb-3">Your Referral Code</h5>
+                                    <p class="mb-3">Share this code with friends and earn ₹500 for each successful referral!</p>
+                                    
+                                    <div class="referral-code-display">
+                                        <p class="referral-code-text" id="referralCode"><%= user.referralCode %></p>
+                                    </div>
+                                    
+                                    <button class="btn copy-btn" onclick="copyReferralCode()">
+                                        <i class="fas fa-copy me-2"></i>Copy Code
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card account-card text-center">
+                                <div class="card-body">
+                                    <p class="stat-number"><%= referralStats.totalReferrals || 0 %></p>
+                                    <p class="stat-label">Total Referrals</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card account-card text-center">
+                                <div class="card-body">
+                                    <p class="stat-number">₹<%= referralStats.totalEarnings || 0 %></p>
+                                    <p class="stat-label">Total Earnings</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card account-card text-center">
+                                <div class="card-body">
+                                    <p class="stat-number">₹<%= wallet.balance || 0 %></p>
+                                    <p class="stat-label">Current Wallet Balance</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Earnings Highlight -->
+                    <% if (referralStats.totalEarnings > 0) { %>
+                    <div class="earnings-highlight">
+                        <h6 class="mb-2">🎊 Congratulations!</h6>
+                        <p class="mb-0">You've earned ₹<%= referralStats.totalEarnings %> through referrals!</p>
+                    </div>
+                    <% } %>
+
+                    <!-- How It Works -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card account-card">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-4">How It Works</h5>
+                                    
+                                    <div class="how-it-works-section">
+                                        <div class="step-item">
+                                            <div class="step-circle">1</div>
+                                            <div class="step-content">
+                                                <h6 class="mb-1">Share Your Code</h6>
+                                                <p class="mb-0 text-muted">Copy your unique referral code and share it with friends and family.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="step-item">
+                                            <div class="step-circle">2</div>
+                                            <div class="step-content">
+                                                <h6 class="mb-1">Friend Signs Up</h6>
+                                                <p class="mb-0 text-muted">Your friend creates a new account using your referral code during signup.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="step-item">
+                                            <div class="step-circle">3</div>
+                                            <div class="step-content">
+                                                <h6 class="mb-1">Earn Instantly</h6>
+                                                <p class="mb-0 text-muted">₹500 is automatically added to your wallet as soon as they complete registration!</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- <div class="mt-4 p-3" style="background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
+                                        <small class="text-warning-emphasis">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Note:</strong> Referral rewards are credited instantly upon successful account creation. Each referral code can only be used once per person.
+                                        </small>
+                                    </div> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer (from partial) -->
+    <%- include('./partials/footer') %>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/user/common.js"></script>
+    <script src="/js/user/accountSidebar.js"></script>
+    
+    <script>
+        function copyReferralCode() {
+            const code = document.getElementById('referralCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+                btn.style.background = 'rgba(76, 175, 80, 0.8)';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.style.background = 'rgba(255, 255, 255, 0.2)';
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const btn = document.querySelector('.copy-btn');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check me-2"></i>Copied!';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

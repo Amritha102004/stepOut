@@ -1,13 +1,15 @@
 const User = require('../../model/userModel');
-const Product=require('../../model/productModel');
-const Category=require('../../model/categoryModel');
+const Product = require('../../model/productModel');
+const Category = require('../../model/categoryModel');
+const Wallet = require("../../model/walletModel")
 const env = require('dotenv').config();
 const statusCode = require("../../utils/httpStatusCodes");
 const bcrypt = require("bcrypt");
 const nodemailer = require('nodemailer');
-const generateOtp=require('../../utils/otpGenerator');
-const sendEmail=require('../../utils/sendEmail');
-const securePassword=require('../../utils/hashPassword');
+const generateOtp = require('../../utils/otpGenerator');
+const sendEmail = require('../../utils/sendEmail');
+const securePassword = require('../../utils/hashPassword');
+const { generateReferralCode, validateReferralCode } = require("../../utils/referralGenerator")
 
 
 const loadHome = async (req, res) => {
@@ -28,23 +30,23 @@ const loadHome = async (req, res) => {
             ];
         }
 
-        const products = await Product.find({isActive:true})
-                    .populate("categoryId")
-                    .sort({createdAt:-1})
-                    .skip(skip)
-                    .limit(limit)
-                    .lean();
-        
-        const totalProducts = await Product.countDocuments({isActive: true});
+        const products = await Product.find({ isActive: true })
+            .populate("categoryId")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+
+        const totalProducts = await Product.countDocuments({ isActive: true });
         const totalPages = Math.ceil(totalProducts / limit);
 
         const categories = await Category.find({ isListed: true }).lean();
-        
+
         const brands = await Product.distinct("brand", { isActive: true });
-        
+
         const colors = await Product.distinct("color", { isActive: true });
 
-        return res.render('user/home', { 
+        return res.render('user/home', {
             products,
             currentPage: page,
             totalPages,
@@ -53,7 +55,7 @@ const loadHome = async (req, res) => {
             brands,
             colors,
             query: req.query,
-            user 
+            user
         });
     } catch (error) {
         console.log("homepage not loading:", error);
@@ -63,7 +65,7 @@ const loadHome = async (req, res) => {
 
 const loadSignup = async (req, res) => {
     try {
-        return res.render('user/signUp', { errors: null, userData: null  });
+        return res.render('user/signUp', { errors: null, userData: null });
     } catch (error) {
         console.log("signUp page not loading:", error);
         res.status(statusCode.INTERNAL_SERVER_ERROR).send("server error");
@@ -72,7 +74,7 @@ const loadSignup = async (req, res) => {
 
 const signup = async (req, res) => {
     try {
-        const { fullName, email, phoneNumber, password, confirmPassword } = req.body;
+        const { fullName, email, phoneNumber, password, confirmPassword, referralCode } = req.body;
 
         const errors = {};
         const userData = { fullName, email, phoneNumber };
@@ -95,7 +97,7 @@ const signup = async (req, res) => {
                 errors.email = "Email already registered";
             }
         }
- 
+
         const phoneRegex = /^\d{10}$/;
         if (!phoneNumber) {
             errors.phoneNumber = "Phone number is required";
@@ -115,7 +117,18 @@ const signup = async (req, res) => {
         } else if (password !== confirmPassword) {
             errors.confirmPassword = "Passwords do not match";
         }
- 
+
+        // Validate referral code if provided
+        let referrerUser = null
+        if (referralCode && referralCode.trim() !== "") {
+            const referralValidation = await validateReferralCode(referralCode)
+            if (!referralValidation.valid) {
+                errors.referralCode = referralValidation.message
+            } else {
+                referrerUser = referralValidation.referrer
+            }
+        }
+
         if (Object.keys(errors).length > 0) {
             return res.render('user/signUp', { 
                 errors, 
@@ -132,7 +145,14 @@ const signup = async (req, res) => {
 
         req.session.userOtp = otp;
         req.session.otpType = 'signup';
-        req.session.userData = { fullName, email, phoneNumber, password };
+        req.session.userData = {
+            fullName,
+            email,
+            phoneNumber,
+            password,
+            referredBy: referrerUser ? referrerUser.referralCode : null,
+            referrerUserId: referrerUser ? referrerUser._id : null,
+        };
 
         res.render('user/otpVerification', { error: null });
         console.log('otp sented ', otp);
@@ -166,15 +186,31 @@ const verifyOtp = async (req, res) => {
             const user = req.session.userData;
             const passwordHash = await securePassword(user.password);
 
+            const newUserReferralCode = await generateReferralCode(user.fullName)
+
             const saveUserData = new User({
                 fullName: user.fullName,
                 email: user.email,
                 password: passwordHash,
-                phoneNumber: user.phoneNumber
+                phoneNumber: user.phoneNumber,
+                referralCode: newUserReferralCode,
+                referredBy: user.referredBy,
             });
 
             await saveUserData.save();
+
+            // Create wallet for new user
+            const newWallet = new Wallet({
+                userId: saveUserData._id,
+                balance: 0,
+                transactions: [],
+            })
+            await newWallet.save()
             
+            // Process referral reward if user was referred
+            if (user.referrerUserId) {
+                await processReferralReward(user.referrerUserId, saveUserData._id)
+            }
 
             req.session.userOtp = null;                                                                                      // Clear OTP-related session data
             req.session.userData = null;
@@ -215,7 +251,40 @@ const verifyOtp = async (req, res) => {
     }
 };
 
+// New function to process referral rewards
+const processReferralReward = async (referrerUserId, newUserId) => {
+  try {
+    const REFERRAL_REWARD = 500 // ₹500 reward
 
+    // Find or create referrer's wallet
+    let referrerWallet = await Wallet.findOne({ userId: referrerUserId })
+    if (!referrerWallet) {
+      referrerWallet = new Wallet({
+        userId: referrerUserId,
+        balance: 0,
+        transactions: [],
+      })
+    }
+
+    // Add referral reward to referrer's wallet
+    referrerWallet.transactions.push({
+      type: "credit",
+      amount: REFERRAL_REWARD,
+      reason: `Referral bonus - New user joined using your code`,
+      date: new Date(),
+    })
+
+    referrerWallet.balance += REFERRAL_REWARD
+    await referrerWallet.save()
+
+    console.log(`Referral reward of ₹${REFERRAL_REWARD} added to user ${referrerUserId}`)
+
+    return { success: true }
+  } catch (error) {
+    console.error("Error processing referral reward:", error)
+    return { success: false, error: error.message }
+  }
+}
 
 const resendOtp = async (req, res) => {
     try {

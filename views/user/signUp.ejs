@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>stepOut - Create Account</title>
     <style>
-        * {
+         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -340,8 +340,6 @@
         <!-- Right Column - Create Account Form -->
         <div class="form-column">
             <div class="form-card">
-
-
                 <!-- Form Header -->
                 <h2 class="form-header">Create Account</h2>
 
@@ -364,7 +362,6 @@
                         </svg>
                         <span class="social-text">Sign up with Google</span>
                     </a>
-
                 </div>
 
                 <!-- OR Divider -->
@@ -373,6 +370,7 @@
                     <span class="divider-text">- OR -</span>
                     <div class="divider-line"></div>
                 </div>
+                
                 <!-- Form Fields -->
                 <form action="/signup" method="post">
                     <div>
@@ -382,7 +380,7 @@
                             <p class="error field-error">
                                 <%= errors.fullName %>
                             </p>
-                            <% } %>
+                        <% } %>
                     </div>
 
                     <div>
@@ -392,7 +390,7 @@
                             <p class="error field-error">
                                 <%= errors.email %>
                             </p>
-                            <% } %>
+                        <% } %>
                     </div>
 
                     <div>
@@ -402,7 +400,19 @@
                             <p class="error field-error">
                                 <%= errors.phoneNumber %>
                             </p>
-                            <% } %>
+                        <% } %>
+                    </div>
+
+                    <!-- NEW: Referral Code Field -->
+                    <div>
+                        <input type="text" placeholder="Referral Code (Optional)" class="input-field" name="referralCode"
+                            value="<%= userData && userData.referralCode ? userData.referralCode : '' %>"
+                            style="text-transform: uppercase;">
+                        <% if (errors && errors.referralCode) { %>
+                            <p class="error field-error">
+                                <%= errors.referralCode %>
+                            </p>
+                        <% } %>
                     </div>
 
                     <div class="password-field">
@@ -419,7 +429,7 @@
                             <p class="error field-error">
                                 <%= errors.password %>
                             </p>
-                            <% } %>
+                        <% } %>
                     </div>
 
                     <div class="password-field">
@@ -437,7 +447,7 @@
                             <p class="error field-error">
                                 <%= errors.confirmPassword %>
                             </p>
-                            <% } %>
+                        <% } %>
                     </div>
 
                     <button type="submit" class="submit-btn">Create Account</button>
@@ -476,6 +486,14 @@
                     }
                 });
             });
+
+            // Auto-uppercase referral code input
+            const referralInput = document.querySelector('input[name="referralCode"]');
+            if (referralInput) {
+                referralInput.addEventListener('input', function() {
+                    this.value = this.value.toUpperCase();
+                });
+            }
         });
     </script>
 </body>

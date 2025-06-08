@@ -6,6 +6,7 @@ const productController=require('../controller/adminController/productController
 const categoryController=require('../controller/adminController/categoryController');
 const orderController=require('../controller/adminController/orderController');
 const couponController=require('../controller/adminController/couponController');
+const salesReportController = require("../controller/adminController/salesReportController")
 // const walletController=require('../controller/adminController/walletController')
 const {checkSession}=require('../middleware/adminAuth');
 const {isAdmin}=require('../middleware/adminAuth');
@@ -65,5 +66,9 @@ router.patch("/coupons/:id/toggle", checkSession, isAdmin, couponController.togg
 router.delete("/coupons/:id", checkSession, isAdmin, couponController.deleteCoupon)
 router.get("/coupons/:id/details", checkSession, couponController.getCouponDetails)
 router.get("/generate-coupon-code", checkSession, couponController.generateCouponCode)
+
+router.get("/sales-report", checkSession, isAdmin, salesReportController.loadSalesReport)
+router.get("/sales-report/download-pdf", checkSession, isAdmin, salesReportController.downloadPdfReport)
+router.get("/sales-report/download-excel", checkSession, isAdmin, salesReportController.downloadExcelReport)
 
 module.exports = router

@@ -8,6 +8,43 @@ const mongoose = require("mongoose")
 const statusCode = require("../../utils/httpStatusCodes")
 const PDFDocument = require("pdfkit")
 
+// FIXED: Added helper function to recalculate order totals
+const recalculateOrderTotals = async (order) => {
+  let newTotalAmount = 0
+  let activeItemsCount = 0
+
+  // Calculate total from active (non-cancelled, non-returned) items
+  order.products.forEach((item) => {
+    if (!["cancelled", "returned"].includes(item.status)) {
+      newTotalAmount += item.variant.salePrice * item.quantity
+      activeItemsCount++
+    }
+  })
+
+  // If no active items, set amounts to 0
+  if (activeItemsCount === 0) {
+    order.totalAmount = 0
+    order.finalAmount = 0
+    return order
+  }
+
+  // Calculate tax on new total
+  const taxAmount = Math.round(newTotalAmount * 0.18)
+
+  // Keep original discount if applicable, but don't exceed new total
+  const applicableDiscount = Math.min(order.discount || 0, newTotalAmount)
+
+  // Calculate new final amount
+  const newFinalAmount = newTotalAmount + taxAmount - applicableDiscount - (order.walletAmountUsed || 0)
+
+  // Update order totals
+  order.totalAmount = newTotalAmount
+  order.finalAmount = Math.max(0, newFinalAmount)
+
+  console.log(`Order totals recalculated: Total: ₹${newTotalAmount}, Final: ₹${order.finalAmount}`)
+  return order
+}
+
 const loadOrders = async (req, res) => {
   try {
     const user = req.session.user
@@ -202,6 +239,8 @@ const cancelOrder = async (req, res) => {
       }
     })
 
+    // FIXED: Recalculate order totals after cancellation
+    await recalculateOrderTotals(order)
     await order.save()
     console.log(`Order ${orderId} cancelled successfully`)
 
@@ -407,6 +446,8 @@ const cancelOrderItem = async (req, res) => {
       order.cancelledAt = new Date()
     }
 
+    // FIXED: Recalculate order totals after item cancellation
+    await recalculateOrderTotals(order)
     await order.save()
     console.log(`Item cancelled successfully: ${item.product.name}`)
 

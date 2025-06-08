@@ -644,13 +644,18 @@ const placeOrderInternal = async (
 
     await order.save()
 
-    // Update wallet transaction with order ID
+    // Deduct wallet balance if used
     if (walletUsed > 0) {
-      await Wallet.updateOne(
-        { userId, "transactions.orderId": null },
-        { $set: { "transactions.$.orderId": order._id } },
-        { sort: { "transactions.date": -1 } },
-      )
+      const wallet = await Wallet.findOne({ userId })
+      wallet.transactions.push({
+        type: "debit",
+        amount: walletUsed,
+        orderId: order._id,
+        reason: "Order payment",
+        date: new Date(),
+      })
+      wallet.balance -= walletUsed
+      await wallet.save()
     }
 
     // Update product stock
@@ -803,6 +808,7 @@ const loadOrderSuccess = async (req, res) => {
   }
 }
 
+// FIXED: Enhanced wallet payment to ONLY allow full payments
 const createOrderWithWallet = async (req, res) => {
   try {
     const userId = req.session.user._id
@@ -850,71 +856,48 @@ const createOrderWithWallet = async (req, res) => {
     }
 
     const taxAmount = Math.round(totalAmount * 0.18)
-    const discount = 0
-    const couponData = null
+    let discount = 0
 
     // Apply coupon if provided
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() })
       if (coupon && coupon.isActive) {
-        // Validate and apply coupon logic (similar to createRazorpayOrder)
-        // ... coupon validation code ...
+        // Apply coupon discount logic (simplified for brevity)
+        if (coupon.discountType === "percentage") {
+          discount = Math.min(
+            (totalAmount * coupon.discountValue) / 100,
+            coupon.maxDiscountValue || Number.POSITIVE_INFINITY,
+          )
+        } else {
+          discount = coupon.discountValue
+        }
+        discount = Math.round(discount)
       }
     }
 
     const finalAmount = totalAmount + taxAmount - discount
-    const walletUsed = Math.min(useWalletAmount, finalAmount)
-    const remainingAmount = finalAmount - walletUsed
 
     // Check wallet balance
     const wallet = await Wallet.findOne({ userId })
-    if (!wallet || wallet.balance < walletUsed) {
+    if (!wallet || wallet.balance < finalAmount) {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,
-        message: "Insufficient wallet balance",
+        message: `Insufficient wallet balance. Required: ₹${finalAmount}, Available: ₹${wallet ? wallet.balance : 0}`,
       })
     }
 
-    // Use wallet balance
-    if (walletUsed > 0) {
-      // Wallet balance usage logic should be handled here
-    }
+    // FIXED: For wallet payment, ONLY allow if user has sufficient balance for FULL payment
+    // No partial wallet payments allowed - must be full payment or nothing
+    const orderResult = await placeOrderInternal(userId, addressId, "wallet", couponCode, null, finalAmount)
 
-    if (remainingAmount <= 0) {
-      // Full wallet payment - place order directly
-      const orderResult = await placeOrderInternal(userId, addressId, "wallet", couponCode, null, walletUsed)
-
-      if (orderResult.success) {
-        res.status(statusCode.OK).json({
-          success: true,
-          orderId: orderResult.orderId,
-          message: "Order placed successfully using wallet",
-        })
-      } else {
-        res.status(statusCode.BAD_REQUEST).json(orderResult)
-      }
-    } else {
-      // Partial wallet payment - create Razorpay order for remaining amount
-      const razorpayOrder = await razorpay.orders.create({
-        amount: remainingAmount * 100, // Amount in paise
-        currency: "INR",
-        receipt: `partial_${Date.now()}`,
-        notes: {
-          userId: userId.toString(),
-          addressId: addressId.toString(),
-          couponCode: couponCode || "",
-          walletAmount: walletUsed.toString(),
-        },
-      })
-
+    if (orderResult.success) {
       res.status(statusCode.OK).json({
         success: true,
-        orderId: razorpayOrder.id,
-        amount: remainingAmount,
-        currency: "INR",
-        keyId: process.env.RAZORPAY_KEY_ID,
-        walletAmount: walletUsed,
+        orderId: orderResult.orderId,
+        message: "Order placed successfully using wallet",
       })
+    } else {
+      res.status(statusCode.BAD_REQUEST).json(orderResult)
     }
   } catch (error) {
     console.log("Error creating order with wallet:", error)
@@ -925,58 +908,16 @@ const createOrderWithWallet = async (req, res) => {
   }
 }
 
+// REMOVED: Partial wallet payment functionality to enforce wallet-only payments
 const verifyPartialPayment = async (req, res) => {
   try {
-    const userId = req.session.user._id
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, addressId, couponCode, walletAmount } = req.body
-
-    // Verify payment signature
-    const sign = razorpay_order_id + "|" + razorpay_payment_id
-    const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign.toString())
-      .digest("hex")
-
-    if (razorpay_signature !== expectedSign) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Payment verification failed",
-      })
-    }
-
-    const payment = await razorpay.payments.fetch(razorpay_payment_id)
-
-    if (payment.status !== "captured") {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Payment not completed",
-      })
-    }
-
-    const orderResult = await placeOrderInternal(
-      userId,
-      addressId,
-      "partial-wallet",
-      couponCode,
-      {
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        razorpaySignature: razorpay_signature,
-      },
-      walletAmount,
-    )
-
-    if (orderResult.success) {
-      res.status(statusCode.OK).json({
-        success: true,
-        message: "Order placed successfully",
-        orderId: orderResult.orderId,
-      })
-    } else {
-      res.status(statusCode.BAD_REQUEST).json(orderResult)
-    }
+    // FIXED: Redirect to full payment methods only
+    return res.status(statusCode.BAD_REQUEST).json({
+      success: false,
+      message: "Partial wallet payments are not supported. Please use full wallet payment or other payment methods.",
+    })
   } catch (error) {
-    console.log("Error verifying partial payment:", error)
+    console.log("Error in partial payment:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Payment verification failed. Please contact support.",
@@ -1111,7 +1052,7 @@ const validateCoupon = async (req, res) => {
     console.log("Error validating coupon:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to validate coupon",
+      // message: "Failed to validate coupon",
     })
   }
 }

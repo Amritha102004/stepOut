@@ -10,6 +10,7 @@ const checkoutController = require('../controller/userController/checkoutControl
 const orderController = require('../controller/userController/orderController');
 const couponController = require('../controller/userController/couponController');
 const walletController = require('../controller/userController/walletController');
+const referralController = require('../controller/userController/referralController');
 const passport = require('passport');
 const { isLogin } = require('../middleware/userAuth')
 const { isBlocked } = require('../middleware/userAuth')
@@ -92,8 +93,11 @@ router.get('/account/orders/:orderId/invoice', checkSession, isBlocked, orderCon
 router.get('/account/wallet', checkSession, isBlocked, walletController.loadWallet)
 router.post("/account/wallet/add-money", checkSession, isBlocked, walletController.addMoney)
 router.get('/account/wallet/balance', checkSession, isBlocked, walletController.getWalletBalance)
-router.get("/account/wallet/transaction/:transactionId",checkSession,isBlocked,walletController.getTransactionDetails,
-)
+router.get("/account/wallet/transaction/:transactionId",checkSession,isBlocked,walletController.getTransactionDetails)
+
+//referral
+router.get("/account/referral", checkSession, isBlocked, referralController.loadReferral)
+router.get("/account/referral/stats", checkSession, isBlocked, referralController.getReferralStats)
 
 router.get('/logout', userController.logout);
 

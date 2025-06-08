@@ -73,7 +73,7 @@
                                 <option value="COD" <%= paymentFilter === 'COD' ? 'selected' : '' %>>Cash on Delivery</option>
                                 <option value="online" <%= paymentFilter === 'online' ? 'selected' : '' %>>Online Payment</option>
                                 <option value="wallet" <%= paymentFilter === 'wallet' ? 'selected' : '' %>>Wallet Payment</option>
-                                <option value="partial-wallet" <%= paymentFilter === 'partial-wallet' ? 'selected' : '' %>>Partial Wallet</option>
+                                <!-- REMOVED: partial-wallet option since we no longer support it -->
                             </select>
                         </div>
                     </div>
@@ -194,16 +194,25 @@
                                                         <i class="fas fa-money-bill-wave text-warning"></i> COD
                                                     <% } else if (order.paymentMethod === 'wallet') { %>
                                                         <i class="fas fa-wallet text-info"></i> Wallet
-                                                    <% } else if (order.paymentMethod === 'partial-wallet') { %>
-                                                        <i class="fas fa-coins text-primary"></i> Partial
                                                     <% } else { %>
                                                         <i class="fas fa-credit-card text-success"></i> Online
                                                     <% } %>
                                                 </span>
                                                 <div class="payment-status">
-                                                    <span class="badge bg-<%= order.paymentStatus === 'completed' ? 'success' : order.paymentStatus === 'failed' ? 'danger' : 'warning' %>">
-                                                        <%= order.paymentStatus %>
-                                                    </span>
+                                                    <!-- FIXED: Enhanced payment status logic for COD orders -->
+                                                    <% if (order.paymentMethod === 'COD') { %>
+                                                        <% if (order.orderStatus === 'delivered' && order.paymentStatus === 'completed') { %>
+                                                            <span class="badge bg-success">Completed</span>
+                                                        <% } else if (order.orderStatus === 'delivered' && order.paymentStatus === 'pending') { %>
+                                                            <span class="badge bg-warning">Payment Due</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-warning">Pending</span>
+                                                        <% } %>
+                                                    <% } else { %>
+                                                        <span class="badge bg-<%= order.paymentStatus === 'completed' ? 'success' : order.paymentStatus === 'failed' ? 'danger' : 'warning' %>">
+                                                            <%= order.paymentStatus %>
+                                                        </span>
+                                                    <% } %>
                                                 </div>
                                             </div>
                                         </td>

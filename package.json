@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "chart.js": "^4.4.9",
     "cloudinary": "^2.6.0",
     "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
@@ -19,6 +20,7 @@
     "express": "^5.1.0",
     "express-flash": "^0.0.2",
     "express-session": "^1.18.1",
+    "flatpickr": "^4.6.13",
     "mongodb": "^6.16.0",
     "mongoose": "^8.13.2",
     "multer": "^1.4.5-lts.2",

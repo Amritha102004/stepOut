@@ -67,7 +67,7 @@
                                         <div class="order-item <%= index < order.products.length - 1 ? 'border-bottom' : '' %>">
                                             <div class="item-image">
                                                 <% 
-                                                let productImage = '/placeholder.svg?height=80&width=80&query=shoe';
+                                                let productImage = '/placeholder.svg?height=80&width=80';
                                                 if (item.product.images && item.product.images.length > 0) {
                                                     const main = item.product.images.find(img => img.isMain) || item.product.images[0];
                                                     productImage = main.url;
@@ -86,11 +86,11 @@
                                                     <span class="status-badge status-<%= item.status %>">
                                                         <%= item.status.charAt(0).toUpperCase() + item.status.slice(1) %>
                                                     </span>
-                                                    <% if (item.cancelReason) { %>
+                                                    <% if (item.cancellationReason) { %>
                                                         <div class="cancel-reason">
                                                             <small class="text-muted">
                                                                 <i class="fas fa-info-circle me-1"></i>
-                                                                Cancelled: <%= item.cancelReason %>
+                                                                Cancelled: <%= item.cancellationReason %>
                                                             </small>
                                                         </div>
                                                     <% } %>
@@ -107,7 +107,8 @@
                                             <div class="item-actions">
                                                 <div class="item-total">₹<%= item.variant.salePrice * item.quantity %></div>
                                                 <div class="action-buttons">
-                                                    <% if ((order.orderStatus === 'pending' || order.orderStatus === 'confirmed') && item.status === 'pending') { %>
+                                                    <!-- FIXED: Better condition checking for item cancellation -->
+                                                    <% if (['pending', 'confirmed'].includes(order.orderStatus) && ['pending', 'confirmed'].includes(item.status)) { %>
                                                         <button class="btn btn-outline-danger btn-sm" 
                                                                 data-bs-toggle="modal" 
                                                                 data-bs-target="#cancelItemModal" 
@@ -118,6 +119,7 @@
                                                             <i class="fas fa-times me-1"></i>Cancel Item
                                                         </button>
                                                     <% } %>
+                                                    <!-- FIXED: Better condition checking for item return -->
                                                     <% if (order.orderStatus === 'delivered' && item.status === 'delivered') { %>
                                                         <button class="btn btn-outline-warning btn-sm" 
                                                                 data-bs-toggle="modal" 
@@ -188,6 +190,12 @@
                                                     <h6>Order Delivered</h6>
                                                     <% if (order.orderStatus === 'delivered') { %>
                                                         <p>Order delivered successfully</p>
+                                                        <!-- FIXED: Show payment completion for COD orders -->
+                                                        <% if (order.paymentMethod === 'COD' && order.paymentStatus === 'completed') { %>
+                                                            <small class="text-success">
+                                                                <i class="fas fa-check-circle me-1"></i>Payment completed
+                                                            </small>
+                                                        <% } %>
                                                     <% } else { %>
                                                         <p class="text-muted">Estimated delivery in 5-7 days</p>
                                                     <% } %>
@@ -199,8 +207,8 @@
                                                 <div class="timeline-content">
                                                     <h6>Order Cancelled</h6>
                                                     <p>Your order has been cancelled</p>
-                                                    <% if (order.cancelReason) { %>
-                                                        <small class="text-muted">Reason: <%= order.cancelReason %></small>
+                                                    <% if (order.cancellationReason) { %>
+                                                        <small class="text-muted">Reason: <%= order.cancellationReason %></small>
                                                     <% } %>
                                                 </div>
                                             </div>
@@ -250,9 +258,12 @@
                                             </button>
                                         <% } %>
 
-                                        <a href="/account/orders/<%= order._id %>/invoice" class="btn btn-outline-success w-100 mb-2" target="_blank">
-                                            <i class="fas fa-download me-2"></i>Download Invoice
-                                        </a>
+                                        <!-- FIXED: Only show invoice download for delivered orders -->
+                                        <% if (order.orderStatus === 'delivered') { %>
+                                            <a href="/account/orders/<%= order._id %>/invoice" class="btn btn-outline-success w-100 mb-2" target="_blank">
+                                                <i class="fas fa-download me-2"></i>Download Invoice
+                                            </a>
+                                        <% } %>
 
                                         <a href="/account/orders" class="btn btn-outline-secondary w-100">
                                             <i class="fas fa-list me-2"></i>View All Orders
@@ -275,6 +286,13 @@
                                         <div class="summary-row discount">
                                             <span>Discount:</span>
                                             <span>-₹<%= order.discount %></span>
+                                        </div>
+                                    <% } %>
+                                    <!-- FIXED: Show wallet usage in order summary -->
+                                    <% if (order.walletAmountUsed > 0) { %>
+                                        <div class="summary-row wallet">
+                                            <span>Wallet Used:</span>
+                                            <span class="text-info">-₹<%= order.walletAmountUsed %></span>
                                         </div>
                                     <% } %>
                                     <div class="summary-row">
@@ -323,17 +341,33 @@
                                         <div class="payment-method">
                                             <% if (order.paymentMethod === 'COD') { %>
                                                 <i class="fas fa-money-bill-wave me-2"></i>Cash on Delivery
+                                            <% } else if (order.paymentMethod === 'wallet') { %>
+                                                <i class="fas fa-wallet me-2"></i>Wallet Payment
                                             <% } else { %>
                                                 <i class="fas fa-credit-card me-2"></i>Online Payment
                                             <% } %>
                                         </div>
                                         <div class="payment-status mt-2">
+                                            <!-- FIXED: Enhanced payment status display -->
                                             <% if (order.paymentMethod === 'COD') { %>
-                                                <span class="badge bg-warning">Payment Pending</span>
+                                                <% if (order.paymentStatus === 'completed') { %>
+                                                    <span class="badge bg-success">Payment Completed</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-warning">Payment on Delivery</span>
+                                                <% } %>
                                             <% } else { %>
                                                 <span class="badge bg-success">Payment Completed</span>
                                             <% } %>
                                         </div>
+                                        <!-- FIXED: Show wallet amount if used -->
+                                        <% if (order.walletAmountUsed > 0) { %>
+                                            <div class="wallet-usage mt-2">
+                                                <small class="text-info">
+                                                    <i class="fas fa-wallet me-1"></i>
+                                                    ₹<%= order.walletAmountUsed %> paid from wallet
+                                                </small>
+                                            </div>
+                                        <% } %>
                                     </div>
                                 </div>
                             </div>
