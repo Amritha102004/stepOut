@@ -51,7 +51,7 @@ const loadProducts = async (req, res) => {
             limit,
             query: req.query,
         });
-        // }
+        
     } catch (error) {
         console.error(error);
         req.flash("error_msg", "Server error");

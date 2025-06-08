@@ -7,16 +7,13 @@ const loadReferral = async (req, res) => {
     const user = req.session.user
     const userId = user._id
 
-    // Get referral stats
     const totalReferrals = await User.countDocuments({ referredBy: user.referralCode })
 
-    // Get wallet info
     let wallet = await Wallet.findOne({ userId })
     if (!wallet) {
       wallet = { balance: 0, transactions: [] }
     }
 
-    // Calculate total referral earnings from wallet transactions
     const referralTransactions =
       wallet.transactions?.filter((t) => t.reason && t.reason.includes("Referral bonus")) || []
 

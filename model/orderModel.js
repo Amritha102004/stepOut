@@ -112,7 +112,7 @@ const orderSchema = new Schema(
     returnApprovalReason: String,
     returnRejectionReason: String,
 
-    // Enhanced payment tracking
+    // for payment tracking
     paymentDetails: {
       razorpayOrderId: String,
       razorpayPaymentId: String,

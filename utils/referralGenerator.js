@@ -1,7 +1,6 @@
 const User = require("../model/userModel")
 
 const generateReferralCode = async (fullName) => {
-  // Create base code from name + random numbers
   const namePrefix = fullName.replace(/\s+/g, "").substring(0, 4).toUpperCase()
   let referralCode
   let isUnique = false
@@ -11,7 +10,6 @@ const generateReferralCode = async (fullName) => {
     const randomNum = Math.floor(1000 + Math.random() * 9000) // 4-digit number
     referralCode = `${namePrefix}${randomNum}`
 
-    // Check if code already exists
     const existingUser = await User.findOne({ referralCode })
     if (!existingUser) {
       isUnique = true
@@ -19,7 +17,6 @@ const generateReferralCode = async (fullName) => {
     attempts++
   }
 
-  // Fallback if name-based generation fails
   if (!isUnique) {
     const timestamp = Date.now().toString().slice(-6)
     referralCode = `REF${timestamp}`

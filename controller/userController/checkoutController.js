@@ -38,7 +38,6 @@ const loadCheckout = async (req, res) => {
 
     const addresses = await Address.find({ user: userId }).sort({ isDefault: -1, createdAt: -1 })
 
-    // Get wallet balance
     let wallet = await Wallet.findOne({ userId })
     if (!wallet) {
       wallet = new Wallet({ userId, balance: 0, transactions: [] })
@@ -292,7 +291,6 @@ const createRazorpayOrder = async (req, res) => {
     let finalAmount = totalAmount + taxAmount - discount
     let walletUsed = 0
 
-    // Handle wallet payment
     if (walletAmount && walletAmount > 0) {
       const wallet = await Wallet.findOne({ userId })
       if (!wallet || wallet.balance < walletAmount) {
@@ -307,7 +305,6 @@ const createRazorpayOrder = async (req, res) => {
     }
 
     if (finalAmount <= 0) {
-      // Full wallet payment
       return res.status(statusCode.OK).json({
         success: true,
         fullWalletPayment: true,
@@ -350,7 +347,7 @@ const verifyPaymentAndPlaceOrder = async (req, res) => {
     const userId = req.session.user._id
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, addressId, couponCode, walletAmount } = req.body
 
-    // Verify payment signature
+    // payment signature thing here
     const sign = razorpay_order_id + "|" + razorpay_payment_id
     const expectedSign = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -598,7 +595,6 @@ const placeOrderInternal = async (
     let finalAmount = totalAmount + taxAmount - discount
     let walletUsed = 0
 
-    // Handle wallet payment
     if (walletAmount && walletAmount > 0) {
       const wallet = await Wallet.findOne({ userId })
       if (!wallet || wallet.balance < walletAmount) {
@@ -644,7 +640,6 @@ const placeOrderInternal = async (
 
     await order.save()
 
-    // Deduct wallet balance if used
     if (walletUsed > 0) {
       const wallet = await Wallet.findOne({ userId })
       wallet.transactions.push({
@@ -658,7 +653,6 @@ const placeOrderInternal = async (
       await wallet.save()
     }
 
-    // Update product stock
     for (const item of cart.products) {
       const product = await Product.findById(item.product._id)
       const variantIndex = product.variants.findIndex((v) => v.size === item.size)
@@ -668,7 +662,6 @@ const placeOrderInternal = async (
       }
     }
 
-    // Clear cart
     cart.products = []
     await cart.save()
 
@@ -691,7 +684,6 @@ const handlePaymentFailure = async (req, res) => {
 
     console.log("Payment failed:", { error, orderId })
 
-    // Store failed order for retry
     if (orderData) {
       const failedOrder = new Order({
         ...orderData,
@@ -808,7 +800,6 @@ const loadOrderSuccess = async (req, res) => {
   }
 }
 
-// FIXED: Enhanced wallet payment to ONLY allow full payments
 const createOrderWithWallet = async (req, res) => {
   try {
     const userId = req.session.user._id
@@ -841,7 +832,6 @@ const createOrderWithWallet = async (req, res) => {
       })
     }
 
-    // Calculate total amount
     let totalAmount = 0
     for (const item of cart.products) {
       const product = item.product
@@ -858,11 +848,9 @@ const createOrderWithWallet = async (req, res) => {
     const taxAmount = Math.round(totalAmount * 0.18)
     let discount = 0
 
-    // Apply coupon if provided
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() })
       if (coupon && coupon.isActive) {
-        // Apply coupon discount logic (simplified for brevity)
         if (coupon.discountType === "percentage") {
           discount = Math.min(
             (totalAmount * coupon.discountValue) / 100,
@@ -877,7 +865,6 @@ const createOrderWithWallet = async (req, res) => {
 
     const finalAmount = totalAmount + taxAmount - discount
 
-    // Check wallet balance
     const wallet = await Wallet.findOne({ userId })
     if (!wallet || wallet.balance < finalAmount) {
       return res.status(statusCode.BAD_REQUEST).json({
@@ -886,8 +873,6 @@ const createOrderWithWallet = async (req, res) => {
       })
     }
 
-    // FIXED: For wallet payment, ONLY allow if user has sufficient balance for FULL payment
-    // No partial wallet payments allowed - must be full payment or nothing
     const orderResult = await placeOrderInternal(userId, addressId, "wallet", couponCode, null, finalAmount)
 
     if (orderResult.success) {
@@ -908,10 +893,8 @@ const createOrderWithWallet = async (req, res) => {
   }
 }
 
-// REMOVED: Partial wallet payment functionality to enforce wallet-only payments
 const verifyPartialPayment = async (req, res) => {
   try {
-    // FIXED: Redirect to full payment methods only
     return res.status(statusCode.BAD_REQUEST).json({
       success: false,
       message: "Partial wallet payments are not supported. Please use full wallet payment or other payment methods.",
@@ -976,7 +959,6 @@ const validateCoupon = async (req, res) => {
       })
     }
 
-    // Get cart to calculate applicable amount
     const cart = await Cart.findOne({ user: userId }).populate({
       path: "products.product",
       populate: { path: "categoryId", model: "Category" },

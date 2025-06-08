@@ -7,12 +7,11 @@ const PDFDocument = require("pdfkit")
 const statusCode = require("../../utils/httpStatusCodes")
 const ExcelJS = require("exceljs")
 
-// Helper function to recalculate order totals
+
 const recalculateOrderTotals = async (order) => {
   let newTotalAmount = 0
   let activeItemsCount = 0
 
-  // Calculate total from active (non-cancelled, non-returned) items
   order.products.forEach((item) => {
     if (!["cancelled", "returned"].includes(item.status)) {
       newTotalAmount += item.variant.salePrice * item.quantity
@@ -20,23 +19,18 @@ const recalculateOrderTotals = async (order) => {
     }
   })
 
-  // If no active items, set amounts to 0
   if (activeItemsCount === 0) {
     order.totalAmount = 0
     order.finalAmount = 0
     return order
   }
 
-  // Calculate tax on new total
   const taxAmount = Math.round(newTotalAmount * 0.18)
 
-  // Keep original discount if applicable, but don't exceed new total
   const applicableDiscount = Math.min(order.discount || 0, newTotalAmount)
 
-  // Calculate new final amount
   const newFinalAmount = newTotalAmount + taxAmount - applicableDiscount - (order.walletAmountUsed || 0)
 
-  // Update order totals
   order.totalAmount = newTotalAmount
   order.finalAmount = Math.max(0, newFinalAmount)
 
@@ -234,14 +228,12 @@ const updateOrderStatus = async (req, res) => {
     if (status === "delivered") {
       order.deliveredAt = new Date()
 
-      // Update all eligible items to delivered
       order.products.forEach((item) => {
         if (["shipped", "out for delivery", "confirmed"].includes(item.status)) {
           item.status = "delivered"
         }
       })
 
-      // FIXED: Update payment status for COD orders
       if (order.paymentMethod === "COD" && order.paymentStatus === "pending") {
         order.paymentStatus = "completed"
         console.log(`COD payment status updated to completed for order ${order.orderID}`)
@@ -255,7 +247,6 @@ const updateOrderStatus = async (req, res) => {
         }
       })
 
-      // Recalculate totals after cancellation
       await recalculateOrderTotals(order)
       await restoreInventory(order)
 
@@ -271,12 +262,10 @@ const updateOrderStatus = async (req, res) => {
         }
       })
 
-      // Recalculate totals after return
       await recalculateOrderTotals(order)
       await restoreInventory(order)
       await processRefundToWallet(order, "Order return approved by admin")
     } else {
-      // For other status updates, update eligible items
       order.products.forEach((item) => {
         if (item.status === "pending" || (status === "shipped" && item.status === "confirmed")) {
           item.status = status
@@ -338,7 +327,6 @@ const updateItemStatus = async (req, res) => {
     if (status === "delivered") {
       item.deliveredAt = new Date()
 
-      // FIXED: Update payment status for COD orders when all items are delivered
       if (order.paymentMethod === "COD" && order.paymentStatus === "pending") {
         const allItemsDelivered = order.products.every((p) => ["delivered", "cancelled", "returned"].includes(p.status))
         if (allItemsDelivered) {
@@ -350,7 +338,6 @@ const updateItemStatus = async (req, res) => {
       item.cancelledAt = new Date()
       item.cancellationReason = "Cancelled by admin"
 
-      // Restore stock for this item
       const product = await Product.findById(productId)
       if (product) {
         const variantIndex = product.variants.findIndex((v) => v.size === size)
@@ -360,7 +347,6 @@ const updateItemStatus = async (req, res) => {
         }
       }
 
-      // Process partial refund if needed
       if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
         const itemRefundAmount = item.variant.salePrice * item.quantity
         await processItemRefund(order, item, itemRefundAmount, "Item cancelled by admin")
@@ -369,7 +355,6 @@ const updateItemStatus = async (req, res) => {
       item.returnedAt = new Date()
       item.returnReason = "Returned - approved by admin"
 
-      // Restore stock for this item
       const product = await Product.findById(productId)
       if (product) {
         const variantIndex = product.variants.findIndex((v) => v.size === size)
@@ -379,27 +364,22 @@ const updateItemStatus = async (req, res) => {
         }
       }
 
-      // Process partial refund
       if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
         const itemRefundAmount = item.variant.salePrice * item.quantity
         await processItemRefund(order, item, itemRefundAmount, "Item returned - approved by admin")
       }
     }
-
-    // FIXED: Recalculate order totals when items are cancelled or returned
     if (["cancelled", "returned"].includes(status)) {
       await recalculateOrderTotals(order)
     }
 
-    // FIXED: Update overall order status based on item statuses
     const allItemStatuses = order.products.map((p) => p.status)
     const uniqueStatuses = [...new Set(allItemStatuses)]
 
     if (uniqueStatuses.length === 1) {
-      // All items have the same status
       order.orderStatus = uniqueStatuses[0]
     } else if (allItemStatuses.every((s) => ["delivered", "cancelled", "returned"].includes(s))) {
-      // All items are in final states - mark order as delivered if any items were delivered
+      
       if (allItemStatuses.includes("delivered")) {
         order.orderStatus = "delivered"
       } else if (allItemStatuses.every((s) => s === "cancelled")) {
@@ -408,7 +388,7 @@ const updateItemStatus = async (req, res) => {
         order.orderStatus = allItemStatuses.includes("returned") ? "returned" : "cancelled"
       }
     } else {
-      // Mixed statuses - determine the most appropriate overall status
+      
       if (allItemStatuses.includes("delivered")) {
         order.orderStatus = "delivered"
       } else if (allItemStatuses.includes("shipped") || allItemStatuses.includes("out for delivery")) {
@@ -449,7 +429,6 @@ const approveReturn = async (req, res) => {
     }
 
     if (itemId) {
-      // Approve individual item return
       const item = order.products.id(itemId)
       if (!item) {
         return res.status(statusCode.NOT_FOUND).json({
@@ -469,7 +448,6 @@ const approveReturn = async (req, res) => {
       item.returnApprovedAt = new Date()
       item.returnApprovalReason = reason || "Return approved by admin"
 
-      // Restore stock for this item
       const product = await Product.findById(item.product)
       if (product) {
         const variantIndex = product.variants.findIndex((v) => v.size === item.variant.size)
@@ -479,11 +457,9 @@ const approveReturn = async (req, res) => {
         }
       }
 
-      // Process refund for this item
       const itemRefundAmount = item.variant.salePrice * item.quantity
       const refundResult = await processItemRefund(order, item, itemRefundAmount, "Item return approved by admin")
 
-      // FIXED: Recalculate order totals after return approval
       await recalculateOrderTotals(order)
       await order.save()
 
@@ -499,7 +475,6 @@ const approveReturn = async (req, res) => {
         })
       }
     } else {
-      // Approve entire order return
       if (order.orderStatus !== "return_requested") {
         return res.status(statusCode.BAD_REQUEST).json({
           success: false,
@@ -518,7 +493,6 @@ const approveReturn = async (req, res) => {
         }
       })
 
-      // FIXED: Recalculate totals and process refund
       await recalculateOrderTotals(order)
       await order.save()
 
@@ -560,7 +534,6 @@ const rejectReturn = async (req, res) => {
     }
 
     if (itemId) {
-      // Reject individual item return
       const item = order.products.id(itemId)
       if (!item) {
         return res.status(statusCode.NOT_FOUND).json({
@@ -587,7 +560,6 @@ const rejectReturn = async (req, res) => {
         message: "Item return request rejected successfully",
       })
     } else {
-      // Reject entire order return
       if (order.orderStatus !== "return_requested") {
         return res.status(statusCode.BAD_REQUEST).json({
           success: false,
@@ -680,7 +652,6 @@ const processItemRefund = async (order, item, refundAmount, reason) => {
     wallet.balance += refundAmount
     await wallet.save()
 
-    // Update order refund tracking
     order.refundAmount = (order.refundAmount || 0) + refundAmount
     order.refundStatus = order.refundStatus === "completed" ? "completed" : "partial"
     order.refundProcessedAt = new Date()
@@ -857,7 +828,7 @@ const sendNotification = async (req, res) => {
       })
     }
 
-    // Here you would implement email notification
+    //  email notification
     console.log(`Sending notification to ${order.user.email} for order ${order.orderID}`)
 
     res.status(statusCode.OK).json({
@@ -904,7 +875,6 @@ const cancelOrder = async (req, res) => {
       }
     })
 
-    // FIXED: Recalculate totals after cancellation
     await recalculateOrderTotals(order)
     await order.save()
     await restoreInventory(order)
@@ -985,7 +955,7 @@ const downloadInvoice = async (req, res) => {
       })
     }
 
-    // Only allow invoice download for delivered orders
+    //  invoice 
     if (order.orderStatus !== "delivered") {
       return res.status(statusCode.BAD_REQUEST).json({
         success: false,

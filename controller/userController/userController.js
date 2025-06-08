@@ -118,7 +118,6 @@ const signup = async (req, res) => {
             errors.confirmPassword = "Passwords do not match";
         }
 
-        // Validate referral code if provided
         let referrerUser = null
         if (referralCode && referralCode.trim() !== "") {
             const referralValidation = await validateReferralCode(referralCode)
@@ -164,17 +163,6 @@ const signup = async (req, res) => {
 }
 
 
-// const securePassword = async (password) => {
-//     try {
-//         const passwordHash = await bcrypt.hash(password, 10)
-//         return passwordHash
-
-//     } catch (error) {
-//         console.error("Password hash error:", error);
-//         throw error;
-//     }
-// }
-
 
 const verifyOtp = async (req, res) => {
     try {
@@ -199,7 +187,6 @@ const verifyOtp = async (req, res) => {
 
             await saveUserData.save();
 
-            // Create wallet for new user
             const newWallet = new Wallet({
                 userId: saveUserData._id,
                 balance: 0,
@@ -207,7 +194,6 @@ const verifyOtp = async (req, res) => {
             })
             await newWallet.save()
             
-            // Process referral reward if user was referred
             if (user.referrerUserId) {
                 await processReferralReward(user.referrerUserId, saveUserData._id)
             }
@@ -251,12 +237,10 @@ const verifyOtp = async (req, res) => {
     }
 };
 
-// New function to process referral rewards
 const processReferralReward = async (referrerUserId, newUserId) => {
   try {
-    const REFERRAL_REWARD = 500 // ₹500 reward
+    const REFERRAL_REWARD = 500 
 
-    // Find or create referrer's wallet
     let referrerWallet = await Wallet.findOne({ userId: referrerUserId })
     if (!referrerWallet) {
       referrerWallet = new Wallet({
@@ -266,7 +250,6 @@ const processReferralReward = async (referrerUserId, newUserId) => {
       })
     }
 
-    // Add referral reward to referrer's wallet
     referrerWallet.transactions.push({
       type: "credit",
       amount: REFERRAL_REWARD,

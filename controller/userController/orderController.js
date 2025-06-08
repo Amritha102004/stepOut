@@ -8,12 +8,10 @@ const mongoose = require("mongoose")
 const statusCode = require("../../utils/httpStatusCodes")
 const PDFDocument = require("pdfkit")
 
-// FIXED: Added helper function to recalculate order totals
 const recalculateOrderTotals = async (order) => {
   let newTotalAmount = 0
   let activeItemsCount = 0
 
-  // Calculate total from active (non-cancelled, non-returned) items
   order.products.forEach((item) => {
     if (!["cancelled", "returned"].includes(item.status)) {
       newTotalAmount += item.variant.salePrice * item.quantity
@@ -21,23 +19,18 @@ const recalculateOrderTotals = async (order) => {
     }
   })
 
-  // If no active items, set amounts to 0
   if (activeItemsCount === 0) {
     order.totalAmount = 0
     order.finalAmount = 0
     return order
   }
 
-  // Calculate tax on new total
   const taxAmount = Math.round(newTotalAmount * 0.18)
 
-  // Keep original discount if applicable, but don't exceed new total
   const applicableDiscount = Math.min(order.discount || 0, newTotalAmount)
 
-  // Calculate new final amount
   const newFinalAmount = newTotalAmount + taxAmount - applicableDiscount - (order.walletAmountUsed || 0)
 
-  // Update order totals
   order.totalAmount = newTotalAmount
   order.finalAmount = Math.max(0, newFinalAmount)
 
@@ -239,12 +232,10 @@ const cancelOrder = async (req, res) => {
       }
     })
 
-    // FIXED: Recalculate order totals after cancellation
     await recalculateOrderTotals(order)
     await order.save()
     console.log(`Order ${orderId} cancelled successfully`)
 
-    // Restore stock
     for (const item of cancellableItems) {
       const product = await Product.findById(item.product._id)
       if (product) {
@@ -257,7 +248,6 @@ const cancelOrder = async (req, res) => {
       }
     }
 
-    // Process refund for online payments
     if ((order.paymentMethod === "online" || order.walletAmountUsed > 0) && order.paymentStatus === "completed") {
       console.log(`Processing refund for online payment: ₹${order.finalAmount}`)
 
@@ -446,12 +436,10 @@ const cancelOrderItem = async (req, res) => {
       order.cancelledAt = new Date()
     }
 
-    // FIXED: Recalculate order totals after item cancellation
     await recalculateOrderTotals(order)
     await order.save()
     console.log(`Item cancelled successfully: ${item.product.name}`)
 
-    // Restore stock
     const product = await Product.findById(productId)
     if (product) {
       const variantIndex = product.variants.findIndex((v) => v.size === size)
@@ -465,7 +453,6 @@ const cancelOrderItem = async (req, res) => {
     const itemRefundAmount = item.variant.salePrice * item.quantity
     console.log(`Item refund amount: ₹${itemRefundAmount}`)
 
-    // Process refund for online payments
     if ((order.paymentMethod === "online" || order.walletAmountUsed > 0) && order.paymentStatus === "completed") {
       console.log(`Processing partial refund for online payment`)
 
@@ -608,7 +595,6 @@ const downloadInvoice = async (req, res) => {
       return res.redirect("/account/orders")
     }
 
-    // Only allow invoice download for delivered orders
     if (order.orderStatus !== "delivered") {
       req.flash("error_msg", "Invoice can only be downloaded for delivered orders")
       return res.redirect("/account/orders")
@@ -621,24 +607,20 @@ const downloadInvoice = async (req, res) => {
 
     doc.pipe(res)
 
-    // Add company header
     doc.fontSize(20).text("StepOut", 50, 50)
     doc.fontSize(10).text("Premium Footwear Store", 50, 75)
     doc.text("Email: support@stepout.com", 50, 90)
     doc.text("Phone: +91 9876543210", 50, 105)
 
-    // Add invoice title
     doc.fontSize(16).text("INVOICE", 400, 50)
     doc.fontSize(10).text(`Invoice #: ${order.orderID}`, 400, 75)
     doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 400, 90)
 
-    // Add customer details
     doc.fontSize(12).text("Bill To:", 50, 150)
     doc.fontSize(10).text(order.user.fullName, 50, 170)
     doc.text(order.user.email, 50, 185)
     doc.text(order.user.phoneNumber, 50, 200)
 
-    // Add shipping address
     doc.fontSize(12).text("Ship To:", 300, 150)
     doc.fontSize(10).text(order.address.name, 300, 170)
     doc.text(order.address.address, 300, 185)
