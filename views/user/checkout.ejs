@@ -16,7 +16,11 @@
     <link rel="stylesheet" href="/css/user/checkout.css">
 </head>
 
-<body>
+<body   data-is-retry="<%= isRetry ? 'true' : 'false' %>" 
+  <% if (isRetry && retryRazorpayOrderId) { %>
+    data-retry-razorpay-order-id="<%= retryRazorpayOrderId %>"
+    data-retry-amount="<%= retryAmount %>"
+  <% } %>>
     <!-- Header (from partial) -->
     <%- include('./partials/header') %>
 
@@ -24,7 +28,7 @@
         <section class="checkout-section py-5">
             <div class="container">
                 <!-- Checkout Header -->
-                <div class="checkout-header mb-4">
+                <div class="checkout-header mb-4"> 
                     <h1 class="checkout-title">Checkout</h1>
                     <div class="checkout-steps">
                         <div class="step active">

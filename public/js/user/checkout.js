@@ -480,6 +480,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (placeOrderBtn) {
       placeOrderBtn.addEventListener("click", () => {
+        // Check if this is a retry payment
+        const isRetry =
+          document.body.hasAttribute("data-is-retry") && document.body.getAttribute("data-is-retry") === "true"
+
+        console.log("Place order clicked - isRetry:", isRetry)
+
+        // If it's a retry, process retry payment
+        if (isRetry) {
+          const retryRazorpayOrderId = document.body.getAttribute("data-retry-razorpay-order-id")
+          const retryAmount = document.body.getAttribute("data-retry-amount")
+
+          console.log("Retry data:", { retryRazorpayOrderId, retryAmount })
+
+          if (!retryRazorpayOrderId) {
+            showToast("Missing retry order information", false)
+            return
+          }
+
+          // Validate address selection for retry
+          const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked')
+          if (!selectedAddress) {
+            showToast("Please select a delivery address", false)
+            return
+          }
+
+          // Show loading state
+          const originalText = placeOrderBtn.innerHTML
+          placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing Payment...'
+          placeOrderBtn.disabled = true
+
+          // Process retry payment directly with current cart
+          processRetryPayment(
+            {
+              razorpayOrderId: retryRazorpayOrderId,
+              addressId: selectedAddress.value,
+              amount: retryAmount,
+            },
+            originalText,
+          )
+
+          return
+        }
+
+        // Regular checkout flow
         // Validate address selection
         const selectedAddress = document.querySelector('input[name="selectedAddress"]:checked')
         if (!selectedAddress) {
@@ -541,6 +585,47 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       })
     }
+  }
+
+  // Updated function to handle retry payments
+  function processRetryPayment(retryData, originalButtonText) {
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    console.log("Processing retry payment with data:", retryData)
+
+    // Create a new Razorpay order for the retry
+    fetch("/checkout/create-razorpay-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        addressId: retryData.addressId,
+        // Don't include isRetry flag - let it create a new order with current cart
+      }),
+    })
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          // Initialize Razorpay payment
+          const orderData = {
+            addressId: retryData.addressId,
+          }
+          initializeRazorpayPayment(result, orderData, originalButtonText)
+        } else {
+          showToast(result.message || "Failed to create payment order", false)
+          // Reset button
+          placeOrderBtn.innerHTML = originalButtonText
+          placeOrderBtn.disabled = false
+        }
+      })
+      .catch((error) => {
+        console.error("Error creating Razorpay order:", error)
+        showToast("An error occurred while creating payment order", false)
+        // Reset button
+        placeOrderBtn.innerHTML = originalButtonText
+        placeOrderBtn.disabled = false
+      })
   }
 
   // Place COD order
@@ -679,20 +764,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const rzp = new Razorpay(options)
 
+    // Update the payment failure handling to store the orderID
     rzp.on("payment.failed", (response) => {
       // Payment failed
       console.error("Payment failed:", response.error)
 
-      // Redirect to payment failure page
-      const errorData = {
-        code: response.error.code,
-        description: response.error.description,
-        source: response.error.source,
-        step: response.error.step,
-        reason: response.error.reason,
-      }
+      // Send failure data to server for logging
+      fetch("/checkout/payment-failure", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          error: response.error,
+          orderId: paymentData.orderId, // This is the Razorpay order ID
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          // Redirect to payment failure page with Razorpay order ID
+          const errorData = {
+            code: response.error.code,
+            description: response.error.description,
+            source: response.error.source,
+            step: response.error.step,
+            reason: response.error.reason,
+          }
 
-      window.location.href = `/payment-failure?orderId=${paymentData.orderId}&error=${encodeURIComponent(JSON.stringify(errorData))}`
+          // Use the Razorpay order ID for retry
+          window.location.href = `/payment-failure?orderId=${paymentData.orderId}&error=${encodeURIComponent(JSON.stringify(errorData))}`
+        })
+        .catch((err) => {
+          console.error("Error handling payment failure:", err)
+          window.location.href = `/payment-failure?orderId=${paymentData.orderId}&error=${encodeURIComponent(JSON.stringify(response.error))}`
+        })
     })
 
     // Reset button text before opening Razorpay
@@ -897,5 +1002,47 @@ document.addEventListener("DOMContentLoaded", () => {
           })
       })
     })
+  }
+})
+
+// Add document ready check for retry payment
+document.addEventListener("DOMContentLoaded", () => {
+  // Check if this is a retry payment
+  const isRetry = document.body.hasAttribute("data-is-retry") && document.body.getAttribute("data-is-retry") === "true"
+
+  console.log("Document ready - isRetry:", isRetry)
+
+  if (isRetry) {
+    // Auto-select online payment method for retry
+    const onlinePaymentRadio = document.getElementById("online")
+    if (onlinePaymentRadio) {
+      onlinePaymentRadio.checked = true
+      console.log("Auto-selected online payment for retry")
+    }
+
+    // Disable other payment methods for retry
+    const paymentRadios = document.querySelectorAll(".payment-radio:not(#online)")
+    paymentRadios.forEach((radio) => {
+      radio.disabled = true
+      radio.parentElement.style.opacity = "0.5"
+      radio.parentElement.style.pointerEvents = "none"
+    })
+
+    // Add retry notice
+    const paymentSection = document.querySelector(".payment-methods")
+    if (paymentSection) {
+      const retryNotice = document.createElement("div")
+      retryNotice.className = "alert alert-info mt-3"
+      retryNotice.innerHTML =
+        '<i class="fas fa-info-circle me-2"></i>You are retrying a failed payment. Please complete the payment to place your order.'
+      paymentSection.appendChild(retryNotice)
+    }
+
+    // Update place order button text
+    const placeOrderBtn = document.getElementById("placeOrderBtn")
+    if (placeOrderBtn) {
+      placeOrderBtn.innerHTML = '<i class="fas fa-redo me-2"></i>Retry Payment'
+      console.log("Updated button text for retry")
+    }
   }
 })

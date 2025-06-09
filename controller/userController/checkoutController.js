@@ -21,6 +21,12 @@ const loadCheckout = async (req, res) => {
     const user = req.session.user
     const userId = req.session.user._id
 
+    
+    const isRetryPayment = req.session.isRetryPayment || false
+    const retryRazorpayOrderId = req.session.retryRazorpayOrderId || null
+
+    console.log("Loading checkout - isRetry:", isRetryPayment, "retryOrderId:", retryRazorpayOrderId)
+
     const cart = await Cart.findOne({ user: userId })
       .populate({
         path: "products.product",
@@ -118,6 +124,9 @@ const loadCheckout = async (req, res) => {
       expiryDate: coupon.expiryDate,
     }))
 
+    const taxAmount = Math.round(totalAmount * 0.18)
+    const finalAmount = totalAmount + taxAmount
+
     res.render("user/checkout", {
       user,
       addresses,
@@ -127,6 +136,9 @@ const loadCheckout = async (req, res) => {
       availableCoupons: formattedCoupons,
       walletBalance: wallet.balance,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+      isRetry: isRetryPayment,
+      retryRazorpayOrderId: retryRazorpayOrderId,
+      retryAmount: finalAmount, 
     })
   } catch (error) {
     console.log("Error loading checkout:", error)
@@ -347,7 +359,7 @@ const verifyPaymentAndPlaceOrder = async (req, res) => {
     const userId = req.session.user._id
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, addressId, couponCode, walletAmount } = req.body
 
-    // payment signature thing here
+    // payment signature
     const sign = razorpay_order_id + "|" + razorpay_payment_id
     const expectedSign = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -384,6 +396,9 @@ const verifyPaymentAndPlaceOrder = async (req, res) => {
     )
 
     if (orderResult.success) {
+      delete req.session.isRetryPayment
+      delete req.session.retryRazorpayOrderId
+
       res.status(statusCode.OK).json({
         success: true,
         message: "Order placed successfully",
@@ -417,6 +432,9 @@ const placeOrder = async (req, res) => {
       const orderResult = await placeOrderInternal(userId, addressId, paymentMethod, couponCode, null, walletAmount)
 
       if (orderResult.success) {
+        delete req.session.isRetryPayment
+        delete req.session.retryRazorpayOrderId
+
         res.status(statusCode.OK).json({
           success: true,
           message: "Order placed successfully",
@@ -681,26 +699,17 @@ const placeOrderInternal = async (
 const handlePaymentFailure = async (req, res) => {
   try {
     const { error, orderId, orderData } = req.body
+    const userId = req.session.user?._id
 
-    console.log("Payment failed:", { error, orderId })
+    console.log("Payment failed:", { error, orderId, orderData })
 
-    if (orderData) {
-      const failedOrder = new Order({
-        ...orderData,
-        paymentStatus: "failed",
-        paymentDetails: {
-          failureReason: error.description || "Payment failed",
-          retryCount: 0,
-        },
-      })
-      await failedOrder.save()
-    }
 
     res.status(statusCode.OK).json({
       success: false,
       message: "Payment failed",
       error: error,
       canRetry: true,
+      razorpayOrderId: orderId, // This is the Razorpay order ID
     })
   } catch (error) {
     console.log("Error handling payment failure:", error)
@@ -733,28 +742,19 @@ const retryPayment = async (req, res) => {
     const { orderId } = req.params
     const userId = req.session.user._id
 
-    // Find the failed order
-    const failedOrder = await Order.findOne({
-      orderID: orderId,
-      user: userId,
-      paymentStatus: "failed",
-    })
+    console.log("Retrying payment for Razorpay order:", orderId, "User:", userId)
 
-    if (!failedOrder) {
-      req.flash("error_msg", "Order not found or cannot be retried")
-      return res.redirect("/account/orders")
+    const cart = await Cart.findOne({ user: userId })
+
+    if (!cart || cart.products.length === 0) {
+      req.flash("error_msg", "Your cart is empty. Please add items to retry payment.")
+      return res.redirect("/cart")
     }
 
-    // Increment retry count
-    failedOrder.paymentDetails.retryCount += 1
-    await failedOrder.save()
+    req.session.isRetryPayment = true
+    req.session.retryRazorpayOrderId = orderId
 
-    // Redirect to checkout with order data
-    req.session.retryOrderData = {
-      orderId: failedOrder._id,
-      addressId: failedOrder.address,
-      totalAmount: failedOrder.finalAmount,
-    }
+    console.log("Set retry flags - isRetry:", req.session.isRetryPayment, "orderId:", req.session.retryRazorpayOrderId)
 
     res.redirect("/checkout")
   } catch (error) {
@@ -876,6 +876,9 @@ const createOrderWithWallet = async (req, res) => {
     const orderResult = await placeOrderInternal(userId, addressId, "wallet", couponCode, null, finalAmount)
 
     if (orderResult.success) {
+      delete req.session.isRetryPayment
+      delete req.session.retryRazorpayOrderId
+
       res.status(statusCode.OK).json({
         success: true,
         orderId: orderResult.orderId,
@@ -1034,7 +1037,7 @@ const validateCoupon = async (req, res) => {
     console.log("Error validating coupon:", error)
     res.status(statusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
-      // message: "Failed to validate coupon",
+      message: "Failed to validate coupon",
     })
   }
 }
