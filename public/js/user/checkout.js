@@ -128,8 +128,12 @@ document.addEventListener("DOMContentLoaded", () => {
               `Insufficient wallet balance for full payment. Required: ₹${finalTotal}, Available: ₹${walletBalance}`,
               false,
             )
-            // Force switch back to COD
-            document.getElementById("cod").checked = true
+            // Force switch to available payment method
+            if (window.IS_COD_ENABLED) {
+              document.getElementById("cod").checked = true
+            } else {
+              document.getElementById("online").checked = true
+            }
             this.checked = false
             return
           }
@@ -146,8 +150,12 @@ document.addEventListener("DOMContentLoaded", () => {
           "Partial wallet payments are not supported. Please use full wallet payment or other payment methods.",
           false,
         )
-        // Force switch back to COD
-        document.getElementById("cod").checked = true
+        // Force switch to available payment method
+        if (window.IS_COD_ENABLED) {
+          document.getElementById("cod").checked = true
+        } else {
+          document.getElementById("online").checked = true
+        }
         this.checked = false
       })
     }
@@ -189,12 +197,16 @@ document.addEventListener("DOMContentLoaded", () => {
         walletUsage = totalAmount
         amountToPay = 0
       } else {
-        // Insufficient balance - show error and switch to COD
+        // Insufficient balance - show error and switch to available payment method
         showToast(
           `Insufficient wallet balance for full payment. Required: ₹${totalAmount}, Available: ₹${walletBalance}`,
           false,
         )
-        document.getElementById("cod").checked = true
+        if (window.IS_COD_ENABLED) {
+          document.getElementById("cod").checked = true
+        } else {
+          document.getElementById("online").checked = true
+        }
         selectedPayment.checked = false
         walletRow.style.display = "none"
         payRow.style.display = "none"
@@ -244,6 +256,16 @@ document.addEventListener("DOMContentLoaded", () => {
     paymentRadios.forEach((radio) => {
       radio.addEventListener("change", () => {
         console.log("Payment method selected:", radio.value)
+
+        // Check COD eligibility
+        if (radio.value === "COD" && !window.IS_COD_ENABLED) {
+          showToast("Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.", false)
+          // Switch to online payment
+          document.getElementById("online").checked = true
+          radio.checked = false
+          return
+        }
+
         updatePriceDisplay()
 
         // FIXED: Revalidate wallet balance when payment method changes
@@ -370,7 +392,6 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Error validating coupon:", error)
             applyCouponBtn.textContent = originalText
             applyCouponBtn.disabled = false
-            showToast("Failed to validate coupon. Please try again.", false)
           })
       })
 
@@ -631,6 +652,16 @@ document.addEventListener("DOMContentLoaded", () => {
   // Place COD order
   function placeCODOrder(orderData, originalButtonText) {
     const placeOrderBtn = document.getElementById("placeOrderBtn")
+
+    // Client-side validation for COD
+    if (!window.IS_COD_ENABLED) {
+      showToast("Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.", false)
+      placeOrderBtn.innerHTML = originalButtonText
+      placeOrderBtn.disabled = false
+      // Switch to online payment
+      document.getElementById("online").checked = true
+      return
+    }
 
     fetch("/checkout/place-order", {
       method: "POST",

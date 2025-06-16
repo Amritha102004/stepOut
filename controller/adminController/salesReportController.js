@@ -66,7 +66,11 @@ const loadSalesReport = async (req, res) => {
     const paymentMethod = req.query.paymentMethod || "all"
     const orderStatus = req.query.orderStatus || "all"
 
-    
+    // Pagination parameters
+    const analysisPage = parseInt(req.query.analysisPage) || 1
+    const ordersPage = parseInt(req.query.ordersPage) || 1
+    const limit = 5
+
     let dateRange
     if (period === "custom") {
       const startDate = req.query.startDate
@@ -74,7 +78,6 @@ const loadSalesReport = async (req, res) => {
         : new Date(new Date().setMonth(new Date().getMonth() - 1))
       const endDate = req.query.endDate ? new Date(req.query.endDate) : new Date()
 
-      
       startDate.setHours(0, 0, 0, 0)
       endDate.setHours(23, 59, 59, 999)
 
@@ -83,7 +86,6 @@ const loadSalesReport = async (req, res) => {
       dateRange = getDateRange(period)
     }
 
-    
     const filter = {
       orderDate: {
         $gte: dateRange.startDate,
@@ -99,56 +101,44 @@ const loadSalesReport = async (req, res) => {
       filter.orderStatus = orderStatus
     }
 
+    // Get sales analysis data with pagination
+    const salesAnalysis = await getSalesAnalysis(dateRange.startDate, dateRange.endDate, period, analysisPage, limit)
+
+    // Get orders with pagination
+    const ordersSkip = (ordersPage - 1) * limit
     const orders = await Order.find(filter)
       .populate("user", "fullName email")
       .populate("products.product", "name")
       .populate("coupon")
       .sort({ orderDate: -1 })
+      .skip(ordersSkip)
+      .limit(limit)
 
-    const totalOrders = orders.length
-    const totalRevenue = orders.reduce((sum, order) => sum + order.finalAmount, 0)
-    const totalDiscount = orders.reduce((sum, order) => sum + order.discount, 0)
+    // Get total counts for pagination
+    const totalOrdersCount = await Order.countDocuments(filter)
+    const totalOrdersPages = Math.ceil(totalOrdersCount / limit)
 
+
+
+    // Calculate summary statistics
+    const allOrders = await Order.find(filter)
+    const totalOrders = allOrders.length
+    const totalRevenue = allOrders.reduce((sum, order) => sum + order.finalAmount, 0)
+    const totalDiscount = allOrders.reduce((sum, order) => sum + order.discount, 0)
     const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-
-    const paymentMethodCounts = {
-      COD: orders.filter((order) => order.paymentMethod === "COD").length,
-      online: orders.filter((order) => order.paymentMethod === "online").length,
-      wallet: orders.filter((order) => order.paymentMethod === "wallet").length,
-      "partial-wallet": orders.filter((order) => order.paymentMethod === "partial-wallet").length,
-    }
-
-    const orderStatusCounts = {
-      pending: orders.filter((order) => order.orderStatus === "pending").length,
-      confirmed: orders.filter((order) => order.orderStatus === "confirmed").length,
-      shipped: orders.filter((order) => order.orderStatus === "shipped").length,
-      delivered: orders.filter((order) => order.orderStatus === "delivered").length,
-      cancelled: orders.filter((order) => order.orderStatus === "cancelled").length,
-      returned: orders.filter((order) => order.orderStatus === "returned").length,
-    }
-
-    const couponUsage = orders.filter((order) => order.coupon).length
-
-    const dailyRevenue = await getDailyRevenue(dateRange.startDate, dateRange.endDate)
-
-    if (dailyRevenue.labels.length === 0) {
-      dailyRevenue.labels = ["No data"]
-      dailyRevenue.revenue = [0]
-      dailyRevenue.orders = [0]
-    }
-
-    const topProducts = await getTopSellingProducts(dateRange.startDate, dateRange.endDate)
+    const couponUsage = allOrders.filter((order) => order.coupon).length
 
     res.render("admin/salesReport", {
       admin: req.session.admin,
       activePage: "salesReport",
       orders,
+      salesAnalysis,
       period,
       paymentMethod,
       orderStatus,
       startDate: dateRange.startDate.toISOString().split("T")[0],
       endDate: dateRange.endDate.toISOString().split("T")[0],
-      query: req.query, 
+      query: req.query,
       summary: {
         totalOrders,
         totalRevenue,
@@ -156,10 +146,22 @@ const loadSalesReport = async (req, res) => {
         avgOrderValue,
         couponUsage,
       },
-      paymentMethodCounts,
-      orderStatusCounts,
-      dailyRevenue,
-      topProducts,
+      pagination: {
+        analysis: {
+          currentPage: analysisPage,
+          totalPages: salesAnalysis.totalPages,
+          hasNext: analysisPage < salesAnalysis.totalPages,
+          hasPrev: analysisPage > 1,
+          totalCount: salesAnalysis.totalCount
+        },
+        orders: {
+          currentPage: ordersPage,
+          totalPages: totalOrdersPages,
+          hasNext: ordersPage < totalOrdersPages,
+          hasPrev: ordersPage > 1,
+          totalCount: totalOrdersCount
+        }
+      },
       formatCurrency,
       formatDate,
     })
@@ -167,6 +169,112 @@ const loadSalesReport = async (req, res) => {
     console.error("Error loading sales report:", error)
     req.flash("error_msg", "Failed to load sales report")
     res.status(statusCode.INTERNAL_SERVER_ERROR).redirect("/admin/dashboard")
+  }
+}
+
+// Get sales analysis data with pagination
+const getSalesAnalysis = async (startDate, endDate, period, page = 1, limit = 10) => {
+  let groupByFormat
+  let sortField = "_id"
+
+  // Determine grouping format based on period
+  switch (period) {
+    case "today":
+      groupByFormat = "%Y-%m-%d %H:00" // Hourly for today
+      break
+    case "week":
+      groupByFormat = "%Y-%m-%d" // Daily for week
+      break
+    case "month":
+      groupByFormat = "%Y-%m-%d" // Daily for month
+      break
+    case "year":
+      groupByFormat = "%Y-%m" // Monthly for year
+      break
+    case "custom":
+      // Determine based on date range
+      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+      if (daysDiff <= 1) {
+        groupByFormat = "%Y-%m-%d %H:00" // Hourly
+      } else if (daysDiff <= 31) {
+        groupByFormat = "%Y-%m-%d" // Daily
+      } else if (daysDiff <= 365) {
+        groupByFormat = "%Y-%m" // Monthly
+      } else {
+        groupByFormat = "%Y" // Yearly
+      }
+      break
+    default:
+      groupByFormat = "%Y-%m-%d"
+  }
+
+  const pipeline = [
+    {
+      $match: {
+        orderDate: { $gte: startDate, $lte: endDate },
+        orderStatus: { $nin: ["cancelled"] }
+      }
+    },
+    {
+      $addFields: {
+        productDiscount: {
+          $reduce: {
+            input: "$products",
+            initialValue: 0,
+            in: {
+              $add: [
+                "$$value",
+                {
+                  $multiply: [
+                    {
+                      $subtract: [
+                        "$$this.variant.regularPrice",
+                        "$$this.variant.salePrice"
+                      ]
+                    },
+                    "$$this.quantity"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: groupByFormat, date: "$orderDate" }
+        },
+        totalOrders: { $sum: 1 },
+        totalRevenue: { $sum: "$finalAmount" },
+        totalAmount: { $sum: "$totalAmount" },
+        productDiscount: { $sum: "$productDiscount" },
+        couponDiscount: { $sum: { $ifNull: ["$couponDiscount", 0] } },
+        totalDiscount: { $sum: "$discount" },
+        netRevenue: { $sum: "$finalAmount" }
+      }
+    },
+    { $sort: { [sortField]: -1 } }
+  ]
+
+  // Get total count for pagination by running the pipeline without pagination
+  const countPipeline = [...pipeline]
+  const allResults = await Order.aggregate(countPipeline)
+  const totalCount = allResults.length
+  const totalPages = Math.ceil(totalCount / limit)
+
+  // Add pagination to the original pipeline
+  pipeline.push({ $skip: (page - 1) * limit })
+  pipeline.push({ $limit: limit })
+
+  const analysisData = await Order.aggregate(pipeline)
+
+  return {
+    data: analysisData,
+    totalPages,
+    currentPage: page,
+    totalCount
   }
 }
 

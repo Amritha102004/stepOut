@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - StepOut</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/user/header.css">
+    <link rel="stylesheet" href="/css/user/footer.css">
+    <link rel="stylesheet" href="/css/user/contact.css">
+</head>
+<body>
+    <!-- Include Header Partial -->
+    <%- include('./partials/header') %>
+
+    <!-- Contact Hero Section -->
+    <section class="contact-hero">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="contact-title">Get in Touch</h1>
+                    <p class="contact-subtitle">We'd love to hear from you. Send us a message and we'll respond as soon as possible.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Content Section -->
+    <section class="contact-content py-5">
+        <div class="container">
+            <div class="row">
+                <!-- Contact Form -->
+                <div class="col-lg-8 mb-5">
+                    <div class="contact-form-wrapper">
+                        <h3 class="mb-4">Send us a Message</h3>
+                        <form action="" method="POST" class="contact-form">
+                            <!-- FormSubmit Configuration -->
+                            <input type="hidden" name="_subject" value="New Contact Form Submission - StepOut">
+                            <input type="hidden" name="_captcha" value="false">
+                            <input type="hidden" name="_template" value="table">
+                            <input type="hidden" name="_next" value="/contact?success=true">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="firstName" class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="lastName" class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="subject" class="form-label">Subject *</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="">Choose a subject...</option>
+                                    <option value="General Inquiry">General Inquiry</option>
+                                    <option value="Product Question">Product Question</option>
+                                    <option value="Order Support">Order Support</option>
+                                    <option value="Returns & Exchanges">Returns & Exchanges</option>
+                                    <option value="Technical Support">Technical Support</option>
+                                    <option value="Partnership">Partnership Opportunity</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="message" class="form-label">Message *</label>
+                                <textarea class="form-control" id="message" name="message" rows="6" placeholder="Please provide details about your inquiry..." required></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-paper-plane me-2"></i>Send Message
+                            </button>
+                        </form>
+                        
+                        <!-- Success Message -->
+                        <% if (typeof success !== 'undefined' && success) { %>
+                            <div class="alert alert-success mt-4" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Thank you!</strong> Your message has been sent successfully. We'll get back to you soon.
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Contact Information -->
+                <div class="col-lg-4">
+                    <div class="contact-info-wrapper">
+                        <h3 class="mb-4">Contact Information</h3>
+                        
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h5>Visit Our Store</h5>
+                                <p>123 Fashion Street<br>
+                                Downtown District<br>
+                                City, State 12345</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h5>Call Us</h5>
+                                <p><a href="tel:+911234567890">+91 1234567890</a></p>
+                                <small class="text-muted">Mon-Fri: 9:00 AM - 8:00 PM<br>Sat-Sun: 10:00 AM - 6:00 PM</small>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h5>Email Us</h5>
+                                <p><a href="mailto:info@stepOut.com">info@stepOut.com</a></p>
+                                <small class="text-muted">We'll respond within 24 hours</small>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-info-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="contact-details">
+                                <h5>Business Hours</h5>
+                                <p>Monday - Friday: 9:00 AM - 8:00 PM<br>
+                                Saturday - Sunday: 10:00 AM - 6:00 PM<br>
+                                <small class="text-muted">GMT +5:30 (IST)</small></p>
+                            </div>
+                        </div>
+                        
+                        <!-- Social Media -->
+                        <div class="social-media mt-4">
+                            <h5>Follow Us</h5>
+                            <div class="social-icons">
+                                <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                                <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section py-5 bg-light">
+        <div class="container">
+            <h2 class="section-title text-center mb-5">Frequently Asked Questions</h2>
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
+                                    What is your return policy?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="faq1" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    We offer a 30-day return policy for all unworn items in original packaging. Returns are free for defective items, and we provide prepaid return labels for exchanges.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
+                                    How long does shipping take?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Standard shipping takes 3-5 business days, while express shipping delivers within 1-2 business days. Free shipping is available on orders over ₹2,000.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
+                                    Do you offer size exchanges?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes! We offer free size exchanges within 30 days of purchase. Simply contact our customer service team to initiate an exchange.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faq4">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4" aria-expanded="false" aria-controls="collapse4">
+                                    How can I track my order?
+                                </button>
+                            </h2>
+                            <div id="collapse4" class="accordion-collapse collapse" aria-labelledby="faq4" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Once your order ships, you'll receive a tracking number via email. You can also track your order by logging into your account and visiting the "My Orders" section.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Include Footer Partial -->
+    <%- include('./partials/footer') %>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/user/common.js"></script>
+</body>
+</html>

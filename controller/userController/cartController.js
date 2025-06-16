@@ -12,8 +12,7 @@ const maxQuantityPerProduct = 10
 const loadCart = async (req, res) => {
   try {
     const user =req.session.user;
-    const userId = req.session.user._id
-    const cart = await Cart.findOne({ user: userId })
+    const cart = await Cart.findOne({ user: user._id })
       .populate({
         path: "products.product",
         populate: {

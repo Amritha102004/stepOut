@@ -462,8 +462,25 @@ const logout = async (req, res) => {
     }
 }
 
+const about = async (req,res) => {
+    try {
+        const user = req.session.user
+        res.render('user/about',{user})
+    } catch (error) {
+        console.log(error);
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send('cannot load about page')
+    }
+}
 
-
+const contact = async (req,res) => {
+    try {
+        const user = req.session.user
+        res.render('user/contact',{user})
+    } catch (error) {
+        console.log(error);
+        res.status(statusCode.INTERNAL_SERVER_ERROR).send('cannot load contact page')
+    }
+}
 module.exports = {
     loadHome,
     loadSignup,
@@ -476,6 +493,8 @@ module.exports = {
     handleForgotPassword,
     loadResetPassword,
     changePassword,
+    about,
+    contact,
     logout,
 }
 

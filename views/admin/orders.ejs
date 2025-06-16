@@ -218,7 +218,7 @@
                                         </td>
                                         <td>
                                             <span class="status-badge status-<%= order.orderStatus.replace('_', '-') %>">
-                                                <%= order.orderStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                                <%= order.orderStatus%>
                                             </span>
                                             <% if (order.orderStatus === 'return_requested') { %>
                                                 <div class="mt-1">

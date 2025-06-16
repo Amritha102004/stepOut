@@ -126,6 +126,7 @@ const loadCheckout = async (req, res) => {
 
     const taxAmount = Math.round(totalAmount * 0.18)
     const finalAmount = totalAmount + taxAmount
+    const isCODEnabled = finalAmount < 1000
 
     res.render("user/checkout", {
       user,
@@ -138,7 +139,9 @@ const loadCheckout = async (req, res) => {
       razorpayKeyId: process.env.RAZORPAY_KEY_ID,
       isRetry: isRetryPayment,
       retryRazorpayOrderId: retryRazorpayOrderId,
-      retryAmount: finalAmount, 
+      retryAmount: finalAmount,
+      isCODEnabled: isCODEnabled,
+      finalAmount: finalAmount
     })
   } catch (error) {
     console.log("Error loading checkout:", error)
@@ -426,6 +429,39 @@ const placeOrder = async (req, res) => {
         success: false,
         message: "Address and payment method are required",
       })
+    }
+
+    if (paymentMethod === "COD") {
+      const cart = await Cart.findOne({ user: userId }).populate({
+        path: "products.product",
+        populate: { path: "categoryId", model: "Category" },
+      })
+
+      if (!cart || cart.products.length === 0) {
+        return res.status(statusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Your cart is empty",
+        })
+      }
+
+      let totalAmount = 0
+      for (const item of cart.products) {
+        const product = item.product
+        const variant = product.variants.find((v) => v.size === item.size)
+        if (variant) {
+          totalAmount += variant.salePrice * item.quantity
+        }
+      }
+
+      const taxAmount = Math.round(totalAmount * 0.18)
+      const finalAmount = totalAmount + taxAmount
+
+      if (finalAmount >= 1000) {
+        return res.status(statusCode.BAD_REQUEST).json({
+          success: false,
+          message: "Cash on Delivery is not available for orders above ₹1000. Please choose another payment method.",
+        })
+      }
     }
 
     if (paymentMethod === "COD" || paymentMethod === "wallet") {

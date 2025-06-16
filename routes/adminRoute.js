@@ -7,7 +7,7 @@ const categoryController=require('../controller/adminController/categoryControll
 const orderController=require('../controller/adminController/orderController');
 const couponController=require('../controller/adminController/couponController');
 const salesReportController = require("../controller/adminController/salesReportController")
-// const walletController=require('../controller/adminController/walletController')
+const dashboardController=require('../controller/adminController/dashboardController')
 const {checkSession}=require('../middleware/adminAuth');
 const {isAdmin}=require('../middleware/adminAuth');
 const upload=require('../middleware/upload');
@@ -15,7 +15,7 @@ const upload=require('../middleware/upload');
 router.get('/login',adminController.loadlogin);
 router.post('/login',adminController.login);
 router.get('/logout',adminController.logout);
-router.get('/dashboard',checkSession,adminController.loadDashboard);
+router.get('/dashboard',checkSession,dashboardController.loadDashboard);
 
 router.get('/customer',checkSession,customerController.loadCustomer);
 router.patch('/toggleUserStatus/:id',checkSession, isAdmin, customerController.block)

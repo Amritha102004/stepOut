@@ -33,8 +33,8 @@ router.post('/resetpassword', isLogin, userController.changePassword);
 router.get('/shop', isBlocked, productController.getAllProducts);
 router.get('/product/:id', isBlocked, productController.getProductDetails);
 
-// router.get('/about',userController.about);
-// router.get('/contact',userController.contact);
+router.get('/about', isBlocked, userController.about);
+router.get('/contact', isBlocked, userController.contact);
 
 router.get('/account', checkSession, isBlocked, accountController.loadAccount);
 router.get('/account/editAccount', checkSession, isBlocked, accountController.loadEditAccount);

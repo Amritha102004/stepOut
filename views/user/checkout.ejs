@@ -117,9 +117,9 @@
                             </div>
 
                             <div class="payment-methods">
-                                <div class="payment-option">
+                                <div class="payment-option <%= !isCODEnabled ? 'disabled' : '' %>">
                                     <input type="radio" class="payment-radio" name="paymentMethod" id="cod" value="COD"
-                                        checked>
+                                        <%= isCODEnabled ? 'checked' : 'disabled' %>>
                                     <label for="cod" class="payment-label">
                                         <div class="payment-card">
                                             <div class="payment-icon">
@@ -127,10 +127,18 @@
                                             </div>
                                             <div class="payment-details">
                                                 <h5>Cash on Delivery</h5>
-                                                <p>Pay when your order is delivered</p>
+                                                <% if (isCODEnabled) { %>
+                                                    <p>Pay when your order is delivered</p>
+                                                <% } else { %>
+                                                    <p class="text-muted">Not available for orders above ₹1000</p>
+                                                <% } %>
                                             </div>
                                             <div class="payment-badge">
-                                                <span class="badge bg-success">Recommended</span>
+                                                <% if (isCODEnabled) { %>
+                                                    <span class="badge bg-success">Recommended</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-secondary">Unavailable</span>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </label>
@@ -138,7 +146,7 @@
 
                                 <div class="payment-option">
                                     <input type="radio" class="payment-radio" name="paymentMethod" id="online"
-                                        value="online">
+                                        value="online" <%= !isCODEnabled ? 'checked' : '' %>>
                                     <label for="online" class="payment-label">
                                         <div class="payment-card">
                                             <div class="payment-icon">
@@ -149,7 +157,11 @@
                                                 <p>Pay using UPI, Cards, Net Banking</p>
                                             </div>
                                             <div class="payment-badge">
-                                                <span class="badge bg-primary">Secure</span>
+                                                <% if (!isCODEnabled) { %>
+                                                    <span class="badge bg-success">Recommended</span>
+                                                <% } else { %>
+                                                    <span class="badge bg-primary">Secure</span>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </label>
@@ -473,6 +485,7 @@
                 window.WALLET_BALANCE = <%= walletBalance %>;
                 window.TOTAL_AMOUNT = <%= totalAmount %>;
                 window.FINAL_AMOUNT = <%= totalAmount + Math.round(totalAmount * 0.18) %>;
+                window.IS_COD_ENABLED = <%= isCODEnabled %>;
             </script>
             <script src="/js/user/checkout.js"></script>
 </body>

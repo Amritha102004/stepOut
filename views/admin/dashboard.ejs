@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/css/admin/dashboard.css">
     <link rel="stylesheet" href="/css/admin/header.css">
     <link rel="stylesheet" href="/css/admin/sidebar.css">
+    <link rel="stylesheet" href="/css/admin/salesReport.css">
 </head>
 
 <body>
@@ -85,67 +86,202 @@
             </div>
         </div>
         
-        <!-- Revenue Chart -->
-        <div class="chart-container">
-            <div class="chart-header">
-                <div>
-                    <div class="chart-title">Total Revenue</div>
-                    <div class="revenue-amount">₹<%= dashboardStats.totalRevenue.toLocaleString() %></div>
-                    <div class="change-indicator">
-                        <i class="fas fa-arrow-up me-1"></i> <%= dashboardStats.revenueGrowth %>% increase since last month
+        <!-- Filter Section -->
+        <div class="filter-section mb-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="filter-card">
+                        <form method="GET" action="/admin/dashboard" class="filter-form">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label for="period" class="form-label">Period</label>
+                                    <select class="form-select" id="period" name="period">
+                                        <option value="day" <%= period === 'day' ? 'selected' : '' %>>Today</option>
+                                        <option value="week" <%= period === 'week' ? 'selected' : '' %>>This Week</option>
+                                        <option value="month" <%= period === 'month' ? 'selected' : '' %>>This Month</option>
+                                        <option value="year" <%= period === 'year' ? 'selected' : '' %>>This Year</option>
+                                        <option value="custom" <%= period === 'custom' ? 'selected' : '' %>>Custom Range</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2" id="startDateGroup" style="display: <%= period === 'custom' ? 'block' : 'none' %>;">
+                                    <label for="startDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate" value="<%= startDate %>">
+                                </div>
+                                <div class="col-md-2" id="endDateGroup" style="display: <%= period === 'custom' ? 'block' : 'none' %>;">
+                                    <label for="endDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="endDate" name="endDate" value="<%= endDate %>">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="paymentMethod" class="form-label">Payment Method</label>
+                                    <select class="form-select" id="paymentMethod" name="paymentMethod">
+                                        <option value="all" <%= paymentMethod === 'all' ? 'selected' : '' %>>All Methods</option>
+                                        <option value="COD" <%= paymentMethod === 'COD' ? 'selected' : '' %>>Cash on Delivery</option>
+                                        <option value="online" <%= paymentMethod === 'online' ? 'selected' : '' %>>Online Payment</option>
+                                        <option value="wallet" <%= paymentMethod === 'wallet' ? 'selected' : '' %>>Wallet</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="orderStatus" class="form-label">Order Status</label>
+                                    <select class="form-select" id="orderStatus" name="orderStatus">
+                                        <option value="all" <%= orderStatus === 'all' ? 'selected' : '' %>>All Status</option>
+                                        <option value="pending" <%= orderStatus === 'pending' ? 'selected' : '' %>>Pending</option>
+                                        <option value="confirmed" <%= orderStatus === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+                                        <option value="shipped" <%= orderStatus === 'shipped' ? 'selected' : '' %>>Shipped</option>
+                                        <option value="delivered" <%= orderStatus === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                        <option value="cancelled" <%= orderStatus === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">
+                                    <label class="form-label">&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-filter me-1"></i>Filter
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="chart-legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #333;"></div>
-                        <span>Profit</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #ddd;"></div>
-                        <span>Loss</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="chart-wrapper">
-                <!-- Y-Axis Labels -->
-                <div class="chart-axis y-axis-0"><span>0</span></div>
-                <div class="chart-axis y-axis-20"><span>20%</span></div>
-                <div class="chart-axis y-axis-40"><span>40%</span></div>
-                <div class="chart-axis y-axis-60"><span>60%</span></div>
-                <div class="chart-axis y-axis-80"><span>80%</span></div>
-                <div class="chart-axis y-axis-100"><span>100%</span></div>
-                
-                <!-- Chart Bars -->
-                <div class="chart-bar-container">
-                    <div class="chart-bar" style="height: 85%;"></div>
-                    <div class="chart-bar" style="height: 65%;"></div>
-                    <div class="chart-bar" style="height: 70%;"></div>
-                    <div class="chart-bar" style="height: 55%;"></div>
-                    <div class="chart-bar" style="height: 65%;"></div>
-                    <div class="chart-bar loss" style="height: 40%;"></div>
-                    <div class="chart-bar" style="height: 60%;"></div>
-                    <div class="chart-bar" style="height: 70%;"></div>
-                    <div class="chart-bar" style="height: 65%;"></div>
-                    <div class="chart-bar" style="height: 60%;"></div>
-                </div>
-            </div>
-            
-            <!-- X-Axis Labels -->
-            <div class="chart-labels">
-                <div class="chart-label">Jan</div>
-                <div class="chart-label">Feb</div>
-                <div class="chart-label">Mar</div>
-                <div class="chart-label">Apr</div>
-                <div class="chart-label">May</div>
-                <div class="chart-label">Jun</div>
-                <div class="chart-label">Jul</div>
-                <div class="chart-label">Aug</div>
-                <div class="chart-label">Sep</div>
-                <div class="chart-label">Oct</div>
             </div>
         </div>
-        
+
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <h5 class="mb-4">Revenue Trend</h5>
+                    <canvas id="revenueChart" height="300" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5 class="mb-4">Payment Methods</h5>
+                    <canvas id="paymentMethodChart" class="payment-method-chart" height="250" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5 class="mb-4">Order Status</h5>
+                    <canvas id="orderStatusChart" class="order-status-chart" height="250" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <!-- Best Selling Products -->
+                <div class="best-selling-card">
+                    <h5 class="mb-4">Top 10 Best Selling Products</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Product</th>
+                                    <th>Brand</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (topProducts && topProducts.length > 0) { %>
+                                    <% topProducts.forEach((product, index) => { %>
+                                        <tr>
+                                            <td><span class="rank-badge">#<%= index + 1 %></span></td>
+                                            <td>
+                                                <div class="product-info">
+                                                    <img src="<%= product.image ? product.image.url : '/placeholder.svg?height=40&width=40' %>"
+                                                         alt="<%= product.name %>" class="product-img">
+                                                    <span><%= product.name %></span>
+                                                </div>
+                                            </td>
+                                            <td><%= product.brand || 'N/A' %></td>
+                                            <td><span class="quantity-badge"><%= product.totalQuantity %></span></td>
+                                            <td><strong><%= formatCurrency(product.totalRevenue) %></strong></td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-4">No data available for the selected period</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Selling Categories and Brands -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="best-selling-card">
+                    <h5 class="mb-4">Top 10 Best Selling Categories</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Category</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (topCategories && topCategories.length > 0) { %>
+                                    <% topCategories.forEach((category, index) => { %>
+                                        <tr>
+                                            <td><span class="rank-badge">#<%= index + 1 %></span></td>
+                                            <td><%= category.name %></td>
+                                            <td><span class="quantity-badge"><%= category.totalQuantity %></span></td>
+                                            <td><strong><%= formatCurrency(category.totalRevenue) %></strong></td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">No data available for the selected period</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="best-selling-card">
+                    <h5 class="mb-4">Top 10 Best Selling Brands</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Brand</th>
+                                    <th>Quantity Sold</th>
+                                    <th>Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% if (topBrands && topBrands.length > 0) { %>
+                                    <% topBrands.forEach((brand, index) => { %>
+                                        <tr>
+                                            <td><span class="rank-badge">#<%= index + 1 %></span></td>
+                                            <td><%= brand.name %></td>
+                                            <td><span class="quantity-badge"><%= brand.totalQuantity %></span></td>
+                                            <td><strong><%= formatCurrency(brand.totalRevenue) %></strong></td>
+                                        </tr>
+                                    <% }); %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">No data available for the selected period</td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Latest Orders -->
         <div class="orders-container">
             <div class="orders-header">
@@ -261,8 +397,155 @@
     
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Custom JS -->
     <script src="/js/admin/sidebar.js"></script>
+
+    <script>
+        // Filter form handling
+        document.getElementById('period').addEventListener('change', function() {
+            const customDateGroups = document.querySelectorAll('#startDateGroup, #endDateGroup');
+            if (this.value === 'custom') {
+                customDateGroups.forEach(group => group.style.display = 'block');
+            } else {
+                customDateGroups.forEach(group => group.style.display = 'none');
+            }
+        });
+
+        // Chart.js configurations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            window.revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: <%- JSON.stringify(dailyRevenue.labels) %>,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: <%- JSON.stringify(dailyRevenue.revenue) %>,
+                            borderColor: '#4caf50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Orders',
+                            data: <%- JSON.stringify(dailyRevenue.orders) %>,
+                            borderColor: '#2196f3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Revenue (₹)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Orders'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+
+            // Payment Method Chart
+            const paymentMethodCtx = document.getElementById('paymentMethodChart').getContext('2d');
+            const paymentMethodData = <%- JSON.stringify(paymentMethodCounts) %>;
+
+            window.paymentMethodChart = new Chart(paymentMethodCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: paymentMethodData.map(item => item._id.toUpperCase()),
+                    datasets: [{
+                        data: paymentMethodData.map(item => item.count),
+                        backgroundColor: [
+                            '#ff6384',
+                            '#36a2eb',
+                            '#ffce56',
+                            '#4bc0c0',
+                            '#9966ff'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Order Status Chart
+            const orderStatusCtx = document.getElementById('orderStatusChart').getContext('2d');
+            const orderStatusData = <%- JSON.stringify(orderStatusCounts) %>;
+
+            window.orderStatusChart = new Chart(orderStatusCtx, {
+                type: 'pie',
+                data: {
+                    labels: orderStatusData.map(item => item._id.charAt(0).toUpperCase() + item._id.slice(1)),
+                    datasets: [{
+                        data: orderStatusData.map(item => item.count),
+                        backgroundColor: [
+                            '#28a745',
+                            '#ffc107',
+                            '#17a2b8',
+                            '#fd7e14',
+                            '#dc3545',
+                            '#6f42c1'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>

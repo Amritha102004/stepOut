@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - StepOut</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/user/header.css">
+    <link rel="stylesheet" href="/css/user/footer.css">
+    <link rel="stylesheet" href="/css/user/about.css">
+</head>
+<body>
+    <!-- Include Header Partial -->
+    <%- include('./partials/header') %>
+
+    <!-- About Hero Section -->
+    <section class="about-hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="about-title">About StepOut</h1>
+                    <p class="about-subtitle">Your journey to finding the perfect footwear starts here</p>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-hero-img">
+                        <img src="/placeholder.svg?height=400&width=500" alt="StepOut Shoe Collection" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Story Section -->
+    <section class="our-story py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 mx-auto text-center">
+                    <h2 class="section-title">Our Story</h2>
+                    <p class="story-text">
+                        Founded with a passion for quality footwear, StepOut began as a dream to bring together the world's finest shoes under one roof. We believe that the right pair of shoes doesn't just complete your outfit – it empowers your journey, boosts your confidence, and helps you step out in style.
+                    </p>
+                    <p class="story-text">
+                        From humble beginnings to becoming a trusted name in footwear, we've maintained our commitment to quality, style, and customer satisfaction. Every shoe in our collection is carefully selected to ensure it meets our high standards of comfort, durability, and design.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Values Section -->
+    <section class="values-section py-5 bg-light">
+        <div class="container">
+            <h2 class="section-title text-center mb-5">Our Values</h2>
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="value-card text-center">
+                        <div class="value-icon">
+                            <i class="fas fa-gem"></i>
+                        </div>
+                        <h4>Quality First</h4>
+                        <p>We source only the finest materials and work with trusted manufacturers to ensure every shoe meets our exacting standards.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="value-card text-center">
+                        <div class="value-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h4>Customer Love</h4>
+                        <p>Your satisfaction is our priority. We're here to help you find the perfect fit and provide exceptional service every step of the way.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="value-card text-center">
+                        <div class="value-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <h4>Sustainability</h4>
+                        <p>We're committed to responsible practices, supporting eco-friendly brands and sustainable manufacturing processes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-section py-5">
+        <div class="container">
+            <h2 class="section-title text-center mb-5">Meet Our Team</h2>
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="team-card text-center">
+                        <div class="team-img">
+                            <img src="/placeholder.svg?height=200&width=200" alt="Team Member" class="img-fluid rounded-circle">
+                        </div>
+                        <h5>Amritha T</h5>
+                        <p class="team-role">Founder & CEO</p>
+                        <p>Passionate about footwear and customer experience, Sarah leads our vision of making quality shoes accessible to everyone.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="team-card text-center">
+                        <div class="team-img">
+                            <img src="/placeholder.svg?height=200&width=200" alt="Team Member" class="img-fluid rounded-circle">
+                        </div>
+                        <h5>Michael Chen</h5>
+                        <p class="team-role">Head of Product</p>
+                        <p>With over 10 years in the footwear industry, Michael ensures every product in our catalog meets the highest standards.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="team-card text-center">
+                        <div class="team-img">
+                            <img src="/placeholder.svg?height=200&width=200" alt="Team Member" class="img-fluid rounded-circle">
+                        </div>
+                        <h5>Emily Rodriguez</h5>
+                        <p class="team-role">Customer Success Manager</p>
+                        <p>Emily leads our customer service team, ensuring every customer has an exceptional shopping experience with StepOut.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section py-5" style="background-color: #009688; color: white;">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-item">
+                        <h3 class="stat-number">50,000+</h3>
+                        <p class="stat-label">Happy Customers</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-item">
+                        <h3 class="stat-number">1,000+</h3>
+                        <p class="stat-label">Shoe Styles</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-item">
+                        <h3 class="stat-number">100+</h3>
+                        <p class="stat-label">Brand Partners</p>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="stat-item">
+                        <h3 class="stat-number">5</h3>
+                        <p class="stat-label">Years of Excellence</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section py-5">
+        <div class="container text-center">
+            <h2>Ready to Step Out in Style?</h2>
+            <p class="lead mb-4">Discover our amazing collection of footwear and find your perfect pair today!</p>
+            <a href="/shop" class="btn btn-lg" style="background-color: #009688; color: white;">Shop Now</a>
+        </div>
+    </section>
+
+    <!-- Include Footer Partial -->
+    <%- include('./partials/footer') %>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/user/common.js"></script>
+</body>
+</html>

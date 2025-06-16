@@ -1,114 +1,109 @@
 /* General Styles */
 body {
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Hero Section Styles */
+.hero-section {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Carousel Container */
+.carousel-item {
+  position: relative;
+  min-height: 500px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark overlay for text readability */
+.carousel-overlay {
+  background-color: rgba(0, 0, 0, 0.5); /* optional: tweak for brightness */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Text Content */
+.hero-title {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.hero-text {
+  font-size: 1.2rem;
+  color: #f1f1f1;
+  max-width: 700px;
+  margin: 0 auto;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Carousel Indicators */
+.carousel-indicators {
+  bottom: 20px;
+}
+
+.carousel-indicators [data-bs-target] {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #fff;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.carousel-indicators .active {
+  opacity: 1;
+}
+
+/* Navigation Arrows */
+.carousel-control-prev,
+.carousel-control-next {
+  width: 5%;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 50%;
+  padding: 20px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
   }
-  
-  /* Hero Section Styles */
-  .hero-section {
-    position: relative;
-    padding: 3rem 0;
-    overflow: hidden;
+
+  .hero-text {
+    font-size: 1rem;
+    padding: 0 1rem;
   }
-  
+
   .carousel-item {
     min-height: 400px;
   }
-  
-  .hero-bg {
-    position: absolute;
-    width: 70%;
-    height: 80%;
-    background-color: #009688;
-    border-radius: 50%;
-    right: -10%;
-    top: 10%;
-    z-index: -1;
-  }
-  
-  .hero-content {
-    padding: 2rem;
-  }
-  
+}
+
+@media (max-width: 576px) {
   .hero-title {
-    font-size: 3.5rem;
-    font-weight: 300;
-    color: #555;
-    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
   }
-  
+
   .hero-text {
-    color: #666;
-    margin-bottom: 2rem;
-    max-width: 450px;
+    font-size: 0.95rem;
   }
-  
-  .hero-shoe {
-    transform: rotate(-15deg);
-    max-width: 100%;
-    transition: transform 0.3s ease;
-  }
-  
-  .hero-shoe:hover {
-    transform: rotate(-10deg) scale(1.05);
-  }
-  
-  .shoe-thumbnails {
-    display: flex;
-    justify-content: center;
-    margin-top: 2rem;
-  }
-  
-  .shoe-thumbnail {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: #f0f0f0;
-    margin: 0 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: hidden;
-    border: 2px solid transparent;
-    transition: all 0.2s ease;
-  }
-  
-  .shoe-thumbnail:hover {
-    border-color: #009688;
-  }
-  
-  .shoe-thumbnail img {
-    width: 85%;
-    height: auto;
-  }
-  
-  .carousel-indicators {
-    bottom: -40px;
-  }
-  
-  .carousel-indicators [data-bs-target] {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #009688;
-    opacity: 0.5;
-  }
-  
-  .carousel-indicators .active {
-    opacity: 1;
-  }
-  
-  .carousel-control-prev,
-  .carousel-control-next {
-    width: 5%;
-  }
-  
-  .carousel-control-prev-icon,
-  .carousel-control-next-icon {
-    background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 50%;
-    padding: 20px;
-  }
+}
+
   
   /* Jordan Section Styles */
   .jordan-section {
@@ -235,11 +230,7 @@ body {
   
   /* Responsive adjustments */
   @media (max-width: 992px) {
-    .hero-bg {
-      width: 90%;
-      right: -20%;
-    }
-  
+     
     .jordan-bg {
       width: 50%;
       right: 5%;
@@ -264,12 +255,7 @@ body {
     .hero-title {
       font-size: 2.5rem;
     }
-  
-    .hero-bg {
-      width: 100%;
-      height: 60%;
-      right: -30%;
-    }
+
   
     .jordan-bg {
       width: 100%;

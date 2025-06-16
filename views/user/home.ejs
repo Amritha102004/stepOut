@@ -19,99 +19,60 @@
     <%- include('./partials/header') %>
 
     <!-- Hero Section with Carousel -->
-    <section class="hero-section">
-        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-indicators">
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
-            </div>
-            <div class="carousel-inner">
-                <!-- Slide 1 -->
-                <div class="carousel-item active">
-                    <div class="hero-bg"></div>
-                    <div class="container">
-                        <div class="row align-items-center">
-                            <div class="col-lg-5 col-md-6 hero-content">
-                                <h1 class="hero-title">stepOut</h1>
-                                <p class="hero-text">Find your true style with stepOut and explore the variety of playful, colorful designs!</p>
-                            </div>
-                            <div class="col-lg-7 col-md-6">
-                                <img src="/placeholder.svg?height=400&width=320&query=white%20nike%20shoe" alt="White Nike Shoe" class="hero-shoe">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Slide 2 -->
-                <div class="carousel-item">
-                    <div class="hero-bg" style="background-color: #3f51b5;"></div>
-                    <div class="container">
-                        <div class="row align-items-center">
-                            <div class="col-lg-5 col-md-6 hero-content">
-                                <h1 class="hero-title">New Arrivals</h1>
-                                <p class="hero-text">Check out our latest collection of premium footwear for every occasion!</p>
-                            </div>
-                            <div class="col-lg-7 col-md-6">
-                                <img src="/placeholder.svg?height=400&width=320&query=blue%20nike%20shoe" alt="Blue Nike Shoe" class="hero-shoe">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Slide 3 -->
-                <div class="carousel-item">
-                    <div class="hero-bg" style="background-color: #ff5722;"></div>
-                    <div class="container">
-                        <div class="row align-items-center">
-                            <div class="col-lg-5 col-md-6 hero-content">
-                                <h1 class="hero-title">Special Offers</h1>
-                                <p class="hero-text">Limited time deals on selected items. Grab yours before they're gone!</p>
-                            </div>
-                            <div class="col-lg-7 col-md-6">
-                                <img src="/placeholder.svg?height=400&width=320&query=red%20nike%20shoe" alt="Red Nike Shoe" class="hero-shoe">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
+<section class="hero-section">
+  <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+      <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+      <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+      <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+
+    <!-- Slide 1 -->
+    <div class="carousel-inner">
+      <div class="carousel-item active" style="background-image: url('/image/carousel3.jpg');">
+        <div class="carousel-overlay">
+          <div class="container text-center text-white">
+            <h1 class="hero-title">stepOut</h1>
+            <p class="hero-text">Find your true style with stepOut and explore the variety of playful, colorful designs!</p>
+          </div>
         </div>
-        
-        <div class="container mt-4">
-            <div class="row">
-                <div class="col-12">
-                    <div class="shoe-thumbnails">
-                        <div class="shoe-thumbnail">
-                            <img src="/placeholder.svg?height=50&width=50&query=shoe%201" alt="Shoe 1">
-                        </div>
-                        <div class="shoe-thumbnail">
-                            <img src="/placeholder.svg?height=50&width=50&query=shoe%202" alt="Shoe 2">
-                        </div>
-                        <div class="shoe-thumbnail">
-                            <img src="/placeholder.svg?height=50&width=50&query=shoe%203" alt="Shoe 3">
-                        </div>
-                        <div class="shoe-thumbnail">
-                            <img src="/placeholder.svg?height=50&width=50&query=shoe%204" alt="Shoe 4">
-                        </div>
-                        <div class="shoe-thumbnail">
-                            <img src="/placeholder.svg?height=50&width=50&query=shoe%205" alt="Shoe 5">
-                        </div>
-                    </div>
-                </div>
-            </div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="carousel-item" style="background-image: url('/image/carousel1.jpg');">
+        <div class="carousel-overlay">
+          <div class="container text-center text-white">
+            <h1 class="hero-title">New Arrivals</h1>
+            <p class="hero-text">Check out our latest collection of premium footwear for every occasion!</p>
+          </div>
         </div>
-    </section>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="carousel-item" style="background-image: url('/image/carousel2.png');">
+        <div class="carousel-overlay">
+          <div class="container text-center text-white">
+            <h1 class="hero-title">Special Offers</h1>
+            <p class="hero-text">Limited time deals on selected items. Grab yours before they're gone!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+</section>
+
 
     <!-- Air Jordan Section -->
-    <section class="jordan-section">
+    <!-- <section class="jordan-section">
         <div class="jordan-bg"></div>
         <div class="container">
             <div class="row align-items-center">
@@ -148,7 +109,7 @@
                 <img src="/placeholder.svg?height=30&width=30&query=green%20shoe" alt="Green Variant">
             </div>
         </div>
-    </section>
+    </section> -->
 
     <!-- Featured Products Section -->
     <section class="product-section py-5">
