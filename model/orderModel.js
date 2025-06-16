@@ -112,7 +112,6 @@ const orderSchema = new Schema(
     returnApprovalReason: String,
     returnRejectionReason: String,
 
-    // for payment tracking
     paymentDetails: {
       razorpayOrderId: String,
       razorpayPaymentId: String,
@@ -121,7 +120,6 @@ const orderSchema = new Schema(
       retryCount: { type: Number, default: 0 },
     },
 
-    // Enhanced refund tracking
     refundStatus: {
       type: String,
       enum: ["none", "pending", "partial", "completed", "failed"],
@@ -136,7 +134,6 @@ const orderSchema = new Schema(
     refundProcessedAt: Date,
     refundReason: String,
 
-    // Wallet integration
     walletAmountUsed: { type: Number, default: 0 },
     remainingAmount: { type: Number, default: 0 },
 

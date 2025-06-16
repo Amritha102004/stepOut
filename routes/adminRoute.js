@@ -50,7 +50,8 @@ router.patch("/orders/:orderId/status", checkSession, isAdmin, orderController.u
 router.patch("/orders/:orderId/item-status", checkSession, isAdmin, orderController.updateItemStatus)
 router.post("/orders/:orderId/approve-return", checkSession, isAdmin, orderController.approveReturn)
 router.post("/orders/:orderId/reject-return", checkSession, isAdmin, orderController.rejectReturn)
-router.post("/orders/:orderId/process-refund", checkSession, isAdmin, orderController.processRefund)
+// Manual refund route disabled - refunds are now processed automatically
+// router.post("/orders/:orderId/process-refund", checkSession, isAdmin, orderController.processRefund)
 router.post("/orders/:orderId/notify", checkSession, isAdmin, orderController.sendNotification)
 router.post("/orders/:orderId/cancel", checkSession, isAdmin, orderController.cancelOrder)
 router.delete("/orders/:orderId", checkSession, isAdmin, orderController.deleteOrder)

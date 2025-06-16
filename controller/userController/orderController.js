@@ -38,6 +38,36 @@ const recalculateOrderTotals = async (order) => {
   return order
 }
 
+const calculateProportionalRefund = (order, refundItems) => {
+  const originalTotalAmount = order.products.reduce((sum, item) => sum + (item.variant.salePrice * item.quantity), 0)
+  const refundItemsAmount = refundItems.reduce((sum, item) => sum + (item.variant.salePrice * item.quantity), 0)
+
+  if (originalTotalAmount === 0) return 0
+
+  const proportionOfOrder = refundItemsAmount / originalTotalAmount
+
+  const proportionalGST = Math.round(refundItemsAmount * 0.18)
+
+  const proportionalDiscount = Math.round((order.discount || 0) * proportionOfOrder)
+
+  const proportionalWalletUsed = Math.round((order.walletAmountUsed || 0) * proportionOfOrder)
+
+  const refundAmount = refundItemsAmount + proportionalGST - proportionalDiscount - proportionalWalletUsed
+
+  console.log(`Proportional refund calculation:
+    - Items amount: ₹${refundItemsAmount}
+    - Proportional GST: ₹${proportionalGST}
+    - Proportional discount: ₹${proportionalDiscount}
+    - Proportional wallet used: ₹${proportionalWalletUsed}
+    - Final refund: ₹${Math.max(0, refundAmount)}`)
+
+  return Math.max(0, refundAmount)
+}
+
+const calculateItemProportionalRefund = (order, item) => {
+  return calculateProportionalRefund(order, [item])
+}
+
 const loadOrders = async (req, res) => {
   try {
     const user = req.session.user
@@ -248,43 +278,56 @@ const cancelOrder = async (req, res) => {
       }
     }
 
-    if ((order.paymentMethod === "online" || order.walletAmountUsed > 0) && order.paymentStatus === "completed") {
-      console.log(`Processing refund for online payment: ₹${order.finalAmount}`)
+    if (order.paymentMethod !== "COD" && order.paymentStatus === "completed") {
+      console.log(`Processing refund for ${order.paymentMethod} payment`)
 
-      const refundResult = await processWalletRefund(
-        userId,
-        order.finalAmount,
-        order._id,
-        `Order cancellation refund - ${reason}`,
-        cancellableItems.map((item) => item.product._id),
-      )
+      const refundAmount = calculateProportionalRefund(order, cancellableItems)
 
-      if (refundResult.success) {
-        order.refundStatus = "completed"
-        order.refundAmount = order.finalAmount
-        order.refundProcessedAt = new Date()
-        order.refundMethod = "wallet"
-        await order.save()
+      if (refundAmount > 0) {
+        const refundResult = await processWalletRefund(
+          userId,
+          refundAmount,
+          order._id,
+          `Order cancellation refund - ${reason}`,
+          cancellableItems.map((item) => item.product._id),
+        )
 
-        console.log(`Refund processed successfully: ₹${order.finalAmount} to wallet`)
+        if (refundResult.success) {
+          order.refundStatus = "completed"
+          order.refundAmount = refundAmount
+          order.refundProcessedAt = new Date()
+          order.refundMethod = "wallet"
+          await order.save()
 
-        res.status(statusCode.OK).json({
-          success: true,
-          message: `Order cancelled successfully. Refund of ₹${order.finalAmount} has been processed to your wallet.`,
-          refundAmount: order.finalAmount,
-          newWalletBalance: refundResult.newBalance,
-        })
+          console.log(`Refund processed successfully: ₹${refundAmount} to wallet`)
+
+          res.status(statusCode.OK).json({
+            success: true,
+            message: `Order cancelled successfully. Refund of ₹${refundAmount} has been processed to your wallet.`,
+            refundAmount: refundAmount,
+            newWalletBalance: refundResult.newBalance,
+          })
+        } else {
+          console.error(`Refund processing failed: ${refundResult.error}`)
+          res.status(statusCode.OK).json({
+            success: true,
+            message: "Order cancelled successfully, but refund processing failed. Please contact support.",
+          })
+        }
       } else {
-        console.error(`Refund processing failed: ${refundResult.error}`)
         res.status(statusCode.OK).json({
           success: true,
-          message: "Order cancelled successfully, but refund processing failed. Please contact support.",
+          message: "Order cancelled successfully",
         })
       }
     } else {
+      const message = order.paymentMethod === "COD"
+        ? "Order cancelled successfully"
+        : "Order cancelled successfully"
+
       res.status(statusCode.OK).json({
         success: true,
-        message: "Order cancelled successfully",
+        message: message,
       })
     }
   } catch (error) {
@@ -450,40 +493,47 @@ const cancelOrderItem = async (req, res) => {
       }
     }
 
-    const itemRefundAmount = item.variant.salePrice * item.quantity
-    console.log(`Item refund amount: ₹${itemRefundAmount}`)
+    if (order.paymentMethod !== "COD" && order.paymentStatus === "completed") {
+      console.log(`Processing partial refund for ${order.paymentMethod} payment`)
 
-    if ((order.paymentMethod === "online" || order.walletAmountUsed > 0) && order.paymentStatus === "completed") {
-      console.log(`Processing partial refund for online payment`)
+      const itemRefundAmount = calculateItemProportionalRefund(order, item)
+      console.log(`Item proportional refund amount: ₹${itemRefundAmount}`)
 
-      const refundResult = await processWalletRefund(
-        userId,
-        itemRefundAmount,
-        order._id,
-        `Item cancellation refund - ${item.product.name} (${size}) - ${reason}`,
-        [item.product._id],
-      )
+      if (itemRefundAmount > 0) {
+        const refundResult = await processWalletRefund(
+          userId,
+          itemRefundAmount,
+          order._id,
+          `Item cancellation refund - ${item.product.name} (${size}) - ${reason}`,
+          [item.product._id],
+        )
 
-      if (refundResult.success) {
-        order.refundStatus = order.refundStatus === "completed" ? "completed" : "partial"
-        order.refundAmount = (order.refundAmount || 0) + itemRefundAmount
-        order.refundProcessedAt = new Date()
-        order.refundMethod = "wallet"
-        await order.save()
+        if (refundResult.success) {
+          order.refundStatus = order.refundStatus === "completed" ? "completed" : "partial"
+          order.refundAmount = (order.refundAmount || 0) + itemRefundAmount
+          order.refundProcessedAt = new Date()
+          order.refundMethod = "wallet"
+          await order.save()
 
-        console.log(`Partial refund processed: ₹${itemRefundAmount}`)
+          console.log(`Partial refund processed: ₹${itemRefundAmount}`)
 
-        res.status(statusCode.OK).json({
-          success: true,
-          message: `Item cancelled successfully. Refund of ₹${itemRefundAmount} has been processed to your wallet.`,
-          refundAmount: itemRefundAmount,
-          newWalletBalance: refundResult.newBalance,
-        })
+          res.status(statusCode.OK).json({
+            success: true,
+            message: `Item cancelled successfully. Refund of ₹${itemRefundAmount} has been processed to your wallet.`,
+            refundAmount: itemRefundAmount,
+            newWalletBalance: refundResult.newBalance,
+          })
+        } else {
+          console.error(`Refund processing failed: ${refundResult.error}`)
+          res.status(statusCode.OK).json({
+            success: true,
+            message: "Item cancelled successfully, but refund processing failed. Please contact support.",
+          })
+        }
       } else {
-        console.error(`Refund processing failed: ${refundResult.error}`)
         res.status(statusCode.OK).json({
           success: true,
-          message: "Item cancelled successfully, but refund processing failed. Please contact support.",
+          message: "Item cancelled successfully",
         })
       }
     } else {

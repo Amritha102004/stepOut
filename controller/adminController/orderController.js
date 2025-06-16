@@ -37,6 +37,36 @@ const recalculateOrderTotals = async (order) => {
   return order
 }
 
+const calculateProportionalRefund = (order, refundItems) => {
+  const originalTotalAmount = order.products.reduce((sum, item) => sum + (item.variant.salePrice * item.quantity), 0)
+  const refundItemsAmount = refundItems.reduce((sum, item) => sum + (item.variant.salePrice * item.quantity), 0)
+
+  if (originalTotalAmount === 0) return 0
+
+  const proportionOfOrder = refundItemsAmount / originalTotalAmount
+
+  const proportionalGST = Math.round(refundItemsAmount * 0.18)
+
+  const proportionalDiscount = Math.round((order.discount || 0) * proportionOfOrder)
+
+  const proportionalWalletUsed = Math.round((order.walletAmountUsed || 0) * proportionOfOrder)
+
+  const refundAmount = refundItemsAmount + proportionalGST - proportionalDiscount - proportionalWalletUsed
+
+  console.log(`Proportional refund calculation:
+    - Items amount: ₹${refundItemsAmount}
+    - Proportional GST: ₹${proportionalGST}
+    - Proportional discount: ₹${proportionalDiscount}
+    - Proportional wallet used: ₹${proportionalWalletUsed}
+    - Final refund: ₹${Math.max(0, refundAmount)}`)
+
+  return Math.max(0, refundAmount)
+}
+
+const calculateItemProportionalRefund = (order, item) => {
+  return calculateProportionalRefund(order, [item])
+}
+
 const loadOrders = async (req, res) => {
   try {
     const page = Number.parseInt(req.query.page) || 1
@@ -250,8 +280,13 @@ const updateOrderStatus = async (req, res) => {
       await recalculateOrderTotals(order)
       await restoreInventory(order)
 
-      if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
-        await processRefundToWallet(order, "Order cancelled by admin")
+      if (order.paymentMethod !== "COD") {
+        const cancelledItems = order.products.filter(item => item.status === "cancelled")
+        const refundAmount = calculateProportionalRefund(order, cancelledItems)
+
+        if (refundAmount > 0) {
+          await processRefundToWallet(order, "Order cancelled by admin", refundAmount)
+        }
       }
     } else if (status === "returned") {
       order.products.forEach((item) => {
@@ -264,7 +299,13 @@ const updateOrderStatus = async (req, res) => {
 
       await recalculateOrderTotals(order)
       await restoreInventory(order)
-      await processRefundToWallet(order, "Order return approved by admin")
+
+      const returnedItems = order.products.filter(item => item.status === "returned")
+      const refundAmount = calculateProportionalRefund(order, returnedItems)
+
+      if (refundAmount > 0) {
+        await processRefundToWallet(order, "Order return approved by admin", refundAmount)
+      }
     } else {
       order.products.forEach((item) => {
         if (item.status === "pending" || (status === "shipped" && item.status === "confirmed")) {
@@ -347,9 +388,13 @@ const updateItemStatus = async (req, res) => {
         }
       }
 
-      if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
-        const itemRefundAmount = item.variant.salePrice * item.quantity
-        await processItemRefund(order, item, itemRefundAmount, "Item cancelled by admin")
+      if (order.paymentMethod !== "COD") {
+        const itemRefundAmount = calculateItemProportionalRefund(order, item)
+        console.log(`Item cancellation refund amount: ₹${itemRefundAmount}`)
+
+        if (itemRefundAmount > 0) {
+          await processItemRefund(order, item, itemRefundAmount, "Item cancelled by admin")
+        }
       }
     } else if (status === "returned") {
       item.returnedAt = new Date()
@@ -457,7 +502,9 @@ const approveReturn = async (req, res) => {
         }
       }
 
-      const itemRefundAmount = item.variant.salePrice * item.quantity
+      const itemRefundAmount = calculateItemProportionalRefund(order, item)
+      console.log(`Item return refund amount: ₹${itemRefundAmount}`)
+
       const refundResult = await processItemRefund(order, item, itemRefundAmount, "Item return approved by admin")
 
       await recalculateOrderTotals(order)
@@ -497,7 +544,12 @@ const approveReturn = async (req, res) => {
       await order.save()
 
       await restoreInventory(order)
-      const refundResult = await processRefundToWallet(order, "Return approved - refund processed")
+
+      const returnedItems = order.products.filter(item => item.status === "returned")
+      const refundAmount = calculateProportionalRefund(order, returnedItems)
+      console.log(`Full order return refund amount: ₹${refundAmount}`)
+
+      const refundResult = await processRefundToWallet(order, "Return approved - refund processed", refundAmount)
 
       if (refundResult.success) {
         res.status(statusCode.OK).json({
@@ -595,10 +647,15 @@ const rejectReturn = async (req, res) => {
   }
 }
 
-const processRefundToWallet = async (order, reason) => {
+const processRefundToWallet = async (order, reason, customRefundAmount = null) => {
   try {
     const userId = order.user._id
-    const refundAmount = order.finalAmount
+    const refundAmount = customRefundAmount !== null ? customRefundAmount : order.finalAmount
+
+    if (refundAmount <= 0) {
+      console.log(`No refund needed - amount is ₹${refundAmount}`)
+      return { success: true, amount: 0 }
+    }
 
     let wallet = await Wallet.findOne({ userId })
     if (!wallet) {
@@ -618,7 +675,7 @@ const processRefundToWallet = async (order, reason) => {
     await wallet.save()
 
     order.refundStatus = "completed"
-    order.refundAmount = refundAmount
+    order.refundAmount = (order.refundAmount || 0) + refundAmount
     order.refundProcessedAt = new Date()
     order.refundMethod = "wallet"
     await order.save()
@@ -686,61 +743,9 @@ const restoreInventory = async (order) => {
 
 const processRefund = async (req, res) => {
   try {
-    const orderId = req.params.orderId
-    const { refundAmount, reason } = req.body
-
-    const order = await Order.findById(orderId).populate("user", "_id fullName email")
-    if (!order) {
-      return res.status(statusCode.NOT_FOUND).json({
-        success: false,
-        message: "Order not found",
-      })
-    }
-
-    if (!refundAmount || refundAmount <= 0 || refundAmount > order.finalAmount) {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Invalid refund amount",
-      })
-    }
-
-    if (order.refundStatus === "completed") {
-      return res.status(statusCode.BAD_REQUEST).json({
-        success: false,
-        message: "Order has already been refunded",
-      })
-    }
-
-    const userId = order.user._id
-
-    let wallet = await Wallet.findOne({ userId })
-    if (!wallet) {
-      wallet = new Wallet({ userId, balance: 0, transactions: [] })
-    }
-
-    wallet.transactions.push({
-      type: "credit",
-      amount: refundAmount,
-      orderId: order._id,
-      reason: reason || "Manual refund by admin",
-      date: new Date(),
-    })
-
-    wallet.balance += refundAmount
-    await wallet.save()
-
-    order.refundStatus = "completed"
-    order.refundAmount = refundAmount
-    order.refundProcessedAt = new Date()
-    order.refundMethod = "wallet"
-    order.refundReason = reason || "Manual refund by admin"
-    await order.save()
-
-    res.status(statusCode.OK).json({
-      success: true,
-      message: `Refund of ₹${refundAmount} processed successfully to user's wallet`,
-      refundAmount,
-      newWalletBalance: wallet.balance,
+    res.status(statusCode.BAD_REQUEST).json({
+      success: false,
+      message: "Manual refunds are disabled. Refunds are processed automatically when returns are approved or orders are cancelled.",
     })
   } catch (error) {
     console.log("Error processing refund:", error)
@@ -879,18 +884,28 @@ const cancelOrder = async (req, res) => {
     await order.save()
     await restoreInventory(order)
 
-    if (order.paymentMethod === "online" || order.walletAmountUsed > 0) {
-      const refundResult = await processRefundToWallet(order, "Order cancelled by admin - automatic refund")
+    if (order.paymentMethod !== "COD") {
+      const cancelledItems = order.products.filter(item => item.status === "cancelled")
+      const refundAmount = calculateProportionalRefund(order, cancelledItems)
 
-      if (refundResult.success) {
-        res.status(statusCode.OK).json({
-          success: true,
-          message: `Order cancelled successfully and refund of ₹${refundResult.amount} processed to user's wallet`,
-        })
+      if (refundAmount > 0) {
+        const refundResult = await processRefundToWallet(order, "Order cancelled by admin - automatic refund", refundAmount)
+
+        if (refundResult.success) {
+          res.status(statusCode.OK).json({
+            success: true,
+            message: `Order cancelled successfully and refund of ₹${refundResult.amount} processed to user's wallet`,
+          })
+        } else {
+          res.status(statusCode.OK).json({
+            success: true,
+            message: "Order cancelled successfully but refund processing failed. Please process refund manually.",
+          })
+        }
       } else {
         res.status(statusCode.OK).json({
           success: true,
-          message: "Order cancelled successfully but refund processing failed. Please process refund manually.",
+          message: "Order cancelled successfully",
         })
       }
     } else {

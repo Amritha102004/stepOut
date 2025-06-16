@@ -12,7 +12,6 @@ const loadDashboard = async (req, res) => {
     const paymentMethod = req.query.paymentMethod || "all"
     const orderStatus = req.query.orderStatus || "all"
 
-    // Get date range based on period
     let dateRange
     if (period === "custom") {
       const startDate = req.query.startDate
@@ -27,11 +26,8 @@ const loadDashboard = async (req, res) => {
     } else {
       dateRange = getDateRange(period)
     }
-
-    // Get dashboard stats
     const dashboardStats = await getDashboardStats()
 
-    // Get latest orders
     const latestOrders = await Order.find()
       .populate("user", "name email")
       .populate("address")
@@ -43,12 +39,10 @@ const loadDashboard = async (req, res) => {
       .limit(3)
       .lean()
 
-    // Get chart data
     const dailyRevenue = await getDailyRevenue(dateRange.startDate, dateRange.endDate)
     const paymentMethodCounts = await getPaymentMethodCounts(dateRange.startDate, dateRange.endDate)
     const orderStatusCounts = await getOrderStatusCounts(dateRange.startDate, dateRange.endDate)
 
-    // Get best selling data
     const topProducts = await getTopSellingProducts(dateRange.startDate, dateRange.endDate, 10)
     const topCategories = await getTopSellingCategories(dateRange.startDate, dateRange.endDate, 10)
     const topBrands = await getTopSellingBrands(dateRange.startDate, dateRange.endDate, 10)
@@ -144,7 +138,6 @@ const getDashboardStats = async () => {
   }
 }
 
-// Helper function to get date range based on period
 const getDateRange = (period) => {
   const now = new Date()
   let startDate, endDate = new Date()
@@ -172,7 +165,6 @@ const getDateRange = (period) => {
   return { startDate, endDate }
 }
 
-// Get daily revenue data for charts
 const getDailyRevenue = async (startDate, endDate) => {
   const pipeline = [
     {
@@ -202,7 +194,6 @@ const getDailyRevenue = async (startDate, endDate) => {
   return { labels, revenue, orders }
 }
 
-// Get payment method distribution
 const getPaymentMethodCounts = async (startDate, endDate) => {
   const pipeline = [
     {
@@ -223,7 +214,6 @@ const getPaymentMethodCounts = async (startDate, endDate) => {
   return await Order.aggregate(pipeline)
 }
 
-// Get order status distribution
 const getOrderStatusCounts = async (startDate, endDate) => {
   const pipeline = [
     {
@@ -242,7 +232,6 @@ const getOrderStatusCounts = async (startDate, endDate) => {
   return await Order.aggregate(pipeline)
 }
 
-// Get top selling products
 const getTopSellingProducts = async (startDate, endDate, limit = 10) => {
   const pipeline = [
     {
@@ -285,7 +274,6 @@ const getTopSellingProducts = async (startDate, endDate, limit = 10) => {
   return await Order.aggregate(pipeline)
 }
 
-// Get top selling categories
 const getTopSellingCategories = async (startDate, endDate, limit = 10) => {
   const pipeline = [
     {
@@ -335,7 +323,6 @@ const getTopSellingCategories = async (startDate, endDate, limit = 10) => {
   return await Order.aggregate(pipeline)
 }
 
-// Get top selling brands
 const getTopSellingBrands = async (startDate, endDate, limit = 10) => {
   const pipeline = [
     {
@@ -381,7 +368,6 @@ const getTopSellingBrands = async (startDate, endDate, limit = 10) => {
   return await Order.aggregate(pipeline)
 }
 
-// Format currency helper
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -391,7 +377,6 @@ const formatCurrency = (amount) => {
   }).format(amount)
 }
 
-// Format date helper
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('en-IN', {
     year: 'numeric',

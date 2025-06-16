@@ -66,7 +66,6 @@ const loadSalesReport = async (req, res) => {
     const paymentMethod = req.query.paymentMethod || "all"
     const orderStatus = req.query.orderStatus || "all"
 
-    // Pagination parameters
     const analysisPage = parseInt(req.query.analysisPage) || 1
     const ordersPage = parseInt(req.query.ordersPage) || 1
     const limit = 5
@@ -101,10 +100,8 @@ const loadSalesReport = async (req, res) => {
       filter.orderStatus = orderStatus
     }
 
-    // Get sales analysis data with pagination
     const salesAnalysis = await getSalesAnalysis(dateRange.startDate, dateRange.endDate, period, analysisPage, limit)
 
-    // Get orders with pagination
     const ordersSkip = (ordersPage - 1) * limit
     const orders = await Order.find(filter)
       .populate("user", "fullName email")
@@ -114,13 +111,10 @@ const loadSalesReport = async (req, res) => {
       .skip(ordersSkip)
       .limit(limit)
 
-    // Get total counts for pagination
     const totalOrdersCount = await Order.countDocuments(filter)
     const totalOrdersPages = Math.ceil(totalOrdersCount / limit)
 
 
-
-    // Calculate summary statistics
     const allOrders = await Order.find(filter)
     const totalOrders = allOrders.length
     const totalRevenue = allOrders.reduce((sum, order) => sum + order.finalAmount, 0)
@@ -172,36 +166,33 @@ const loadSalesReport = async (req, res) => {
   }
 }
 
-// Get sales analysis data with pagination
 const getSalesAnalysis = async (startDate, endDate, period, page = 1, limit = 10) => {
   let groupByFormat
   let sortField = "_id"
 
-  // Determine grouping format based on period
   switch (period) {
     case "today":
-      groupByFormat = "%Y-%m-%d %H:00" // Hourly for today
+      groupByFormat = "%Y-%m-%d %H:00" 
       break
     case "week":
-      groupByFormat = "%Y-%m-%d" // Daily for week
+      groupByFormat = "%Y-%m-%d" 
       break
     case "month":
-      groupByFormat = "%Y-%m-%d" // Daily for month
+      groupByFormat = "%Y-%m-%d" 
       break
     case "year":
-      groupByFormat = "%Y-%m" // Monthly for year
+      groupByFormat = "%Y-%m" 
       break
     case "custom":
-      // Determine based on date range
       const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
       if (daysDiff <= 1) {
-        groupByFormat = "%Y-%m-%d %H:00" // Hourly
+        groupByFormat = "%Y-%m-%d %H:00" 
       } else if (daysDiff <= 31) {
-        groupByFormat = "%Y-%m-%d" // Daily
+        groupByFormat = "%Y-%m-%d" 
       } else if (daysDiff <= 365) {
-        groupByFormat = "%Y-%m" // Monthly
+        groupByFormat = "%Y-%m" 
       } else {
-        groupByFormat = "%Y" // Yearly
+        groupByFormat = "%Y" 
       }
       break
     default:
@@ -258,13 +249,11 @@ const getSalesAnalysis = async (startDate, endDate, period, page = 1, limit = 10
     { $sort: { [sortField]: -1 } }
   ]
 
-  // Get total count for pagination by running the pipeline without pagination
   const countPipeline = [...pipeline]
   const allResults = await Order.aggregate(countPipeline)
   const totalCount = allResults.length
   const totalPages = Math.ceil(totalCount / limit)
 
-  // Add pagination to the original pipeline
   pipeline.push({ $skip: (page - 1) * limit })
   pipeline.push({ $limit: limit })
 

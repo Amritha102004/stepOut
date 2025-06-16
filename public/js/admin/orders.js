@@ -85,24 +85,12 @@ function initializeModals() {
     })
   }
 
-  // Refund modal
-  const refundModal = document.getElementById("refundModal")
-  const confirmRefundBtn = document.getElementById("confirmRefundBtn")
+  // Refund modal disabled - refunds are now processed automatically
+  // const refundModal = document.getElementById("refundModal")
+  // const confirmRefundBtn = document.getElementById("confirmRefundBtn")
 
-  if (confirmRefundBtn) {
-    confirmRefundBtn.addEventListener("click", () => {
-      const orderId = document.getElementById("refundOrderId").value
-      const amount = document.getElementById("refundAmount").value
-      const reason = document.getElementById("refundReason").value
-
-      if (!amount || amount <= 0) {
-        document.getElementById("refundAmount").classList.add("is-invalid")
-        return
-      }
-
-      confirmRefundProcessing(orderId, amount, reason)
-    })
-  }
+  // Manual refund functionality disabled
+  // Refunds are now processed automatically when returns are approved or orders are cancelled
 }
 
 // Initialize action handlers
@@ -398,10 +386,9 @@ function getOrderActionButtons(order) {
         `
   }
 
+  // Manual refund button disabled - refunds are now processed automatically
+  // when returns are approved or orders are cancelled
   buttons += `
-        <button class="btn btn-outline-info me-2" onclick="processRefund('${order._id}')">
-            <i class="fas fa-money-bill-wave me-1"></i>Process Refund
-        </button>
         <button class="btn btn-outline-secondary" onclick="sendNotification('${order._id}')">
             <i class="fas fa-bell me-1"></i>Send Notification
         </button>
@@ -568,49 +555,17 @@ async function confirmReturnRejection(orderId, reason, itemId = null) {
   }
 }
 
-// Process refund
-function processRefund(orderId) {
-  document.getElementById("refundOrderId").value = orderId
-  document.getElementById("refundAmount").value = ""
-  document.getElementById("refundReason").value = ""
-  document.getElementById("refundAmount").classList.remove("is-invalid")
+// Manual refund functions disabled - refunds are now processed automatically
+// when returns are approved or orders are cancelled
 
-  const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("refundModal"))
-  modal.show()
+// Process refund - DISABLED
+function processRefund(orderId) {
+  showToast("Manual refunds are disabled. Refunds are processed automatically when returns are approved or orders are cancelled.", "info")
 }
 
-// Confirm refund processing
+// Confirm refund processing - DISABLED
 async function confirmRefundProcessing(orderId, amount, reason) {
-  try {
-    showLoading("Processing refund...")
-
-    const response = await fetch(`/admin/orders/${orderId}/process-refund`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        refundAmount: Number.parseFloat(amount),
-        reason,
-      }),
-    })
-
-    const data = await response.json()
-    hideLoading()
-
-    if (data.success) {
-      showToast(data.message, "success")
-      const modal = window.bootstrap.Modal.getOrCreateInstance(document.getElementById("refundModal"))
-      modal.hide()
-      setTimeout(() => window.location.reload(), 1500)
-    } else {
-      showToast(data.message || "Failed to process refund", "error")
-    }
-  } catch (error) {
-    hideLoading()
-    console.error("Error processing refund:", error)
-    showToast("Failed to process refund", "error")
-  }
+  showToast("Manual refunds are disabled. Refunds are processed automatically when returns are approved or orders are cancelled.", "info")
 }
 
 // Cancel order
