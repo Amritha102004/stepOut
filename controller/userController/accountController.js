@@ -91,7 +91,6 @@ const editAccount = async (req, res) => {
             return res.render('user/otpVerification', { error: null });
 
         }
-        console.log(req.session.user)/////d
         const updatedUser = await User.findOneAndUpdate(
             { _id: req.session.user._id },
             {
@@ -102,7 +101,6 @@ const editAccount = async (req, res) => {
 
         );
         req.session.user = updatedUser;
-        console.log(req.session.user)/////d
 
         req.flash("success_msg", "Updated info successfully")
         res.redirect('/account');

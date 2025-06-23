@@ -25,7 +25,7 @@ const loadCheckout = async (req, res) => {
     const isRetryPayment = req.session.isRetryPayment || false
     const retryRazorpayOrderId = req.session.retryRazorpayOrderId || null
 
-    console.log("Loading checkout - isRetry:", isRetryPayment, "retryOrderId:", retryRazorpayOrderId)
+    console.log("Loading checkout - isRetry:", isRetryPayment, "retryOrderId:", retryRazorpayOrderId)////d
 
     const cart = await Cart.findOne({ user: userId })
       .populate({

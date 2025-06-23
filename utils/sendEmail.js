@@ -58,15 +58,17 @@ async function sendPasswordEmail(email, otp) {
             },
         });
 
-        await transporter.sendMail({
+        const info = await transporter.sendMail({
             from: `"stepOut Support" <${process.env.NODEMAILER_EMAIL}>`,
             to: email,
             subject: "Reset your stepOut password",
             text: `Your OTP is ${otp}`,
         });
+        return info.accepted.length > 0
 
     } catch (error) {
-
+        console.error("ERROR SENDING EMAIL", error);
+        return false
     }
 }
 

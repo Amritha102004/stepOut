@@ -142,7 +142,7 @@
   color: #6c757d;
 }
 
-.no-address-message i {
+.no-address-message .new {
   font-size: 3rem;
   color: #009688;
 }

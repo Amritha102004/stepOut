@@ -146,8 +146,8 @@
         }
 
         .pagination .page-item.active .page-link {
-            background-color: #007bff;
-            border-color: #007bff;
+            /* background-color: #007bff;
+            border-color: #007bff; */
             color: white;
         }
 
@@ -217,7 +217,7 @@
             <nav aria-label="breadcrumb" class="mb-4">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item">
-                        <a href="/admin/dashboard" class="text-decoration-none">Dashboard</a>
+                        <a href="/admin/dashboard" class="text-decoration-none text-dark">Dashboard</a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
                         Sales Report
@@ -357,7 +357,7 @@
         <div class="chart-container mb-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="mb-0">Sales Analysis</h5>
-                <span class="badge bg-primary"><%= salesAnalysis.totalCount %> records</span>
+                <span class="badge bg-dark"><%= salesAnalysis.totalCount %> records</span>
             </div>
 
             <div class="table-responsive">
@@ -367,8 +367,8 @@
                             <th>Date/Period</th>
                             <th>Orders</th>
                             <th>Revenue</th>
-                            <th>Product Discount</th>
-                            <th>Coupon Discount</th>
+                            <!-- <th>Product Discount</th>
+                            <th>Coupon Discount</th> -->
                             <th>Total Discount</th>
                             <th>Net Revenue</th>
                         </tr>
@@ -396,8 +396,8 @@
                                     <td><strong><%= analysis._id %></strong></td>
                                     <td><span class="badge bg-info"><%= analysis.totalOrders %></span></td>
                                     <td><%= formatCurrency(analysis.totalRevenue) %></td>
-                                    <td><%= formatCurrency(analysis.productDiscount || 0) %></td>
-                                    <td><%= formatCurrency(analysis.couponDiscount || 0) %></td>
+                                    <!-- <td><%= formatCurrency(analysis.productDiscount || 0) %></td>
+                                    <td><%= formatCurrency(analysis.couponDiscount || 0) %></td> -->
                                     <td><%= formatCurrency(analysis.totalDiscount) %></td>
                                     <td><strong><%= formatCurrency(analysis.netRevenue) %></strong></td>
                                 </tr>
@@ -407,8 +407,8 @@
                                 <td><strong>TOTAL</strong></td>
                                 <td><span class="badge bg-dark"><%= totalOrdersSum %></span></td>
                                 <td><strong><%= formatCurrency(totalRevenueSum) %></strong></td>
-                                <td><strong><%= formatCurrency(totalProductDiscountSum) %></strong></td>
-                                <td><strong><%= formatCurrency(totalCouponDiscountSum) %></strong></td>
+                                <!-- <td><strong><%= formatCurrency(totalProductDiscountSum) %></strong></td>
+                                <td><strong><%= formatCurrency(totalCouponDiscountSum) %></strong></td> -->
                                 <td><strong><%= formatCurrency(totalDiscountSum) %></strong></td>
                                 <td><strong class="text-success"><%= formatCurrency(totalNetRevenueSum) %></strong></td>
                             </tr>

@@ -292,25 +292,28 @@ const resendOtp = async (req, res) => {
             const newOtp = generateOtp();
             req.session.secondOtp = newOtp;
 
-            ////util//
+            const emailSent = await sendEmail.sendPasswordEmail(email, newOtp);
+            if (emailSent) {
+                console.log("Resent reset password OTP:", newOtp);    ////////
+                return res.status(statusCode.OK).json({ success: true });
+            } else {
+                return res.json({ success: false, error: "Failed to resend OTP" });
+            }
+            
+        }
 
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                    user: process.env.NODEMAILER_EMAIL,
-                    pass: process.env.NODEMAILER_PASSWORD,
-                },
-            });
+        else if (otpType === 'email') {
+            const { email } = req.session.userData;
+            const newOtp = generateOtp();
+            req.session.userOtp = newOtp;
 
-            await transporter.sendMail({
-                from: `"stepOut Support" <${process.env.NODEMAILER_EMAIL}>`,
-                to: email,
-                subject: "Reset your stepOut password",
-                text: `Your OTP is ${newOtp}`,
-            });
-
-            console.log("Resent reset password OTP:", newOtp);    ////////
-            return res.status(statusCode.OK).json({ success: true });
+            const emailSent = await sendEmail.sendVerificationEmail(email, newOtp);
+            if (emailSent) {
+                console.log("Resent reset email OTP:", newOtp);////////
+                return res.status(statusCode.OK).json({ success: true });
+            } else {
+                return res.json({ success: false, error: "Failed to resend OTP" });
+            }
         }
 
         else {
@@ -389,26 +392,12 @@ const handleForgotPassword = async (req, res) => {
         req.session.otpType = 'reset';
 
         
-        // const emailsent = await sendEmail.sendVerificationEmail(email, otp);
+        const emailsent = await sendEmail.sendPasswordEmail(email, otp);
 
-        // if (!emailsent) {
-        //     return res.json('email error');
-        // }
-
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.NODEMAILER_EMAIL,
-                pass: process.env.NODEMAILER_PASSWORD,
-            },
-        });
-
-        await transporter.sendMail({
-            from: `"stepOut Support" <${process.env.NODEMAILER_EMAIL}>`,
-            to: email,
-            subject: "Reset your stepOut password",
-            text: `Your OTP is ${otp}`,
-        });
+        if (!emailsent) {
+            return res.json('email error');
+        }
+ 
         console.log("reset password OTP:", otp);//////
 
         res.render("user/otpVerification", { email: null, error: null });
